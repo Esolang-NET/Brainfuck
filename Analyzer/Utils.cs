@@ -29,7 +29,7 @@ public static class Utils
         if (isPartial) { result.Append("partial "); }
         if (namedTypeSymbol.IsRecord) { result.Append("record "); }
 
-        string typeKind = namedTypeSymbol.TypeKind switch
+        var typeKind = namedTypeSymbol.TypeKind switch
         {
             TypeKind.Class => "class",
             TypeKind.Interface => "interface",
@@ -54,7 +54,7 @@ public static class Utils
     public static (string CodeForOpeningDefinition, string CodeForClosingDefinition) GenerateOpeningClosingTypeDefinitionCode(IMethodSymbol methodSymbol)
     {
         var openingDefinitionCode = new StringBuilder();
-        int closingBracketCount = 0;
+        var closingBracketCount = 0;
         if (!methodSymbol.ContainingNamespace.IsGlobalNamespace)
         {
             openingDefinitionCode.Append($$"""namespace {{methodSymbol.ContainingNamespace}} {""");
