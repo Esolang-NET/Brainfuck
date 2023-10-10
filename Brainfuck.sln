@@ -9,7 +9,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Analyzer", "Analy
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Core", "Core\Brainfuck.Core.csproj", "{99A9246F-D0C0-4524-B444-D5E04FFAD131}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Brainfuck.Analyzer.UseConsole", "Analyzer.UseConsole\Brainfuck.Analyzer.UseConsole.csproj", "{104FF51E-4705-4F44-B543-6693180E02C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Analyzer.UseConsole", "Analyzer.UseConsole\Brainfuck.Analyzer.UseConsole.csproj", "{104FF51E-4705-4F44-B543-6693180E02C5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ソリューション項目", "ソリューション項目", "{DB7C457F-B116-429A-9B60-3C1AAFAFC8AC}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
