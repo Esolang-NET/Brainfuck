@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Brainfuck;
 
@@ -8,11 +9,44 @@ public class BrainfuckSequencer : IEnumerable<(BrainfuckSequence Sequence, ReadO
     readonly ReadOnlyMemory<char> input;
     public BrainfuckSequencer(string input) : this(input.AsMemory(), null) { }
     public BrainfuckSequencer(ReadOnlyMemory<char> input) : this(input, null) { }
-    public BrainfuckSequencer(string input, BrainfuckOptions? options):this(input.AsMemory(), options) { }
+    public BrainfuckSequencer(string input, BrainfuckOptions? options) : this(input.AsMemory(), options) { }
     public BrainfuckSequencer(ReadOnlyMemory<char> input, BrainfuckOptions? options)
     {
         this.input = input;
         this.options = options is not null ? new(options) : new();
+    }
+    [MemberNotNull(nameof(_needInput), nameof(_needOutput))]
+    void InitializeNeeds()
+    {
+        if (_needInput is not null && _needOutput is not null) return;
+        foreach (var (sequence, _) in this)
+        {
+            if (_needInput is not null && _needOutput is not null)
+                return;
+            if (_needInput is null && sequence is BrainfuckSequence.Input) _needInput = true;
+            if (_needOutput is null && sequence is BrainfuckSequence.Output) _needOutput = true;
+        }
+        _needInput ??= false;
+        _needOutput ??= false;
+    }
+    bool? _needInput;
+    public bool NeedInput
+    {
+        get
+        {
+            InitializeNeeds();
+            return _needInput.Value;
+        }
+    }
+
+    bool? _needOutput;
+    public bool NeedOutput
+    {
+        get
+        {
+            InitializeNeeds();
+            return _needOutput.Value;
+        }
     }
 
     public Enumerator GetEnumerator() => new(input, OptionSyntaxes.OrderByDescending(v => v.Syntax.Length).ToArray());
@@ -36,7 +70,7 @@ public class BrainfuckSequencer : IEnumerable<(BrainfuckSequence Sequence, ReadO
     {
         (BrainfuckSequence, ReadOnlyMemory<char>) current;
         ReadOnlyMemory<char> memory;
-        
+
         readonly (BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)[] optionSyntaxes;
         public readonly (BrainfuckSequence, ReadOnlyMemory<char>) Current => current;
 
@@ -46,13 +80,12 @@ public class BrainfuckSequencer : IEnumerable<(BrainfuckSequence Sequence, ReadO
             this.memory = memory;
             this.optionSyntaxes = optionSyntaxes;
         }
-
         public bool MoveNext()
         {
             if (memory.Length <= 0) return false;
             (memory, current) = Next(memory, optionSyntaxes);
             return true;
-            static (ReadOnlyMemory<char> Memory,(BrainfuckSequence Sequence, ReadOnlyMemory<char> Text) Current) Next(ReadOnlyMemory<char> memory, (BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)[] optionSyntaxes)
+            static (ReadOnlyMemory<char> Memory, (BrainfuckSequence Sequence, ReadOnlyMemory<char> Text) Current) Next(ReadOnlyMemory<char> memory, (BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)[] optionSyntaxes)
             {
                 int? max = null;
                 ReadOnlyMemory<char> text;
@@ -64,14 +97,14 @@ public class BrainfuckSequencer : IEnumerable<(BrainfuckSequence Sequence, ReadO
                         max = Math.Min(indexOf, max ?? int.MaxValue);
                         continue;
                     }
-                    text = memory.Slice(0, syntax.Length);
-                    memory = memory.Slice(syntax.Length);
+                    text = memory[..syntax.Length];
+                    memory = memory[syntax.Length..];
                     return (memory, (sequenceValue, text));
                 }
                 max = Math.Min(memory.Length, max ?? int.MaxValue);
-                text = memory.Slice(0, max.Value);
-                memory = memory.Slice(max.Value);
-                return (memory , (default, text));
+                text = memory[..max.Value];
+                memory = memory[max.Value..];
+                return (memory, (default, text));
             }
         }
         public readonly void Dispose() { }

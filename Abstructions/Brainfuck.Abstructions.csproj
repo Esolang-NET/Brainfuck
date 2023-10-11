@@ -1,10 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net6.0;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <FrameworksLackingNullableReferenceTypeAttributes>|netstandard2.0|netstandard2.1|</FrameworksLackingNullableReferenceTypeAttributes>
   </PropertyGroup>
+  
+  <ItemGroup Condition="$(FrameworksLackingNullableReferenceTypeAttributes.Contains('|$(TargetFramework)|'))">
+    <PackageReference Include="Hafner.Compatibility.NullableReferenceTypeAttributes">
+      <Version>1.0.0</Version>
+    </PackageReference>
+  </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="IndexRange" Version="1.0.3" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
     <PackageReference Include="System.Memory" Version="4.5.5" />
   </ItemGroup>
 

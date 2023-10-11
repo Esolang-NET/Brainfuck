@@ -1,5 +1,4 @@
-﻿using Brainfuck;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text;
@@ -52,7 +51,7 @@ public partial class BrainfuckMethodGenerator
     {
 
         var attributeData = methodSymbol.GetAttributes().Single(
-            x => x.AttributeClass?.ToDisplayString() == NameSpaceName+"."+ClassNameBrainfuckAttribution
+            x => x.AttributeClass?.ToDisplayString() == NameSpaceName + "." + ClassNameBrainfuckAttribution
         );
 
         if (attributeData.ConstructorArguments.Length != 1)
