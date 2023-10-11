@@ -10,7 +10,7 @@ public class DecrementPointerCommand : BrainfuckSequenceCommand
         var sequencesIndex = context.SequencesIndex + 1;
         var stackIndex = context.StackIndex - 1;
         if (stackIndex < 0)
-            throw new IndexOutOfRangeException(nameof(stackIndex));
+            return new(Next());
         return new(new BrainfuckContext(
             sequences: context.Sequences, sequencesIndex: sequencesIndex,
             stack: context.Stack, stackIndex: stackIndex,

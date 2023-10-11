@@ -1,0 +1,12 @@
+<Project>
+	<ItemGroup>
+		<PackageReference Update="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" />
+		<PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+		<PackageReference Update="Microsoft.Bcl.HashCode" Version="1.1.1" />
+		<PackageReference Update="System.Memory" Version="4.5.5" />
+		<PackageReference Update="System.Collections.Immutable" Version="6.0.0" />
+		<PackageReference Update="System.IO.Pipelines" Version="7.0.0" />
+		<PackageReference Update="Hafner.Compatibility.NullableReferenceTypeAttributes" Version="1.0.0" />
+		<PackageReference Update="IndexRange" Version="1.0.3" />
+	</ItemGroup>
+</Project>

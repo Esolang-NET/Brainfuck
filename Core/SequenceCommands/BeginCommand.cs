@@ -1,4 +1,5 @@
-﻿namespace Brainfuck.Core.SequenceCommands;
+﻿using static Brainfuck.BrainfuckSequence;
+namespace Brainfuck.Core.SequenceCommands;
 
 public class BeginCommand : BrainfuckSequenceCommand
 {
@@ -9,27 +10,25 @@ public class BeginCommand : BrainfuckSequenceCommand
         cancellationToken.ThrowIfCancellationRequested();
         var sequencesIndex = context.SequencesIndex + 1;
         var current = context.Stack[context.StackIndex];
-        if (current is 0)
+        if (current is not 0)
+            return new(Next());
+        var hierarchy = 0;
+        var lastIndex = sequencesIndex;
+        for (; lastIndex < context.Sequences.Length; lastIndex++)
         {
-            var hierarchy = 0;
-            var lastIndex = sequencesIndex;
-            for (; lastIndex < context.Sequences.Length; lastIndex++)
-            {
-                var sequence = context.Sequences.Span[lastIndex];
-                if (sequence is not BrainfuckSequence.Begin or BrainfuckSequence.End)
-                    continue;
-                if (sequence is BrainfuckSequence.Begin)
-                    hierarchy++;
-                else if (hierarchy == 0 && sequence is BrainfuckSequence.End)
-                    break;
-                else if (sequence is BrainfuckSequence.End)
-                    hierarchy--;
-            }
-            if (context.Sequences.Length > lastIndex && context.Sequences.Span[lastIndex] is BrainfuckSequence.End)
-                sequencesIndex = lastIndex + 1;
-            else
-                throw new InvalidOperationException($"not found {BrainfuckSequence.End}");
+            var sequence = context.Sequences.Span[lastIndex];
+            if (sequence is not (Begin or End))
+                continue;
+            if (sequence is Begin)
+                hierarchy++;
+            else if (hierarchy == 0 && sequence is End)
+                break;
+            else if (sequence is End)
+                hierarchy--;
         }
+        if (context.Sequences.Length <= lastIndex || context.Sequences.Span[lastIndex] is not End)
+            return new(Next());
+        sequencesIndex = lastIndex + 1;
         return new(new BrainfuckContext(
             sequences: context.Sequences, sequencesIndex: sequencesIndex,
             stack: context.Stack, stackIndex: context.StackIndex,

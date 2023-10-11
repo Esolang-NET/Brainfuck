@@ -39,7 +39,6 @@ public partial class BrainfuckMethodGenerator
         var builder = new StringBuilder();
         foreach (var (sequence, _) in sequences)
         {
-
         }
         return builder.ToString();
     }

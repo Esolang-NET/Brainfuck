@@ -23,4 +23,14 @@ public abstract class BrainfuckSequenceCommand
             BrainfuckSequence.Comment or _ => new CommentCommand(context),
         };
     }
+    protected BrainfuckContext Next()
+    {
+        var sequencesIndex = context.SequencesIndex + 1;
+        return new(
+            sequences: context.Sequences, sequencesIndex: sequencesIndex,
+            stack: context.Stack, stackIndex: context.StackIndex,
+            input: context.Input, output: context.Output
+        );
+
+    }
 }
