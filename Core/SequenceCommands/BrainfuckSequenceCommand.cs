@@ -1,16 +1,19 @@
-﻿namespace Brainfuck.Core.SequenceCommands;
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Brainfuck.Core.SequenceCommands;
 
 public abstract class BrainfuckSequenceCommand
 {
     protected readonly BrainfuckContext context;
     public BrainfuckSequenceCommand(BrainfuckContext context) => this.context = context;
     abstract public ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default);
-    public static BrainfuckSequenceCommand? GetCommand(BrainfuckContext context)
+    public static bool TryGetCommand(BrainfuckContext context, [NotNullWhen(true)] out BrainfuckSequenceCommand command)
     {
+        command = default!;
         if (context.Sequences.Length <= context.SequencesIndex)
-            return null;
+            return false;
         var sequence = context.Sequences.Span[context.SequencesIndex];
-        return sequence switch
+        command = sequence switch
         {
             BrainfuckSequence.IncrementPointer => new IncrementPointerCommand(context),
             BrainfuckSequence.DecrementPointer => new DecrementPointerCommand(context),
@@ -22,15 +25,15 @@ public abstract class BrainfuckSequenceCommand
             BrainfuckSequence.End => new EndCommand(context),
             BrainfuckSequence.Comment or _ => new CommentCommand(context),
         };
+        return true;
     }
     protected BrainfuckContext Next()
     {
         var sequencesIndex = context.SequencesIndex + 1;
-        return new(
-            sequences: context.Sequences, sequencesIndex: sequencesIndex,
-            stack: context.Stack, stackIndex: context.StackIndex,
-            input: context.Input, output: context.Output
-        );
+        return context with
+        {
+            SequencesIndex = sequencesIndex,
+        };
 
     }
 }

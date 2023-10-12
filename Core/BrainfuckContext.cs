@@ -1,28 +1,28 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO.Pipelines;
-using System.Text;
-using System.Linq;
-using System.Runtime.Serialization;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
+using System.Text;
 
 namespace Brainfuck;
 
+/// <summary>
+/// 
+/// </summary>
+/// <param name="Sequences"></param>
+/// <param name="Stack"></param>
+/// <param name="SequencesIndex"></param>
+/// <param name="StackIndex"></param>
+/// <param name="Input"></param>
+/// <param name="Output"></param>
 [Serializable]
 [DebuggerDisplay($"{{{nameof(GetDebuggerDisplay)}(),nq}}")]
-public readonly struct BrainfuckContext : ISerializable, IEquatable<BrainfuckContext>
+public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence> Sequences, ImmutableList<byte> Stack, int SequencesIndex = default, int StackIndex = default, PipeReader? Input = default, PipeWriter? Output = default) : ISerializable, IEquatable<BrainfuckContext>
 {
-    public readonly ReadOnlyMemory<BrainfuckSequence> Sequences { get; }
-    public readonly int SequencesIndex { get; }
-    public readonly ImmutableList<byte> Stack { get; }
-    public readonly int StackIndex { get; }
-    public readonly PipeReader? Input { get; }
-    public readonly PipeWriter? Output { get; }
-    public BrainfuckContext(ReadOnlyMemory<BrainfuckSequence> sequences, ImmutableList<byte> stack, int sequencesIndex = default, int stackIndex = default, PipeReader? input = default, PipeWriter? output = default)
-        => (Sequences, Stack, SequencesIndex, StackIndex, Input, Output) = (sequences, stack, sequencesIndex, stackIndex, input, output);
     public void Deconstruct(out ReadOnlyMemory<BrainfuckSequence> sequences, out ImmutableList<byte> stack, out int sequencesIndex, out int stackIndex, out PipeReader? input, out PipeWriter? output)
         => (sequences, stack, sequencesIndex, stackIndex, input, output) = (Sequences, Stack, SequencesIndex, StackIndex, Input, Output);
-    public BrainfuckContext(SerializationInfo info, StreamingContext context)
+    public BrainfuckContext(SerializationInfo info, StreamingContext context) : this(Sequences: default, Stack: default!)
     {
         if (info is null) throw new ArgumentNullException(nameof(info));
         Sequences = (info.GetValue(nameof(Sequences), typeof(BrainfuckSequence[])) as BrainfuckSequence[] ?? Array.Empty<BrainfuckSequence>()).AsMemory();
@@ -75,18 +75,12 @@ public readonly struct BrainfuckContext : ISerializable, IEquatable<BrainfuckCon
         info.AddValue(nameof(StackIndex), StackIndex);
     }
     public bool Equals(BrainfuckContext other)
-        => MemoryMarshal.Cast<BrainfuckSequence, int>(Sequences.Span).SequenceEqual(MemoryMarshal.Cast<BrainfuckSequence, int>( other.Sequences.Span))
+        => MemoryMarshal.Cast<BrainfuckSequence, int>(Sequences.Span).SequenceEqual(MemoryMarshal.Cast<BrainfuckSequence, int>(other.Sequences.Span))
         && SequencesIndex == other.SequencesIndex
         && Stack.SequenceEqual(other.Stack)
         && StackIndex == other.StackIndex
         && Equals(Input, other.Input)
         && Equals(Output, other.Output);
-
-    public override bool Equals(object? obj) => obj is BrainfuckContext context && Equals(context);
-
-    public static bool operator ==(BrainfuckContext left, BrainfuckContext right) => left.Equals(right);
-
-    public static bool operator !=(BrainfuckContext left, BrainfuckContext right) => !(left == right);
 
     public override int GetHashCode()
     {

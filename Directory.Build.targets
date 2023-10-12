@@ -1,12 +1,16 @@
 <Project>
-	<ItemGroup>
-		<PackageReference Update="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" />
-		<PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
-		<PackageReference Update="Microsoft.Bcl.HashCode" Version="1.1.1" />
-		<PackageReference Update="System.Memory" Version="4.5.5" />
-		<PackageReference Update="System.Collections.Immutable" Version="6.0.0" />
-		<PackageReference Update="System.IO.Pipelines" Version="7.0.0" />
-		<PackageReference Update="Hafner.Compatibility.NullableReferenceTypeAttributes" Version="1.0.0" />
-		<PackageReference Update="IndexRange" Version="1.0.3" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="Microsoft.CodeAnalysis.CSharp" Version="4.3.1" />
+    <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+    <PackageReference Update="Microsoft.Bcl.HashCode" Version="1.1.1" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.7.2" />
+    <PackageReference Update="MSTest.TestAdapter" Version="3.1.1" />
+    <PackageReference Update="MSTest.TestFramework" Version="3.1.1" />
+    <PackageReference Update="System.Memory" Version="4.5.5" />
+    <PackageReference Update="System.Collections.Immutable" Version="6.0.0" />
+    <PackageReference Update="System.IO.Pipelines" Version="7.0.0" />
+    <PackageReference Update="Hafner.Compatibility.NullableReferenceTypeAttributes" Version="1.0.0" />
+    <PackageReference Update="IndexRange" Version="1.0.3" />
+    <PackageReference Update="coverlet.collector" Version="6.0.0" />
+  </ItemGroup>
 </Project>

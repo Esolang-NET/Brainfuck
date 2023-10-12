@@ -5,7 +5,7 @@ using static Brainfuck.BrainfuckSequence;
 namespace Brainfuck.Core.SequenceCommands.Tests;
 
 [TestClass()]
-public class DecrementCurrentCommandTests
+public class CommentCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
     static IEnumerable<object[]> ExecuteAsyncTestData
@@ -13,9 +13,9 @@ public class DecrementCurrentCommandTests
         get
         {
             {
-                // currentStack -1
-                var sequences = new[] { DecrementCurrent }.AsMemory();
-                var stack = ImmutableList.Create<byte>(1);
+                // noop
+                var sequences = new[] { Comment }.AsMemory();
+                var stack = ImmutableList.Create<byte>(0);
                 BrainfuckContext before = new(
                     Sequences: sequences,
                     Stack: stack
@@ -25,24 +25,6 @@ public class DecrementCurrentCommandTests
                     before with
                     {
                         SequencesIndex = 1,
-                        Stack = ImmutableList.Create<byte>(0),
-                    }
-                );
-            }
-            {
-                // stackPointer -1 underflow 0 → 255
-                var sequences = new[] { DecrementCurrent }.AsMemory();
-                var stack = ImmutableList.Create(byte.MinValue);
-                BrainfuckContext before = new(
-                    Sequences: sequences,
-                    Stack: stack
-                );
-                yield return ExecuteAsyncTest(
-                    before,
-                    before with
-                    {
-                        SequencesIndex = 1,
-                        Stack = ImmutableList.Create(byte.MaxValue),
                     }
                 );
             }
@@ -56,7 +38,7 @@ public class DecrementCurrentCommandTests
     {
         var token = TestContext.CancellationTokenSource.Token;
 
-        var result = await new DecrementCurrentCommand(context).ExecuteAsync(token);
+        var result = await new CommentCommand(context).ExecuteAsync(token);
         Assert.AreEqual(accept, result);
     }
 }

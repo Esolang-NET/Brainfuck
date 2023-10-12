@@ -8,12 +8,22 @@ public class BeginCommand : BrainfuckSequenceCommand
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var sequencesIndex = context.SequencesIndex + 1;
+        if (!TryBegin(out var sequencesIndex))
+            return new(Next());
+        return new(context with
+        {
+            SequencesIndex = sequencesIndex,
+        });
+    }
+    bool TryBegin(out int sequencesIndex)
+    {
+        sequencesIndex = default;
+        var sequencesIndex_ = context.SequencesIndex + 1;
         var current = context.Stack[context.StackIndex];
         if (current is not 0)
-            return new(Next());
+            return false;
         var hierarchy = 0;
-        var lastIndex = sequencesIndex;
+        var lastIndex = sequencesIndex_;
         for (; lastIndex < context.Sequences.Length; lastIndex++)
         {
             var sequence = context.Sequences.Span[lastIndex];
@@ -27,12 +37,10 @@ public class BeginCommand : BrainfuckSequenceCommand
                 hierarchy--;
         }
         if (context.Sequences.Length <= lastIndex || context.Sequences.Span[lastIndex] is not End)
-            return new(Next());
-        sequencesIndex = lastIndex + 1;
-        return new(new BrainfuckContext(
-            sequences: context.Sequences, sequencesIndex: sequencesIndex,
-            stack: context.Stack, stackIndex: context.StackIndex,
-            input: context.Input, output: context.Output
-        ));
+            return false;
+        sequencesIndex_ = lastIndex + 1;
+        sequencesIndex = sequencesIndex_;
+        return true;
+
     }
 }

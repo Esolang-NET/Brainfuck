@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static Brainfuck.BrainfuckSequence;
 using System.Collections.Immutable;
+using static Brainfuck.BrainfuckSequence;
 
 namespace Brainfuck.Core.SequenceCommands.Tests;
 
@@ -16,27 +16,35 @@ public class IncrementCurrentCommandTests
                 // currentStack +1
                 var sequences = new[] { IncrementCurrent }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new(
-                    sequences: sequences,
-                    stack: ImmutableList.Create<byte>(1),
-                    sequencesIndex: 1
-                ));
+                BrainfuckContext before = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    before,
+                    before with
+                    {
+                        Stack = ImmutableList.Create<byte>(1),
+                        SequencesIndex = 1,
+                    }
+                );
             }
             {
                 // stackPointer +1 overflow 255 → 0
                 var sequences = new[] { IncrementCurrent }.AsMemory();
                 var stack = ImmutableList.Create(byte.MaxValue);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new(
-                    sequences: sequences,
-                    stack: ImmutableList.Create(byte.MinValue),
-                    sequencesIndex: 1
-                ));
+                BrainfuckContext before = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    before,
+                    before with
+                    {
+                        Stack = ImmutableList.Create(byte.MinValue),
+                        SequencesIndex = 1,
+                    }
+                );
             }
             static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
                 => new object[] { context, accept };

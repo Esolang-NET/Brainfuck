@@ -1,7 +1,13 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static Brainfuck.BrainfuckSequence;
-using System.Collections.Immutable;
 
+/* プロジェクト 'Brainfuck.Core.Tests (net48)' からのマージされていない変更
+前:
+using static Brainfuck.BrainfuckSequence;
+後:
+using System.Collections;
+*/
+using System.Collections.Immutable;
+using static Brainfuck.BrainfuckSequence;
 
 namespace Brainfuck.Core.SequenceCommands.Tests;
 
@@ -17,28 +23,35 @@ public class DecrementPointerCommandTests
                 // stackPointer -1 
                 var sequences = new[] { DecrementPointer }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0, 0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack,
-                    stackIndex: 1
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1
-                ));
+                BrainfuckContext before = new(
+                    Sequences: sequences,
+                    Stack: stack,
+                    StackIndex: 1
+                );
+                yield return ExecuteAsyncTest(
+                    before,
+                    before with
+                    {
+                        SequencesIndex = 1,
+                        StackIndex = 0,
+                    }
+                );
             }
             {
                 // no op pattern.
                 var sequences = new[] { DecrementPointer }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1
-                ));
+                BrainfuckContext before = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    before,
+                    before with
+                    {
+                        SequencesIndex = 1,
+                    }
+                );
             }
             static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
                 => new object[] { context, accept };

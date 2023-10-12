@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static Brainfuck.BrainfuckSequence;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
+using static Brainfuck.BrainfuckSequence;
 
 namespace Brainfuck.Core.SequenceCommands.Tests;
 
@@ -14,64 +14,65 @@ public class InputCommandTests
         get
         {
             {
-                // stackPointer +1 (and extends stack)
+                // input set.
                 var sequences = new[] { Input }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new byte[] { 1 }, new(
-                    sequences: sequences,
-                    stack: ImmutableList.Create<byte>(1),
-                    sequencesIndex: 1
-                ));
+                var stack = ImmutableList.Create<byte>(2);
+                BrainfuckContext context = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    context,
+                    new byte[] { 1 },
+                    context with
+                    {
+                        Stack = ImmutableList.Create<byte>(1),
+                        SequencesIndex = 1,
+                    }
+                );
             }
             {
-                // stackPointer +1
+                // input nodata.
                 var sequences = new[] { Input }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0, 0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), Array.Empty<byte>() 
-                ,new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1,
-                    stackIndex: 1
-                ));
+                var stack = ImmutableList.Create<byte>(2);
+                BrainfuckContext context = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    context,
+                    Array.Empty<byte>(),
+                    context with
+                    {
+                        Stack = ImmutableList.Create<byte>(0),
+                        SequencesIndex = 1,
+                    }
+                );
             }
             static object[] ExecuteAsyncTest(BrainfuckContext context, byte[] input, BrainfuckContext accept)
-                => new object[] { context, input, accept };
+                => new object[] { context, SerializableArrayWrapper.Create(input), accept };
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteAsyncTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, byte[] input, BrainfuckContext accept)
+    public async Task ExecuteAsyncTest(BrainfuckContext context, SerializableArrayWrapper<byte> input, BrainfuckContext accept)
     {
         var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
-        context = new BrainfuckContext(
-            sequences: context.Sequences,
-            sequencesIndex: context.SequencesIndex,
-            stack: context.Stack,
-            stackIndex: context.StackIndex,
-            input: pipe.Reader,
-            output: context.Output
-        );
-        accept = new BrainfuckContext(
-            sequences: accept.Sequences,
-            sequencesIndex: accept.SequencesIndex,
-            stack: accept.Stack,
-            stackIndex: accept.StackIndex,
-            input: pipe.Reader,
-            output: accept.Output
-        );
+        context = context with
+        {
+            Input = pipe.Reader,
+        };
+        accept = accept with
+        {
+            Input = pipe.Reader,
+        };
 
-        var waiter = new IncrementPointerCommand(context).ExecuteAsync(token);
-        await pipe.Writer.WriteAsync(input, token);
+        var waiter = new InputCommand(context).ExecuteAsync(token);
+        if (input.Array.Length > 0)
+            await pipe.Writer.WriteAsync(input, token);
+        await pipe.Writer.CompleteAsync();
         var result = await waiter;
         Assert.AreEqual(accept, result);
     }
-
 }

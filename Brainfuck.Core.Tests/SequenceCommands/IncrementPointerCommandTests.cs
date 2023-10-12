@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static Brainfuck.BrainfuckSequence;
 using System.Collections.Immutable;
+using static Brainfuck.BrainfuckSequence;
 
 namespace Brainfuck.Core.SequenceCommands.Tests;
 
@@ -16,29 +16,36 @@ public class IncrementPointerCommandTests
                 // stackPointer +1 (and extends stack)
                 var sequences = new[] { IncrementPointer }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new(
-                    sequences: sequences,
-                    stack: ImmutableList.Create<byte>(0, 0),
-                    sequencesIndex: 1,
-                    stackIndex: 1
-                ));
+                BrainfuckContext context = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    context,
+                    context with
+                    {
+                        Stack = ImmutableList.Create<byte>(0, 0),
+                        SequencesIndex = 1,
+                        StackIndex = 1
+                    }
+                );
             }
             {
                 // stackPointer +1
                 var sequences = new[] { IncrementPointer }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0, 0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1,
-                    stackIndex: 1
-                ));
+                BrainfuckContext context = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    context,
+                    context with
+                    {
+                        SequencesIndex = 1,
+                        StackIndex = 1
+                    }
+                );
             }
             static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
                 => new object[] { context, accept };

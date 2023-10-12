@@ -3,7 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Brainfuck;
 
-public class BrainfuckSequencer : IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)>
+public class BrainfuckSequencer
+
+    : IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)>
 {
     readonly BrainfuckOptions options;
     readonly ReadOnlyMemory<char> input;
@@ -92,6 +94,7 @@ public class BrainfuckSequencer : IEnumerable<(BrainfuckSequence Sequence, ReadO
                 foreach (var (sequenceValue, syntax) in optionSyntaxes)
                 {
                     var indexOf = memory.Span.IndexOf(syntax.Span, StringComparison.Ordinal);
+                    if (indexOf < 0) continue;
                     if (indexOf > 0)
                     {
                         max = Math.Min(indexOf, max ?? int.MaxValue);

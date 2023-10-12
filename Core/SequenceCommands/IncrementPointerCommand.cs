@@ -1,4 +1,6 @@
-﻿namespace Brainfuck.Core.SequenceCommands;
+﻿using System.Collections.Immutable;
+
+namespace Brainfuck.Core.SequenceCommands;
 
 public class IncrementPointerCommand : BrainfuckSequenceCommand
 {
@@ -7,15 +9,19 @@ public class IncrementPointerCommand : BrainfuckSequenceCommand
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var sequencesIndex = context.SequencesIndex + 1;
-        var stack = sequencesIndex < context.Stack.Count 
-            ? context.Stack 
-            : context.Stack.Add(0);
-        var stackIndex = context.StackIndex + 1;
+        IncrementPointer(out var sequencesIndex, out var stack, out var stackIndex);
         return new(new BrainfuckContext(
-            sequences: context.Sequences, sequencesIndex: sequencesIndex,
-            stack: stack, stackIndex: stackIndex,
-            input: context.Input, output: context.Output
+            Sequences: context.Sequences, SequencesIndex: sequencesIndex,
+            Stack: stack, StackIndex: stackIndex,
+            Input: context.Input, Output: context.Output
         ));
+    }
+    void IncrementPointer(out int sequencesIndex, out ImmutableList<byte> stack, out int stackIndex)
+    {
+        sequencesIndex = context.SequencesIndex + 1;
+        stack = sequencesIndex < context.Stack.Count
+            ? context.Stack
+            : context.Stack.Add(0);
+        stackIndex = context.StackIndex + 1;
     }
 }

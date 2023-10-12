@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static Brainfuck.BrainfuckSequence;
 using System.Collections.Immutable;
+using static Brainfuck.BrainfuckSequence;
 
 namespace Brainfuck.Core.SequenceCommands.Tests;
 
@@ -16,17 +16,20 @@ public class EndCommandTests
                 // while(true) {
                 // } ← before
                 // ← after
-                var sequences = new[] { Begin, Comment, End, Comment}.AsMemory();
+                var sequences = new[] { Begin, Comment, End, Comment }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 2
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 3
-                ));
+                BrainfuckContext before = new(
+                    Sequences: sequences,
+                    Stack: stack,
+                    SequencesIndex: 2
+                );
+                yield return ExecuteAsyncTest(
+                    before,
+                    before with
+                    {
+                        SequencesIndex = 3,
+                    }
+                );
             }
             {
                 // while(true) {
@@ -34,42 +37,51 @@ public class EndCommandTests
                 // } ← before
                 var sequences = new[] { Begin, Comment, End, Comment }.AsMemory();
                 var stack = ImmutableList.Create<byte>(1);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 2
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1
-                ));
+                BrainfuckContext before = new(
+                    Sequences: sequences,
+                    Stack: stack,
+                    SequencesIndex: 2
+                );
+                yield return ExecuteAsyncTest(
+                    before,
+                    before with
+                    {
+                        SequencesIndex = 1,
+                    }
+                );
             }
             {
                 // invalid pattern 1
                 var sequences = new[] { Comment, End, Comment }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 2
-                ));
+                BrainfuckContext context = new(
+                    Sequences: sequences,
+                    Stack: stack,
+                    SequencesIndex: 1
+                );
+                yield return ExecuteAsyncTest(
+                    context,
+                    context with
+                    {
+                        SequencesIndex = 2,
+                    }
+                );
             }
             {
                 // invalid pattern 2
                 var sequences = new[] { End, End, Comment }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1
-                ));
+                BrainfuckContext context = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    context,
+                    context with
+                    {
+                        SequencesIndex = 1,
+                    }
+                );
             }
             static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
                 => new object[] { context, accept };

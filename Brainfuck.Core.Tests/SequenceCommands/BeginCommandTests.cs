@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static Brainfuck.BrainfuckSequence;
 using System.Collections.Immutable;
+using static Brainfuck.BrainfuckSequence;
 
 namespace Brainfuck.Core.SequenceCommands.Tests;
 
@@ -18,14 +18,16 @@ public class BeginCommandTests
                 // ← after
                 var sequences = new[] { Begin, Comment, End }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 3
-                ));
+                BrainfuckContext before = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    before,
+                    before with
+                    {
+                        SequencesIndex = 3,
+                    });
             }
             {
                 // while(true) { ← before
@@ -33,41 +35,49 @@ public class BeginCommandTests
                 // }
                 var sequences = new[] { Begin, Comment, End }.AsMemory();
                 var stack = ImmutableList.Create<byte>(1);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1
-                ));
+                BrainfuckContext before = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    before,
+                    before with
+                    {
+                        SequencesIndex = 1,
+                    });
             }
             {
                 // invalid pattern 1
                 var sequences = new[] { Comment, Begin, Comment, Comment }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 2
-                ));
+                BrainfuckContext context = new(
+                    Sequences: sequences,
+                    Stack: stack,
+                    SequencesIndex: 1
+                );
+                yield return ExecuteAsyncTest(
+                    context,
+                    context with
+                    {
+                        SequencesIndex = 2,
+                    }
+                );
             }
             {
                 // invalid pattern 2
                 var sequences = new[] { Begin, Begin, End }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                yield return ExecuteAsyncTest(new(
-                    sequences: sequences,
-                    stack: stack
-                ), new(
-                    sequences: sequences,
-                    stack: stack,
-                    sequencesIndex: 1
-                ));
+                BrainfuckContext context = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    context,
+                    context with
+                    {
+                        SequencesIndex = 1,
+                    }
+                );
             }
             static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
                 => new object[] { context, accept };
@@ -82,5 +92,5 @@ public class BeginCommandTests
 
         var result = await new BeginCommand(context).ExecuteAsync(token);
         Assert.AreEqual(accept, result);
-	}
+    }
 }

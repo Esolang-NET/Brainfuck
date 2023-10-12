@@ -13,10 +13,9 @@ public class OutputCommand : BrainfuckSequenceCommand
         var current = context.Stack[context.StackIndex];
         var memory = new byte[] { current }.AsMemory();
         await context.Output.WriteAsync(memory, cancellationToken);
-        return new(
-            sequences: context.Sequences, sequencesIndex: sequencesIndex,
-            stack: context.Stack, stackIndex: context.StackIndex,
-            input: context.Input, output: context.Output
-        );
+        return context with
+        {
+            SequencesIndex = sequencesIndex,
+        };
     }
 }

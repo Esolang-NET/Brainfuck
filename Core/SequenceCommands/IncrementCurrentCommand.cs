@@ -6,14 +6,18 @@ public class IncrementCurrentCommand : BrainfuckSequenceCommand
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        return new(IncrementCurrent());
+    }
+    BrainfuckContext IncrementCurrent()
+    {
         var sequencesIndex = context.SequencesIndex + 1;
         var current = context.Stack[context.StackIndex];
         current++;
         var stack = context.Stack.SetItem(context.StackIndex, current);
-        return new(new BrainfuckContext(
-            sequences: context.Sequences, sequencesIndex: sequencesIndex,
-            stack: stack, stackIndex: context.StackIndex,
-            input: context.Input, output: context.Output
-        ));
+        return context with
+        {
+            SequencesIndex = sequencesIndex,
+            Stack = stack,
+        };
     }
 }
