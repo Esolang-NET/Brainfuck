@@ -19,4 +19,6 @@
     <ProjectReference Include="..\Abstructions\Brainfuck.Abstructions.csproj" />
   </ItemGroup>
 
+  <Import Project="..\Shared\Shared.projitems" Label="Shared" />
+
 </Project>

@@ -8,7 +8,7 @@ namespace Brainfuck.Core.SequenceCommands.Tests;
 public class DecrementCurrentCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object[]> ExecuteAsyncTestData
+    static IEnumerable<object?[]> ExecuteAsyncTestData
     {
         get
         {
@@ -16,13 +16,13 @@ public class DecrementCurrentCommandTests
                 // currentStack -1
                 var sequences = new[] { DecrementCurrent }.AsMemory();
                 var stack = ImmutableList.Create<byte>(1);
-                BrainfuckContext before = new(
+                BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
                 );
                 yield return ExecuteAsyncTest(
-                    before,
-                    before with
+                    context,
+                    context with
                     {
                         SequencesIndex = 1,
                         Stack = ImmutableList.Create<byte>(0),
@@ -33,30 +33,30 @@ public class DecrementCurrentCommandTests
                 // stackPointer -1 underflow 0 → 255
                 var sequences = new[] { DecrementCurrent }.AsMemory();
                 var stack = ImmutableList.Create(byte.MinValue);
-                BrainfuckContext before = new(
+                BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
                 );
                 yield return ExecuteAsyncTest(
-                    before,
-                    before with
+                    context,
+                    context with
                     {
                         SequencesIndex = 1,
                         Stack = ImmutableList.Create(byte.MaxValue),
                     }
                 );
             }
-            static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
-                => new object[] { context, accept };
+            static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
+                => new object[] { context, expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteAsyncTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
+    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
 
-        var result = await new DecrementCurrentCommand(context).ExecuteAsync(token);
-        Assert.AreEqual(accept, result);
+        var actual = await new DecrementCurrentCommand(context).ExecuteAsync(token);
+        Assert.AreEqual(expected, actual);
     }
 }

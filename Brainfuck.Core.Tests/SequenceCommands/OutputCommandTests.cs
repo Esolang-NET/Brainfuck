@@ -30,13 +30,13 @@ public class OutputCommandTests
                     }
                 );
             }
-            static object[] ExecuteAsyncTest(BrainfuckContext context, byte[] output, BrainfuckContext accept)
-                => new object[] { context, SerializableArrayWrapper.Create(output), accept };
+            static object[] ExecuteAsyncTest(BrainfuckContext context, byte[] output, BrainfuckContext expected)
+                => new object[] { context, SerializableArrayWrapper.Create(output), expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteAsyncTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, SerializableArrayWrapper<byte> output, BrainfuckContext accept)
+    public async Task ExecuteAsyncTest(BrainfuckContext context, SerializableArrayWrapper<byte> outputExpected, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
@@ -44,18 +44,18 @@ public class OutputCommandTests
         {
             Output = pipe.Writer,
         };
-        accept = accept with
+        expected = expected with
         {
             Output = pipe.Writer,
         };
         using var stream = new MemoryStream();
         var waiter = pipe.Reader.CopyToAsync(stream, token);
-        var result = await new OutputCommand(context).ExecuteAsync(token);
+        var actual = await new OutputCommand(context).ExecuteAsync(token);
         await pipe.Writer.CompleteAsync();
         await waiter;
         stream.Seek(0, SeekOrigin.Begin);
-        Assert.AreEqual(accept, result);
-        var outputResult = stream.ToArray();
-        CollectionAssert.AreEqual(output.Array, outputResult);
+        Assert.AreEqual(expected, actual);
+        var outputActual = stream.ToArray();
+        CollectionAssert.AreEqual(outputExpected.Array, outputActual);
     }
 }

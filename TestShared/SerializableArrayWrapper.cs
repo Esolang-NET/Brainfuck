@@ -33,6 +33,21 @@ public readonly struct SerializableArrayWrapper<T> : ISerializable, IEquatable<T
     public static implicit operator T[](SerializableArrayWrapper<T> other) => other.Array;
 
     public static implicit operator ReadOnlyMemory<T>(SerializableArrayWrapper<T> other) => other.Array;
+
+    public override bool Equals(object? obj) => obj is SerializableArrayWrapper<T> wrapper && Equals(wrapper);
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        hash.Add(Array.Length);
+        foreach (var a in Array)
+            hash.Add(a);
+        return hash.ToHashCode();
+    }
+
+    public static bool operator ==(SerializableArrayWrapper<T> left, SerializableArrayWrapper<T> right) => left.Equals(right);
+
+    public static bool operator !=(SerializableArrayWrapper<T> left, SerializableArrayWrapper<T> right) => !(left == right);
 }
 /// <summary>
 /// MSTest 向けの serialize な Array wrapper

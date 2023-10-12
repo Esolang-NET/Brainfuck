@@ -8,7 +8,7 @@ namespace Brainfuck.Core.SequenceCommands.Tests;
 public class IncrementPointerCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object[]> ExecuteAsyncTestData
+    static IEnumerable<object?[]> ExecuteAsyncTestData
     {
         get
         {
@@ -47,17 +47,17 @@ public class IncrementPointerCommandTests
                     }
                 );
             }
-            static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
-                => new object[] { context, accept };
+            static object?[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
+                => new object?[] { context, expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteAsyncTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
+    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
 
-        var result = await new IncrementPointerCommand(context).ExecuteAsync(token);
-        Assert.AreEqual(accept, result);
+        var actual = await new IncrementPointerCommand(context).ExecuteAsync(token);
+        Assert.AreEqual(expected, actual);
     }
 }

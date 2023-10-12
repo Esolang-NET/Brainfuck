@@ -34,7 +34,7 @@ public partial class BrainfuckMethodGenerator
         var generatingSourceFileName = Utils.SanitizeForFileName($"{classPart}.{methodSymbol.Name}.{returnTypePart}.g.cs");
         context.AddSource(generatingSourceFileName, generatedSourceCode);
     }
-    static string GenerateMethodBodyCode(BrainfuckSequencer sequences)
+    static string GenerateMethodBodyCode(BrainfuckSequenceEnumerable sequences)
     {
         var builder = new StringBuilder();
         foreach (var (sequence, _) in sequences)
@@ -42,7 +42,7 @@ public partial class BrainfuckMethodGenerator
         }
         return builder.ToString();
     }
-    static BrainfuckSequencer? GetSources(
+    static BrainfuckSequenceEnumerable? GetSources(
         SourceProductionContext context,
         IMethodSymbol methodSymbol,
         MethodDeclarationSyntax methodDeclarationSyntax
@@ -84,7 +84,7 @@ public partial class BrainfuckMethodGenerator
         var input = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.Input), BrainfuckOptionsDefault.Input);
         var begin = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.Begin), BrainfuckOptionsDefault.Begin);
         var end = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.End), BrainfuckOptionsDefault.End);
-        return new BrainfuckSequencer(source!.AsMemory(), new BrainfuckOptions
+        return new BrainfuckSequenceEnumerable(source!.AsMemory(), new BrainfuckOptions
         {
             IncrementPointer = incrementPointer,
             DecrementPointer = decrementPointer,

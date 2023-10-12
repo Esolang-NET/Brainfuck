@@ -22,7 +22,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Core.Tests", "Brainfuck.Core.Tests\Brainfuck.Core.Tests.csproj", "{E83D67D2-9F99-4E8E-885F-866823E1790F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Brainfuck.Abstructions.Tests", "Brainfuck.Abstructions.Tests\Brainfuck.Abstructions.Tests.csproj", "{66D9655E-1757-4774-A8E5-BE9D05BD090B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Abstructions.Tests", "Brainfuck.Abstructions.Tests\Brainfuck.Abstructions.Tests.csproj", "{66D9655E-1757-4774-A8E5-BE9D05BD090B}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "TestShared", "TestShared\TestShared.shproj", "{6877DEB4-30DD-4C0A-988F-B92D2AA94B7C}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared", "Shared\Shared.shproj", "{FA275398-8F11-42E3-AD4D-6DDE946C9D4A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -64,5 +68,14 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F1A42DE3-62D2-460D-A96B-AECE9694EE19}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		TestShared\TestShared.projitems*{66d9655e-1757-4774-a8e5-be9d05bd090b}*SharedItemsImports = 5
+		TestShared\TestShared.projitems*{6877deb4-30dd-4c0a-988f-b92d2aa94b7c}*SharedItemsImports = 13
+		Shared\Shared.projitems*{99a9246f-d0c0-4524-b444-d5e04ffad131}*SharedItemsImports = 5
+		Shared\Shared.projitems*{c3362c8f-0789-461e-a5c3-a0a7553ccb42}*SharedItemsImports = 5
+		TestShared\TestShared.projitems*{e83d67d2-9f99-4e8e-885f-866823e1790f}*SharedItemsImports = 5
+		Shared\Shared.projitems*{f926ca6b-e500-4ab7-9bc7-8cf3c8e5d353}*SharedItemsImports = 5
+		Shared\Shared.projitems*{fa275398-8f11-42e3-ad4d-6dde946c9d4a}*SharedItemsImports = 13
 	EndGlobalSection
 EndGlobal

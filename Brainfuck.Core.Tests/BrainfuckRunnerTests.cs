@@ -1,27 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-/* プロジェクト 'Brainfuck.Core.Tests (net48)' からのマージされていない変更
-前:
-using Brainfuck;
-using System;
-後:
-using System;
-using System.Collections.Generic;
-*/
 using System.IO.Pipelines;
 using System.Text;
-/* プロジェクト 'Brainfuck.Core.Tests (net48)' からのマージされていない変更
-前:
-using System.Threading.Tasks;
-using System.IO.Pipelines;
-後:
-using System.Threading.Tasks;
-*/
-
 
 namespace Brainfuck.Tests;
 
-[TestClass()]
+[TestClass]
 public class BrainfuckRunnerTests
 {
     public TestContext TestContext { get; set; } = default!;
@@ -52,7 +35,7 @@ public class BrainfuckRunnerTests
     {
         var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
-        var enumerable = new BrainfuckSequencer(source);
+        var enumerable = new BrainfuckSequenceEnumerable(source);
         var sequences = enumerable.Select(v => v.Sequence).ToArray().AsMemory();
         var runner = new BrainfuckRunner(sequences, input: pipe.Reader);
         var awaiter = runner.RunAndOutputStringAsync(token);

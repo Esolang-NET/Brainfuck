@@ -9,7 +9,7 @@ namespace Brainfuck.Core.SequenceCommands.Tests;
 public class InputCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object[]> ExecuteAsyncTestData
+    static IEnumerable<object?[]> ExecuteAsyncTestData
     {
         get
         {
@@ -49,13 +49,13 @@ public class InputCommandTests
                     }
                 );
             }
-            static object[] ExecuteAsyncTest(BrainfuckContext context, byte[] input, BrainfuckContext accept)
-                => new object[] { context, SerializableArrayWrapper.Create(input), accept };
+            static object?[] ExecuteAsyncTest(BrainfuckContext context, byte[] input, BrainfuckContext expected)
+                => new object?[] { context, SerializableArrayWrapper.Create(input), expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteAsyncTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, SerializableArrayWrapper<byte> input, BrainfuckContext accept)
+    public async Task ExecuteAsyncTest(BrainfuckContext context, SerializableArrayWrapper<byte> input, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
@@ -63,7 +63,7 @@ public class InputCommandTests
         {
             Input = pipe.Reader,
         };
-        accept = accept with
+        expected = expected with
         {
             Input = pipe.Reader,
         };
@@ -72,7 +72,7 @@ public class InputCommandTests
         if (input.Array.Length > 0)
             await pipe.Writer.WriteAsync(input, token);
         await pipe.Writer.CompleteAsync();
-        var result = await waiter;
-        Assert.AreEqual(accept, result);
+        var actual = await waiter;
+        Assert.AreEqual(expected, actual);
     }
 }

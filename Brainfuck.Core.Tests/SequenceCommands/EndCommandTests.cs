@@ -8,7 +8,7 @@ namespace Brainfuck.Core.SequenceCommands.Tests;
 public class EndCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object[]> ExecuteAsyncTestData
+    static IEnumerable<object?[]> ExecuteAsyncTestData
     {
         get
         {
@@ -18,14 +18,14 @@ public class EndCommandTests
                 // ← after
                 var sequences = new[] { Begin, Comment, End, Comment }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                BrainfuckContext before = new(
+                BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack,
                     SequencesIndex: 2
                 );
                 yield return ExecuteAsyncTest(
-                    before,
-                    before with
+                    context,
+                    context with
                     {
                         SequencesIndex = 3,
                     }
@@ -37,14 +37,14 @@ public class EndCommandTests
                 // } ← before
                 var sequences = new[] { Begin, Comment, End, Comment }.AsMemory();
                 var stack = ImmutableList.Create<byte>(1);
-                BrainfuckContext before = new(
+                BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack,
                     SequencesIndex: 2
                 );
                 yield return ExecuteAsyncTest(
-                    before,
-                    before with
+                    context,
+                    context with
                     {
                         SequencesIndex = 1,
                     }
@@ -83,19 +83,19 @@ public class EndCommandTests
                     }
                 );
             }
-            static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
-                => new object[] { context, accept };
+            static object?[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
+                => new object?[] { context, expected };
         }
     }
 
 
     [TestMethod]
     [DynamicData(nameof(ExecuteAsyncTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
+    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
 
-        var result = await new EndCommand(context).ExecuteAsync(token);
-        Assert.AreEqual(accept, result);
+        var actual = await new EndCommand(context).ExecuteAsync(token);
+        Assert.AreEqual(expected, actual);
     }
 }

@@ -8,7 +8,7 @@ namespace Brainfuck.Core.SequenceCommands.Tests;
 public class CommentCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object[]> ExecuteAsyncTestData
+    static IEnumerable<object?[]> ExecuteAsyncTestData
     {
         get
         {
@@ -16,29 +16,29 @@ public class CommentCommandTests
                 // noop
                 var sequences = new[] { Comment }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                BrainfuckContext before = new(
+                BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
                 );
                 yield return ExecuteAsyncTest(
-                    before,
-                    before with
+                    context,
+                    context with
                     {
                         SequencesIndex = 1,
                     }
                 );
             }
-            static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
-                => new object[] { context, accept };
+            static object?[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
+                => new object?[] { context, expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteAsyncTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
+    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
 
-        var result = await new CommentCommand(context).ExecuteAsync(token);
-        Assert.AreEqual(accept, result);
+        var actual = await new CommentCommand(context).ExecuteAsync(token);
+        Assert.AreEqual(expected, actual);
     }
 }

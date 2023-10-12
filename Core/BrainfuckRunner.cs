@@ -1,6 +1,7 @@
 ﻿using Brainfuck.Core.SequenceCommands;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Brainfuck;
@@ -17,7 +18,7 @@ public record BrainfuckRunner
     public BrainfuckRunner(string source, BrainfuckOptions? sourceOptions = default, PipeWriter? output = default, PipeReader? input = default)
         : this(SourceToSequences(source, sourceOptions), output: output, input: input) { }
     static ReadOnlyMemory<BrainfuckSequence> SourceToSequences(string source, BrainfuckOptions? sourceOptions)
-        => new BrainfuckSequencer(source, sourceOptions).Select(v => v.Sequence).ToArray().AsMemory();
+        => new BrainfuckSequenceEnumerable(source, sourceOptions).Select(v => v.Sequence).ToArray().AsMemory();
 
     public BrainfuckRunner(ReadOnlyMemory<BrainfuckSequence> sequences, PipeWriter? output = default, PipeReader? input = default)
     {
@@ -25,11 +26,22 @@ public record BrainfuckRunner
         Input = input;
         Output = output;
     }
-    public ValueTask RunAsync(CancellationToken cancellationToken = default) => RunAsync(Context, cancellationToken);
-    static async ValueTask RunAsync(BrainfuckContext context, CancellationToken cancellationToken = default)
+    public ValueTask<BrainfuckContext> RunAsync(CancellationToken cancellationToken = default) => RunAsync(Context, cancellationToken);
+    public IAsyncEnumerable<(BrainfuckSequenceCommand Command, BrainfuckContext After, BrainfuckContext Before)> StepedRunAsync(CancellationToken cancellationToken = default) => StepedRunAsync(Context, cancellationToken);
+    static async ValueTask<BrainfuckContext> RunAsync(BrainfuckContext context, CancellationToken cancellationToken = default)
     {
         while (BrainfuckSequenceCommand.TryGetCommand(context, out var command))
             context = await command.ExecuteAsync(cancellationToken);
+        return context;
+    }
+    static async IAsyncEnumerable<(BrainfuckSequenceCommand Command, BrainfuckContext After, BrainfuckContext Before)> StepedRunAsync(BrainfuckContext context, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+    {
+        while (BrainfuckSequenceCommand.TryGetCommand(context, out var command))
+        {
+            var before = context;
+            context = await command.ExecuteAsync(cancellationToken);
+            yield return (command, context, before);
+        }
     }
     public async ValueTask<string?> RunAndOutputStringAsync(CancellationToken cancellationToken = default)
     {

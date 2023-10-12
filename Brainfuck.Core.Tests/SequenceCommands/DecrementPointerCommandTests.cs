@@ -23,14 +23,14 @@ public class DecrementPointerCommandTests
                 // stackPointer -1 
                 var sequences = new[] { DecrementPointer }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0, 0);
-                BrainfuckContext before = new(
+                BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack,
                     StackIndex: 1
                 );
                 yield return ExecuteAsyncTest(
-                    before,
-                    before with
+                    context,
+                    context with
                     {
                         SequencesIndex = 1,
                         StackIndex = 0,
@@ -41,29 +41,29 @@ public class DecrementPointerCommandTests
                 // no op pattern.
                 var sequences = new[] { DecrementPointer }.AsMemory();
                 var stack = ImmutableList.Create<byte>(0);
-                BrainfuckContext before = new(
+                BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
                 );
                 yield return ExecuteAsyncTest(
-                    before,
-                    before with
+                    context,
+                    context with
                     {
                         SequencesIndex = 1,
                     }
                 );
             }
-            static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
-                => new object[] { context, accept };
+            static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
+                => new object[] { context, expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteAsyncTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext accept)
+    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
 
-        var result = await new DecrementPointerCommand(context).ExecuteAsync(token);
-        Assert.AreEqual(accept, result);
+        var actual = await new DecrementPointerCommand(context).ExecuteAsync(token);
+        Assert.AreEqual(expected, actual);
     }
 }
