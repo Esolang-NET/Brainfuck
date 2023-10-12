@@ -39,8 +39,21 @@ public partial class BrainfuckMethodGenerator
         var builder = new StringBuilder();
         foreach (var (sequence, _) in sequences)
         {
+            if (sequence is BrainfuckSequence.IncrementPointer)
+            {
+
+                continue;
+            }
         }
         return builder.ToString();
+    }
+    interface INestableSequence { }
+    record NestableSequence(INestableSequence[] Nest): INestableSequence;
+    record Sequence(BrainfuckSequence Value): INestableSequence;
+    static IEnumerable<INestableSequence> Nest(IEnumerable<BrainfuckSequence> sequences)
+    {
+        var s = sequences.ToArray();
+        for
     }
     static BrainfuckSequenceEnumerable? GetSources(
         SourceProductionContext context,
