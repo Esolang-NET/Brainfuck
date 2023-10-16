@@ -1,4 +1,5 @@
 ﻿using Brainfuck;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -13,8 +14,17 @@ var app = ConsoleApp.CreateBuilder(args)
     var section = context.Configuration.GetSection("Brainfuck");
     services
         .AddOptions<BrainfuckOptions>()
-        .Bind(section)
-        .ValidateDataAnnotations();
+        .PostConfigure(options =>
+        {
+            options.IncrementPointer = section[nameof(options.IncrementPointer)] ?? BrainfuckOptionsDefault.IncrementPointer;
+            options.DecrementPointer = section[nameof(options.DecrementPointer)] ?? BrainfuckOptionsDefault.DecrementPointer;
+            options.IncrementCurrent = section[nameof(options.IncrementCurrent)] ?? BrainfuckOptionsDefault.IncrementCurrent;
+            options.DecrementCurrent = section[nameof(options.DecrementCurrent)] ?? BrainfuckOptionsDefault.DecrementCurrent;
+            options.Begin = section[nameof(options.Begin)] ?? BrainfuckOptionsDefault.Begin;
+            options.End = section[nameof(options.End)] ?? BrainfuckOptionsDefault.End;
+            options.Input = section[nameof(options.Input)] ?? BrainfuckOptionsDefault.Input;
+            options.Output = section[nameof(options.Output)] ?? BrainfuckOptionsDefault.Output;
+        });
 })
 .Build();
 

@@ -5,12 +5,16 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AssemblyName>dotnet-brainfuck</AssemblyName>
+    <Title>brainfuck runner</Title>
+    <IncludeSymbols>True</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+	<PublishRelease>true</PublishRelease>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ConsoleAppFramework" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
