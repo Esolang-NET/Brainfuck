@@ -1,7 +1,6 @@
 ﻿using Brainfuck.Core.SequenceCommands;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Brainfuck;
@@ -9,7 +8,7 @@ namespace Brainfuck;
 /// <summary>
 /// 
 /// </summary>
-public record BrainfuckRunner
+public sealed partial class BrainfuckRunner
 {
     readonly ReadOnlyMemory<BrainfuckSequence> Sequences;
     readonly PipeReader? Input;
@@ -21,28 +20,35 @@ public record BrainfuckRunner
         => new BrainfuckSequenceEnumerable(source, sourceOptions).Select(v => v.Sequence).ToArray().AsMemory();
 
     public BrainfuckRunner(ReadOnlyMemory<BrainfuckSequence> sequences, PipeWriter? output = default, PipeReader? input = default)
-    {
-        Sequences = sequences;
-        Input = input;
-        Output = output;
-    }
+        => (Sequences, Input, Output) = (sequences, input, output);
+
+    public void Deconstruct(out ReadOnlyMemory<BrainfuckSequence> sequences, out PipeWriter? output, out PipeReader? input)
+        => (sequences, input, output) = (Sequences, Input, Output);
+
     public ValueTask<BrainfuckContext> RunAsync(CancellationToken cancellationToken = default) => RunAsync(Context, cancellationToken);
-    public IAsyncEnumerable<(BrainfuckSequenceCommand Command, BrainfuckContext After, BrainfuckContext Before)> StepedRunAsync(CancellationToken cancellationToken = default) => StepedRunAsync(Context, cancellationToken);
+    public IEnumerable<BrainfuckSequenceCommand> RunStep() => InternalRunStep(Context);
     static async ValueTask<BrainfuckContext> RunAsync(BrainfuckContext context, CancellationToken cancellationToken = default)
     {
-        while (BrainfuckSequenceCommand.TryGetCommand(context, out var command))
-            context = await command.ExecuteAsync(cancellationToken);
-        return context;
+        var lastContext = context;
+        foreach(var command in InternalRunStep(context))
+        {
+            lastContext = await command.ExecuteAsync(cancellationToken);
+        }
+        return lastContext;
     }
-    static async IAsyncEnumerable<(BrainfuckSequenceCommand Command, BrainfuckContext After, BrainfuckContext Before)> StepedRunAsync(BrainfuckContext context, [EnumeratorCancellation]CancellationToken cancellationToken = default)
+
+    internal static IEnumerable<SequenceCommand> InternalRunStep(BrainfuckContext context)
     {
         while (BrainfuckSequenceCommand.TryGetCommand(context, out var command))
         {
             var before = context;
-            context = await command.ExecuteAsync(cancellationToken);
-            yield return (command, context, before);
+            var command2 = new SequenceCommand(command);
+            yield return command2;
+            if (command2.Executed is null) throw new InvalidOperationException($"required {nameof(command2.ExecuteAsync)}() call.");
+            context = command2.Executed.Value;
         }
     }
+
     public async ValueTask<string?> RunAndOutputStringAsync(CancellationToken cancellationToken = default)
     {
         var pipe = new Pipe();
@@ -61,5 +67,27 @@ public record BrainfuckRunner
         if (stream.Length == 0) return null;
         return await reader.ReadToEndAsync();
 
+    }
+
+    bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append(nameof(Sequences) + " = [");
+        builder.Append(string.Join(", ", Sequences));
+        builder.Append("], " + nameof(Input) + " = ");
+        builder.Append(Input);
+        builder.Append(", " + nameof(Output) + " = ");
+        builder.Append(Output);
+        return true;
+    }
+
+    /// <inheritdoc />
+    public override string ToString()
+    {
+        var builder = new StringBuilder();
+        builder.Append(nameof(BrainfuckRunner) + " { ");
+        if (PrintMembers(builder))
+            builder.Append(' ');
+        builder.Append('}');
+        return builder.ToString();
     }
 }

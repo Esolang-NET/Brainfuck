@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using System.IO.Pipelines;
 using static Brainfuck.BrainfuckSequence;
+using Command = Brainfuck.Core.SequenceCommands.OutputCommand;
 
 namespace Brainfuck.Core.SequenceCommands.Tests;
 
@@ -50,12 +51,25 @@ public class OutputCommandTests
         };
         using var stream = new MemoryStream();
         var waiter = pipe.Reader.CopyToAsync(stream, token);
-        var actual = await new OutputCommand(context).ExecuteAsync(token);
+        var actual = await new Command(context).ExecuteAsync(token);
         await pipe.Writer.CompleteAsync();
         await waiter;
         stream.Seek(0, SeekOrigin.Begin);
         Assert.AreEqual(expected, actual);
         var outputActual = stream.ToArray();
         CollectionAssert.AreEqual(outputExpected.Array, outputActual);
+    }
+
+    [TestMethod]
+    public void RequiredInputTest()
+    {
+        var command = new Command(default);
+        Assert.AreEqual(false, command.RequiredInput);
+    }
+    [TestMethod]
+    public void RequiredOutputTest()
+    {
+        var command = new Command(default);
+        Assert.AreEqual(true, command.RequiredOutput);
     }
 }

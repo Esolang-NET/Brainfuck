@@ -1,11 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-/* プロジェクト 'Brainfuck.Core.Tests (net48)' からのマージされていない変更
-前:
-using static Brainfuck.BrainfuckSequence;
-後:
-using System.Collections;
-*/
+using Command = Brainfuck.Core.SequenceCommands.DecrementPointerCommand;
 using System.Collections.Immutable;
 using static Brainfuck.BrainfuckSequence;
 
@@ -63,7 +57,19 @@ public class DecrementPointerCommandTests
     {
         var token = TestContext.CancellationTokenSource.Token;
 
-        var actual = await new DecrementPointerCommand(context).ExecuteAsync(token);
+        var actual = await new Command(context).ExecuteAsync(token);
         Assert.AreEqual(expected, actual);
+    }
+    [TestMethod]
+    public void RequiredInputTest()
+    {
+        var command = new Command(default);
+        Assert.AreEqual(false, command.RequiredInput);
+    }
+    [TestMethod]
+    public void RequiredOutputTest()
+    {
+        var command = new Command(default);
+        Assert.AreEqual(false, command.RequiredOutput);
     }
 }

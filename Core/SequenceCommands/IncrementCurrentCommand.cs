@@ -1,8 +1,7 @@
 ﻿namespace Brainfuck.Core.SequenceCommands;
 
-public class IncrementCurrentCommand : BrainfuckSequenceCommand
+public record IncrementCurrentCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    public IncrementCurrentCommand(BrainfuckContext context) : base(context) { }
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -10,11 +9,11 @@ public class IncrementCurrentCommand : BrainfuckSequenceCommand
     }
     BrainfuckContext IncrementCurrent()
     {
-        var sequencesIndex = context.SequencesIndex + 1;
-        var current = context.Stack[context.StackIndex];
+        var sequencesIndex = Context.SequencesIndex + 1;
+        var current = Context.Stack[Context.StackIndex];
         current++;
-        var stack = context.Stack.SetItem(context.StackIndex, current);
-        return context with
+        var stack = Context.Stack.SetItem(Context.StackIndex, current);
+        return Context with
         {
             SequencesIndex = sequencesIndex,
             Stack = stack,

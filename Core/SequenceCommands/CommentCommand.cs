@@ -1,11 +1,7 @@
 ﻿namespace Brainfuck.Core.SequenceCommands;
 
-public class CommentCommand : BrainfuckSequenceCommand
+public record CommentCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    public CommentCommand(BrainfuckContext context) : base(context)
-    {
-    }
-
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

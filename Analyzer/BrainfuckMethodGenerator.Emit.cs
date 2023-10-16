@@ -53,7 +53,7 @@ public partial class BrainfuckMethodGenerator
     static IEnumerable<INestableSequence> Nest(IEnumerable<BrainfuckSequence> sequences)
     {
         var s = sequences.ToArray();
-        for
+        throw new NotImplementedException();
     }
     static BrainfuckSequenceEnumerable? GetSources(
         SourceProductionContext context,

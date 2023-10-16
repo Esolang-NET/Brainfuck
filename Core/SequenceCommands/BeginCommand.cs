@@ -1,16 +1,14 @@
 ﻿using static Brainfuck.BrainfuckSequence;
 namespace Brainfuck.Core.SequenceCommands;
 
-public class BeginCommand : BrainfuckSequenceCommand
+public record BeginCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    public BeginCommand(BrainfuckContext context) : base(context) { }
-
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (!TryBegin(out var sequencesIndex))
             return new(Next());
-        return new(context with
+        return new(Context with
         {
             SequencesIndex = sequencesIndex,
         });
@@ -18,15 +16,15 @@ public class BeginCommand : BrainfuckSequenceCommand
     bool TryBegin(out int sequencesIndex)
     {
         sequencesIndex = default;
-        var sequencesIndex_ = context.SequencesIndex + 1;
-        var current = context.Stack[context.StackIndex];
+        var sequencesIndex_ = Context.SequencesIndex + 1;
+        var current = Context.Stack[Context.StackIndex];
         if (current is not 0)
             return false;
         var hierarchy = 0;
         var lastIndex = sequencesIndex_;
-        for (; lastIndex < context.Sequences.Length; lastIndex++)
+        for (; lastIndex < Context.Sequences.Length; lastIndex++)
         {
-            var sequence = context.Sequences.Span[lastIndex];
+            var sequence = Context.Sequences.Span[lastIndex];
             if (sequence is not (Begin or End))
                 continue;
             if (sequence is Begin)
@@ -36,7 +34,7 @@ public class BeginCommand : BrainfuckSequenceCommand
             else if (sequence is End)
                 hierarchy--;
         }
-        if (context.Sequences.Length <= lastIndex || context.Sequences.Span[lastIndex] is not End)
+        if (Context.Sequences.Length <= lastIndex || Context.Sequences.Span[lastIndex] is not End)
             return false;
         sequencesIndex_ = lastIndex + 1;
         sequencesIndex = sequencesIndex_;

@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Immutable;
 using static Brainfuck.BrainfuckSequence;
+using Command = Brainfuck.Core.SequenceCommands.CommentCommand;
 
 namespace Brainfuck.Core.SequenceCommands.Tests;
 
@@ -38,7 +39,19 @@ public class CommentCommandTests
     {
         var token = TestContext.CancellationTokenSource.Token;
 
-        var actual = await new CommentCommand(context).ExecuteAsync(token);
+        var actual = await new Command(context).ExecuteAsync(token);
         Assert.AreEqual(expected, actual);
+    }
+    [TestMethod]
+    public void RequiredInputTest()
+    {
+        var command = new Command(default);
+        Assert.AreEqual(false, command.RequiredInput);
+    }
+    [TestMethod]
+    public void RequiredOutputTest()
+    {
+        var command = new Command(default);
+        Assert.AreEqual(false, command.RequiredOutput);
     }
 }

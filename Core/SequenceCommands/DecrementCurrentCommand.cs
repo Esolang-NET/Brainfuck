@@ -2,15 +2,13 @@
 
 namespace Brainfuck.Core.SequenceCommands;
 
-public class DecrementCurrentCommand : BrainfuckSequenceCommand
+public record DecrementCurrentCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    public DecrementCurrentCommand(BrainfuckContext context) : base(context) { }
-
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         DecrementCurrent(out var sequencesIndex, out var stack);
-        return new(context with
+        return new(Context with
         {
             SequencesIndex = sequencesIndex,
             Stack = stack,
@@ -18,9 +16,9 @@ public class DecrementCurrentCommand : BrainfuckSequenceCommand
     }
     void DecrementCurrent(out int sequencesIndex, out ImmutableList<byte> stack)
     {
-        sequencesIndex = context.SequencesIndex + 1;
-        var current = context.Stack[context.StackIndex];
+        sequencesIndex = Context.SequencesIndex + 1;
+        var current = Context.Stack[Context.StackIndex];
         current--;
-        stack = context.Stack.SetItem(context.StackIndex, current);
+        stack = Context.Stack.SetItem(Context.StackIndex, current);
     }
 }
