@@ -1,10 +1,8 @@
-﻿// See https://aka.ms/new-console-template for more information
-using Brainfuck;
+﻿using Brainfuck;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using System.Buffers;
-using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Text;
 using BrainfuckOptions = Brainfuck.Console.BrainfuckOptions;
@@ -34,19 +32,13 @@ static async ValueTask<int> RunAsync(ConsoleAppContext context, IOptions<Brainfu
     {
         if (command.RequiredInput)
         {
-            var kc = (char)0;
-            var cursorTop = Console.CursorTop;
-            var cursorLeft = Console.CursorLeft;
-            var key = Console.ReadKey(true);
+            var kc = await ConsoleReadAsync(cancellationToken);
+
             // 改行 or バックスペース or ESC はESC と同じ扱いにする
-            if (key is { KeyChar: '\n' or '\r' or '\b' or (char)0 })
-            {
-                kc = (char)0;
-            }
-            else
-            {
-                kc = key.KeyChar;
-            }
+            // if (kc is '\n' or '\r' or '\b' or (char)0)
+            // {
+            //    kc = (char)0;
+            // }
             var bytes = encoding.GetBytes(new[] { kc });
             var flush = await input.Writer.WriteAsync(bytes, cancellationToken);
             await input.Writer.FlushAsync(cancellationToken);
@@ -62,15 +54,27 @@ static async ValueTask<int> RunAsync(ConsoleAppContext context, IOptions<Brainfu
                 var sequence2 = buffer.Slice(buffer.Start, buffer.End);
                 if (encoding.GetString(sequence2.FirstSpan) is string chars && !string.IsNullOrEmpty(chars))
                 {
+                    if (!Console.IsOutputRedirected && chars == "\r") chars = Environment.NewLine;
                     Console.Write(chars);
                 }
 
                 output.Reader.AdvanceTo(buffer.End);
             }
         }
-
     }
     return 0;
+    static async ValueTask<char> ConsoleReadAsync(CancellationToken cancellationToken)
+    {
+
+        if (Console.IsInputRedirected)
+            return Convert.ToChar(Console.Read());
+        var cursorTop = Console.CursorTop;
+        var cursorLeft = Console.CursorLeft;
+        if (Console.KeyAvailable == false)
+            await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken);
+        var key = Console.ReadKey(true);
+        return key.KeyChar;
+    }
 }
 app.AddCommand("parse", "parse brainfuck source code.", Parse);
 
