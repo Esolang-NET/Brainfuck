@@ -22,14 +22,14 @@ public readonly record struct BrainfuckOptions(
         string Input = BrainfuckOptionsDefault.Input,
         string Begin = BrainfuckOptionsDefault.Begin,
         string End = BrainfuckOptionsDefault.End
-    ): ISerializable
+    ) : ISerializable
 {
     /// <summary>
     /// brainfuck options
     /// </summary>
-    public BrainfuckOptions(): this(IncrementPointer: BrainfuckOptionsDefault.IncrementPointer) { }
+    public BrainfuckOptions() : this(IncrementPointer: BrainfuckOptionsDefault.IncrementPointer) { }
     public BrainfuckOptions(SerializationInfo info, StreamingContext context)
-        :this(
+        : this(
              IncrementPointer: info.GetString(nameof(IncrementPointer))!,
              DecrementPointer: info.GetString(nameof(DecrementPointer))!,
              IncrementCurrent: info.GetString(nameof(IncrementCurrent))!,
@@ -39,7 +39,7 @@ public readonly record struct BrainfuckOptions(
              Begin: info.GetString(nameof(Begin))!,
              End: info.GetString(nameof(End))!
         )
-    {  }
+    { }
 
     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
     {

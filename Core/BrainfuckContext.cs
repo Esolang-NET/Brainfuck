@@ -17,7 +17,7 @@ namespace Brainfuck;
 /// <param name="Input"></param>
 /// <param name="Output"></param>
 [Serializable]
-[DebuggerDisplay("{" + nameof(DebuggerDisplay)+",nq}")]
+[DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
 public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence> Sequences, ImmutableList<byte> Stack, int SequencesIndex = default, int StackIndex = default, PipeReader? Input = default, PipeWriter? Output = default) : ISerializable, IEquatable<BrainfuckContext>
 {
     public void Deconstruct(out ReadOnlyMemory<BrainfuckSequence> sequences, out ImmutableList<byte> stack, out int sequencesIndex, out int stackIndex, out PipeReader? input, out PipeWriter? output)

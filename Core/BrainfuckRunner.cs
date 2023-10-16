@@ -30,7 +30,7 @@ public sealed partial class BrainfuckRunner
     static async ValueTask<BrainfuckContext> RunAsync(BrainfuckContext context, CancellationToken cancellationToken = default)
     {
         var lastContext = context;
-        foreach(var command in InternalRunStep(context))
+        foreach (var command in InternalRunStep(context))
         {
             lastContext = await command.ExecuteAsync(cancellationToken);
         }

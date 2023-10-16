@@ -48,8 +48,8 @@ public partial class BrainfuckMethodGenerator
         return builder.ToString();
     }
     interface INestableSequence { }
-    record NestableSequence(INestableSequence[] Nest): INestableSequence;
-    record Sequence(BrainfuckSequence Value): INestableSequence;
+    record NestableSequence(INestableSequence[] Nest) : INestableSequence;
+    record Sequence(BrainfuckSequence Value) : INestableSequence;
     static IEnumerable<INestableSequence> Nest(IEnumerable<BrainfuckSequence> sequences)
     {
         var s = sequences.ToArray();

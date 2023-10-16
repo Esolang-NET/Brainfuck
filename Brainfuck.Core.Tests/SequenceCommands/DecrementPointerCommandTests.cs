@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Command = Brainfuck.Core.SequenceCommands.DecrementPointerCommand;
 using System.Collections.Immutable;
 using static Brainfuck.BrainfuckSequence;
+using Command = Brainfuck.Core.SequenceCommands.DecrementPointerCommand;
 
 namespace Brainfuck.Core.SequenceCommands.Tests;
 

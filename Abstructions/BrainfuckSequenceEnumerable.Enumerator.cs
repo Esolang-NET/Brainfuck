@@ -46,7 +46,8 @@ public partial class BrainfuckSequenceEnumerable
                 return (memory, (default, text));
             }
         }
-        public void Dispose() {
+        public void Dispose()
+        {
             current = default;
             memory = default;
         }
