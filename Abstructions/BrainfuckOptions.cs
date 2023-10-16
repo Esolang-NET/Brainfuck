@@ -22,22 +22,44 @@ public readonly record struct BrainfuckOptions(
         string Input = BrainfuckOptionsDefault.Input,
         string Begin = BrainfuckOptionsDefault.Begin,
         string End = BrainfuckOptionsDefault.End
-    ) : ISerializable
+    ) : IBrainfuckOptions, ISerializable
 {
     /// <summary>
     /// brainfuck options
     /// </summary>
     public BrainfuckOptions() : this(IncrementPointer: BrainfuckOptionsDefault.IncrementPointer) { }
+
+    /// <summary>
+    /// brainfuck options
+    /// </summary>
+    /// <param name="options"></param>
+    public BrainfuckOptions(IBrainfuckOptions options) : this(
+             IncrementPointer: options.IncrementPointer,
+             DecrementPointer: options.DecrementPointer,
+             IncrementCurrent: options.IncrementCurrent,
+             DecrementCurrent: options.DecrementCurrent,
+             Output: options.Output,
+             Input: options.Input,
+             Begin: options.Begin,
+             End: options.End
+        )
+    { }
+
+    /// <summary>
+    /// brainfuck options
+    /// </summary>
+    /// <param name="info"></param>
+    /// <param name="context"></param>
     public BrainfuckOptions(SerializationInfo info, StreamingContext context)
         : this(
-             IncrementPointer: info.GetString(nameof(IncrementPointer))!,
-             DecrementPointer: info.GetString(nameof(DecrementPointer))!,
-             IncrementCurrent: info.GetString(nameof(IncrementCurrent))!,
-             DecrementCurrent: info.GetString(nameof(DecrementCurrent))!,
-             Output: info.GetString(nameof(Output))!,
-             Input: info.GetString(nameof(Input))!,
-             Begin: info.GetString(nameof(Begin))!,
-             End: info.GetString(nameof(End))!
+             IncrementPointer: info.GetString(nameof(IncrementPointer)) ?? string.Empty,
+             DecrementPointer: info.GetString(nameof(DecrementPointer)) ?? string.Empty,
+             IncrementCurrent: info.GetString(nameof(IncrementCurrent)) ?? string.Empty,
+             DecrementCurrent: info.GetString(nameof(DecrementCurrent)) ?? string.Empty,
+             Output: info.GetString(nameof(Output)) ?? string.Empty,
+             Input: info.GetString(nameof(Input)) ?? string.Empty,
+             Begin: info.GetString(nameof(Begin)) ?? string.Empty,
+             End: info.GetString(nameof(End)) ?? string.Empty
         )
     { }
 

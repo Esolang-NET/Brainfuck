@@ -9,11 +9,23 @@ public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequenc
     readonly ReadOnlyMemory<char> source;
     public BrainfuckSequenceEnumerable(string source) : this(source.AsMemory(), null) { }
     public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source) : this(source, null) { }
+
     public BrainfuckSequenceEnumerable(string source, BrainfuckOptions? options) : this(source.AsMemory(), options) { }
     public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source, BrainfuckOptions? options)
     {
         this.source = source;
         this.options = options ?? new();
+    }
+    public BrainfuckSequenceEnumerable(string source, IBrainfuckOptions? options) : this(source.AsMemory(), options) { }
+    public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source, IBrainfuckOptions? options)
+    {
+        this.source = source;
+        this.options = options switch
+        {
+            BrainfuckOptions bo => bo,
+            not null => new(options),
+            _ => new(),
+        };
     }
     [MemberNotNull(nameof(_needInput), nameof(_needOutput))]
     void InitializeNeeds()

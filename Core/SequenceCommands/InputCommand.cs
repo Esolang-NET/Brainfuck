@@ -17,8 +17,8 @@ public record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(
     }
     async ValueTask<(int SequencesIndex, ImmutableList<byte> Stack)> Input(CancellationToken cancellationToken = default)
     {
-        var sequencesIndex = Context.SequencesIndex + 1;
         if (Context.Input is null) throw new InvalidOperationException("required context.Input.");
+        var sequencesIndex = Context.SequencesIndex + 1;
         var result = await Context.Input.ReadAtLeastAsync(1, cancellationToken);
         var buffer = result.Buffer;
         byte current;
@@ -26,7 +26,7 @@ public record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(
         {
             var readableSeq = buffer.Slice(buffer.Start, 1);
             current = readableSeq.First.Span[0];
-            Context.Input.AdvanceTo(readableSeq.Start, readableSeq.End);
+            Context.Input.AdvanceTo(readableSeq.End);
         }
         else
         {

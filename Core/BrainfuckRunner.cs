@@ -14,11 +14,14 @@ public sealed partial class BrainfuckRunner
     readonly PipeReader? Input;
     readonly PipeWriter? Output;
     BrainfuckContext Context => new(Sequences, SequencesIndex: 0, Stack: ImmutableList.Create<byte>(0), StackIndex: 0, Input: Input, Output: Output);
+    public BrainfuckRunner(string source, IBrainfuckOptions? sourceOptions = default, PipeWriter? output = default, PipeReader? input = default)
+        : this(SourceToSequences(source, sourceOptions), output: output, input: input) { }
     public BrainfuckRunner(string source, BrainfuckOptions? sourceOptions = default, PipeWriter? output = default, PipeReader? input = default)
         : this(SourceToSequences(source, sourceOptions), output: output, input: input) { }
-    static ReadOnlyMemory<BrainfuckSequence> SourceToSequences(string source, BrainfuckOptions? sourceOptions)
+    static ReadOnlyMemory<BrainfuckSequence> SourceToSequences(string source, IBrainfuckOptions? sourceOptions)
         => new BrainfuckSequenceEnumerable(source, sourceOptions).Select(v => v.Sequence).ToArray().AsMemory();
-
+    static ReadOnlyMemory<BrainfuckSequence> SourceToSequences(string source, BrainfuckOptions sourceOptions)
+        => new BrainfuckSequenceEnumerable(source, sourceOptions).Select(v => v.Sequence).ToArray().AsMemory();
     public BrainfuckRunner(ReadOnlyMemory<BrainfuckSequence> sequences, PipeWriter? output = default, PipeReader? input = default)
         => (Sequences, Input, Output) = (sequences, input, output);
 
