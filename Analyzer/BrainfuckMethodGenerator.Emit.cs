@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text;
+using static Brainfuck.BrainfuckSequence;
 
 namespace Brainfuck.Analyzer;
 public partial class BrainfuckMethodGenerator
@@ -34,26 +35,142 @@ public partial class BrainfuckMethodGenerator
         var generatingSourceFileName = Utils.SanitizeForFileName($"{classPart}.{methodSymbol.Name}.{returnTypePart}.g.cs");
         context.AddSource(generatingSourceFileName, generatedSourceCode);
     }
+    const string SPACE = "    ";
+    const string STACK_NAME = "stack";
+    const string STACK_INDEX = "stackIndex";
     static string GenerateMethodBodyCode(BrainfuckSequenceEnumerable sequences)
     {
         var builder = new StringBuilder();
-        foreach (var (sequence, _) in sequences)
-        {
-            if (sequence is BrainfuckSequence.IncrementPointer)
-            {
+        builder.Append($"""
+        {SPACE}var {STACK_NAME} = new List<byte>();
+        {SPACE}var {STACK_INDEX} = 0;
+        """);
+        if (sequences.NeedOutput)
+            builder.AppendLine($"""
+            {SPACE}var output = new Pipe();
+            """);
+        if (sequences.NeedInput)
+            builder.AppendLine($"""
+            {SPACE}var input = new Pipe();
+            """);
 
+        var seq = sequences.Select((v, i) => new Sequence(i, v.Sequence, v.Syntax)).ToArray().AsMemory();
+        var nest = Nest(seq);
+        WriteNest(0, nest, builder);
+        return builder.ToString();
+    }
+    static void WriteNest(int indent, IEnumerable<INestableSequence> sequences, StringBuilder builder)
+    {
+        foreach (var sequence in sequences)
+        {
+            if (sequence is Sequence simple)
+            {
+                if (simple is { Value: Begin or End })
+                    WriteComment(indent, simple.Syntax, builder);
+                WriteSequence(indent, simple.Value, simple.Syntax, builder);
+                continue;
+            }
+            if (sequence is NestableSequence nested)
+            {
+                var begin = nested.Begin;
+                WriteSequence(indent, begin.Value, begin.Syntax, builder);
+                WriteNest(indent + 1, nested.Nest, builder);
+                var end = nested.End;
+                WriteSequence(indent, end.Value, end.Syntax, builder);
                 continue;
             }
         }
-        return builder.ToString();
+    }
+    static void WriteSequence(int indent, BrainfuckSequence sequence, ReadOnlyMemory<char> syntax, StringBuilder builder)
+    {
+        WriteComment(indent, syntax, builder);
+        var space = string.Join("", Enumerable.Range(0, indent).Select(v => SPACE));
+        builder.AppendLine(sequence switch
+        {
+            IncrementPointer => $"""
+                {space}{STACK_INDEX}++;
+                {space}if ({STACK_NAME}.Length >= {STACK_INDEX}) {STACK_NAME}.Add(0);
+                """,
+            DecrementPointer => $"""
+                {space}if ({STACK_INDEX} > 0){STACK_INDEX}--;
+                """,
+            IncrementCurrent => $"""
+                {space}unchecked({STACK_NAME}[{STACK_INDEX}]++);
+                """,
+            DecrementCurrent => $"""
+                {space}unchecked({STACK_NAME}[{STACK_INDEX}]++);
+                """,
+            Begin => $$"""
+                {{space}}while({{STACK_NAME}}[{{STACK_INDEX}}] is 0) {
+                """,
+            End => $$"""
+                {{space}}}
+            """,
+            Input => $"""
+                {space}
+                """,
+            Output => $"""
+                {space}
+                """,
+            _ => string.Empty,
+        });
+    }
+    static void WriteComment(int indent, ReadOnlyMemory<char> syntax, StringBuilder builder)
+    {
+        var space = string.Join("", Enumerable.Range(0, indent).Select(v => SPACE));
+        var comment = syntax.ToString().Replace("\r", "\\r").Replace("\n", "\\n");
+        builder.AppendLine($"{space}// {comment}");
     }
     interface INestableSequence { }
-    record NestableSequence(INestableSequence[] Nest) : INestableSequence;
-    record Sequence(BrainfuckSequence Value) : INestableSequence;
-    static IEnumerable<INestableSequence> Nest(IEnumerable<BrainfuckSequence> sequences)
+    record NestableSequence(IEnumerable<INestableSequence> Nest, Sequence Begin, Sequence End) : INestableSequence;
+    record Sequence(int Index, BrainfuckSequence Value, ReadOnlyMemory<char> Syntax) : INestableSequence;
+    static IEnumerable<INestableSequence> Nest(ReadOnlyMemory<Sequence> sequences)
     {
-        var s = sequences.ToArray();
-        throw new NotImplementedException();
+        while (sequences.Length > 0)
+        {
+            var current = sequences.Span[0];
+            sequences = sequences[1..];
+            if (current is not { Value: Begin })
+            {
+                yield return current;
+                continue;
+            }
+            if (!TryGetPairEnd(sequences, out var nest, out var end))
+            {
+                yield return current;
+                continue;
+            }
+            sequences = sequences[nest.Length..];
+            yield return new NestableSequence(Nest(nest), current, end);
+        }
+    }
+    static bool TryGetPairEnd(ReadOnlyMemory<Sequence> sequences, out ReadOnlyMemory<Sequence> nest, out Sequence end)
+    {
+        nest = ReadOnlyMemory<Sequence>.Empty;
+        end = null!;
+        var inc = 0;
+        for (var i = 0; i < sequences.Length; i++)
+        {
+            var current = sequences.Span[i];
+            if (current is not { Value: Begin or End }) continue;
+            if (current is { Value: Begin })
+            {
+                inc++;
+                continue;
+            }
+            if (current is { Value: End })
+            {
+                if (inc > 0)
+                {
+                    inc--;
+                    continue;
+                }
+                nest = sequences[..Math.Max(i - 1, 0)];
+                end = current;
+                return true;
+            }
+        }
+        return false;
     }
     static BrainfuckSequenceEnumerable? GetSources(
         SourceProductionContext context,

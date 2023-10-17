@@ -9,5 +9,6 @@
     <FileVersion>1.0.0.0</FileVersion>
     <Version>1.0.0.0</Version>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>NETSDK1213</NoWarn>
   </PropertyGroup>
 </Project>

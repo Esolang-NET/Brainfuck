@@ -42,12 +42,6 @@ static async ValueTask<int> RunAsync(ConsoleAppContext context, IOptions<Brainfu
         if (command.RequiredInput)
         {
             var kc = await ConsoleReadAsync(cancellationToken);
-
-            // 改行 or バックスペース or ESC はESC と同じ扱いにする
-            // if (kc is '\n' or '\r' or '\b' or (char)0)
-            // {
-            //    kc = (char)0;
-            // }
             var bytes = encoding.GetBytes(new[] { kc });
             var flush = await input.Writer.WriteAsync(bytes, cancellationToken);
             await input.Writer.FlushAsync(cancellationToken);
