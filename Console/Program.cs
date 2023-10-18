@@ -12,7 +12,7 @@ var rootCommand = new RootCommand("run brainfuck from source code");
 
 BrainfuckOptionBinder option;
 {
-    var noUseDefaultValue = new Option<bool>(new[] { "--syntax-no-use-default-value", "-snd" },() => false, "not use brainfuck option default value.");
+    var noUseDefaultValue = new Option<bool>(new[] { "--syntax-no-use-default-value", "-snd" }, () => false, "not use brainfuck option default value.");
     rootCommand.AddGlobalOption(noUseDefaultValue);
     var incrementPointer = new Option<string?>(new[] { "--syntax-increment-pointer", "-sip" }, () => null, "Increment the data pointer by one (to point to the next cell to the right).");
     rootCommand.AddGlobalOption(incrementPointer);
@@ -34,7 +34,7 @@ BrainfuckOptionBinder option;
         noUseDefaultValue: noUseDefaultValue,
         incrementPointer: incrementPointer,
         decrementPointer: decrementPointer,
-        incrementCurrent: incrementCurrent, 
+        incrementCurrent: incrementCurrent,
         decrementCurrent: decrementCurrent,
         output: output,
         input: input,
@@ -103,7 +103,8 @@ var parseCommand = new Command("parse", "parse brainfuck source code.");
 
     var sourceArgument = new Argument<string>("source", "brainfuck source");
     parseCommand.AddArgument(sourceArgument);
-    parseCommand.SetHandler((context) => {
+    parseCommand.SetHandler((context) =>
+    {
 
         var console = context.Console;
         var o = GetValueForHandlerParameter(option, context);
@@ -221,14 +222,14 @@ class BrainfuckOptionBinder : BinderBase<IBrainfuckOptions>
         if (!noUseDefaultValue && string.IsNullOrEmpty(end))
             end = BrainfuckOptionsDefault.End;
         return new BrainfuckOptions(
-            IncrementPointer:incrementPointer!,
-            DecrementPointer:decrementPointer!,
-            IncrementCurrent:incrementCurrent!,
+            IncrementPointer: incrementPointer!,
+            DecrementPointer: decrementPointer!,
+            IncrementCurrent: incrementCurrent!,
             DecrementCurrent: decrementCurrent!,
-            Output:output!,
-            Input:input!,
-            Begin:begin!,
-            End:end!
+            Output: output!,
+            Input: input!,
+            Begin: begin!,
+            End: end!
         );
     }
 }
