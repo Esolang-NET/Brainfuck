@@ -4,21 +4,25 @@
       "commandName": "WSL2",
       "distributionName": ""
     },
-    "help": {
+    "[root] help": {
       "commandName": "Project",
-      "commandLineArgs": "help"
+      "commandLineArgs": "--help"
     },
-    "parse 0123456789": {
+    "[root] in/out ": {
       "commandName": "Project",
-      "commandLineArgs": "parse \"++++++[>++++++++<-]++++++++++[>.+<-]\""
+      "commandLineArgs": "\"+[,.]\""
     },
-    "out 0123456789": {
+    "[root] out 0123456789": {
       "commandName": "Project",
       "commandLineArgs": "\"++++++[>++++++++<-]++++++++++[>.+<-]\""
     },
-    "in/out ": {
+    "[parse] help": {
       "commandName": "Project",
-      "commandLineArgs": "\"+[,.]\""
+      "commandLineArgs": "parse --help"
+    },
+    "[parse] 0123456789": {
+      "commandName": "Project",
+      "commandLineArgs": "parse \"++++++[>++++++++<-]++++++++++[>.+<-]\""
     }
   }
 }
