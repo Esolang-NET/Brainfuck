@@ -22,7 +22,7 @@ public readonly record struct BrainfuckOptions(
         string Input = BrainfuckOptionsDefault.Input,
         string Begin = BrainfuckOptionsDefault.Begin,
         string End = BrainfuckOptionsDefault.End
-    ) : IBrainfuckOptions, ISerializable
+    ) : IBrainfuckOptions, ISerializable, IEquatable<BrainfuckOptions>, IEquatable<IBrainfuckOptions>
 {
     /// <summary>
     /// brainfuck options
@@ -62,6 +62,17 @@ public readonly record struct BrainfuckOptions(
              End: info.GetString(nameof(End)) ?? string.Empty
         )
     { }
+
+    public bool Equals(IBrainfuckOptions? other)
+        => other is not null
+        && IncrementPointer == other.IncrementPointer
+        && DecrementPointer == other.DecrementPointer
+        && IncrementCurrent == other.IncrementCurrent
+        && DecrementCurrent == other.DecrementCurrent
+        && Output == other.Output
+        && Input == other.Input
+        && Begin == other.Begin
+        && End == other.End;
 
     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
     {

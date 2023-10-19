@@ -2,6 +2,7 @@
 #if !NETSTANDARD2_1 && !NET5_0_OR_GREATER
 /// <summary>Specifies that when a method returns <see cref="ReturnValue"/>, the parameter will not be null even if the corresponding type allows it.</summary>
 [AttributeUsage(AttributeTargets.Parameter, Inherited = false)]
+[ExcludeFromCodeCoverage]
 internal sealed class NotNullWhenAttribute : Attribute
 {
     /// <summary>Initializes the attribute with the specified return value condition.</summary>

@@ -18,15 +18,13 @@ public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequenc
     }
     public BrainfuckSequenceEnumerable(string source, IBrainfuckOptions? options) : this(source.AsMemory(), options) { }
     public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source, IBrainfuckOptions? options)
-    {
-        this.source = source;
-        this.options = options switch
+        : this(source, options switch
         {
             BrainfuckOptions bo => bo,
             not null => new(options),
             _ => new(),
-        };
-    }
+        })
+    { }
     [MemberNotNull(nameof(_needInput), nameof(_needOutput))]
     void InitializeNeeds()
     {
