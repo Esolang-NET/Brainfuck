@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Buffers;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
 using static Brainfuck.BrainfuckSequence;
@@ -10,7 +11,7 @@ namespace Brainfuck.Core.SequenceCommands.Tests;
 public class OutputCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object[]> ExecuteAsyncTestData
+    static IEnumerable<object[]> ExecuteTestData
     {
         get
         {
@@ -32,11 +33,11 @@ public class OutputCommandTests
                 );
             }
             static object[] ExecuteAsyncTest(BrainfuckContext context, byte[] output, BrainfuckContext expected)
-                => new object[] { context, SerializableArrayWrapper.Create(output), expected };
+                => new object[] { context, output.ToSerializable(), expected };
         }
     }
     [TestMethod]
-    [DynamicData(nameof(ExecuteAsyncTestData))]
+    [DynamicData(nameof(ExecuteTestData))]
     public async Task ExecuteAsyncTest(BrainfuckContext context, SerializableArrayWrapper<byte> outputExpected, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
@@ -57,7 +58,26 @@ public class OutputCommandTests
         stream.Seek(0, SeekOrigin.Begin);
         Assert.AreEqual(expected, actual);
         var outputActual = stream.ToArray();
-        CollectionAssert.AreEqual(outputExpected.Array, outputActual);
+        CollectionAssert.AreEqual((byte[])outputExpected, outputActual);
+    }
+    [TestMethod]
+    [DynamicData(nameof(ExecuteTestData))]
+    public void ExecuteTest(BrainfuckContext context, SerializableArrayWrapper<byte> outputExpected, BrainfuckContext expected)
+    {
+        var pipe = new Pipe();
+        context = context with
+        {
+            Output = pipe.Writer,
+        };
+        expected = expected with
+        {
+            Output = pipe.Writer,
+        };
+        var actual = new Command(context).Execute();
+        pipe.Writer.Complete();
+        Assert.AreEqual(expected, actual);
+        var outputActual = pipe.Reader.TryRead(out var result) ? result.Buffer.ToArray() : Array.Empty<byte>();
+        CollectionAssert.AreEqual((byte[])outputExpected, outputActual);
     }
 
     [TestMethod]

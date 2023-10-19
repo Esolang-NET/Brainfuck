@@ -10,7 +10,7 @@ namespace Brainfuck.Core.SequenceCommands.Tests;
 public class InputCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object?[]> ExecuteAsyncTestData
+    static IEnumerable<object?[]> ExecuteTestData
     {
         get
         {
@@ -51,11 +51,11 @@ public class InputCommandTests
                 );
             }
             static object?[] ExecuteAsyncTest(BrainfuckContext context, byte[] input, BrainfuckContext expected)
-                => new object?[] { context, SerializableArrayWrapper.Create(input), expected };
+                => new object?[] { context, input.ToSerializable(), expected };
         }
     }
     [TestMethod]
-    [DynamicData(nameof(ExecuteAsyncTestData))]
+    [DynamicData(nameof(ExecuteTestData))]
     public async Task ExecuteAsyncTest(BrainfuckContext context, SerializableArrayWrapper<byte> input, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
@@ -74,6 +74,31 @@ public class InputCommandTests
             await pipe.Writer.WriteAsync(input, token);
         await pipe.Writer.CompleteAsync();
         var actual = await waiter;
+        Assert.AreEqual(expected, actual);
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(ExecuteTestData))]
+    public void ExecuteTest(BrainfuckContext context, SerializableArrayWrapper<byte> input, BrainfuckContext expected)
+    {
+        var pipe = new Pipe();
+        context = context with
+        {
+            Input = pipe.Reader,
+        };
+        expected = expected with
+        {
+            Input = pipe.Reader,
+        };
+
+        if (input.Array.Length > 0)
+        {
+            var dest = pipe.Writer.GetSpan(input.Array.Length);
+            input.Array.AsSpan().CopyTo(dest);
+            pipe.Writer.Advance(input.Array.Length);
+        }
+        pipe.Writer.Complete();
+        var actual = new Command(context).Execute();
         Assert.AreEqual(expected, actual);
     }
 

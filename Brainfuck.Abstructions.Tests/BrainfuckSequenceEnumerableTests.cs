@@ -52,7 +52,7 @@ public class BrainfuckSequenceEnumerableTests
                 }.Select(v => Tuple.Create(v.Item1, v.Item2)).ToArray()
             );
             static object?[] GetEnumerableTest(string source, BrainfuckOptions? options = default!, Tuple<BrainfuckSequence, string>[]? expected = null)
-                => new object?[] { source, options, SerializableArrayWrapper.Create(expected ?? Array.Empty<Tuple<BrainfuckSequence, string>>()) };
+                => new object?[] { source, options, (expected ?? Array.Empty<Tuple<BrainfuckSequence, string>>()).ToSerializable() };
         }
     }
     [TestMethod]

@@ -4,6 +4,7 @@
     <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <HasSharedItems>true</HasSharedItems>
     <SharedGUID>6877deb4-30dd-4c0a-988f-b92d2aa94b7c</SharedGUID>
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)\..\coverlet.collect.runsettings</RunSettingsFilePath>
   </PropertyGroup>
   <PropertyGroup Label="Configuration">
     <Import_RootNamespace>TestShared</Import_RootNamespace>
@@ -11,4 +12,10 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)*.cs" />
   </ItemGroup>
+  <PropertyGroup>
+    <TestResultsFolderPath>$(MSBuildProjectDirectory)\TestResults</TestResultsFolderPath>
+  </PropertyGroup>
+  <Target Name="TestResultCleaning" AfterTargets="Clean">
+    <RemoveDir Directories="$(TestResultsFolderPath)" Condition="Exists('$(TestResultsFolderPath)')" />
+  </Target>
 </Project>

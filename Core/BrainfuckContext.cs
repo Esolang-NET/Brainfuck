@@ -24,7 +24,11 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
         => (sequences, stack, sequencesIndex, stackIndex, input, output) = (Sequences, Stack, SequencesIndex, StackIndex, Input, Output);
     public BrainfuckContext(SerializationInfo info, StreamingContext context) : this(Sequences: default, Stack: default!)
     {
-        if (info is null) throw new ArgumentNullException(nameof(info));
+#if NET5_0_OR_GREATER
+        ArgumentNullException.ThrowIfNull(info);
+#else
+        if(info is null) throw new ArgumentNullException(nameof(info));
+#endif
         Sequences = (info.GetValue(nameof(Sequences), typeof(BrainfuckSequence[])) as BrainfuckSequence[] ?? Array.Empty<BrainfuckSequence>()).AsMemory();
         SequencesIndex = info.GetInt32(nameof(SequencesIndex));
         Stack = ImmutableArray.Create(info.GetValue(nameof(Stack), typeof(byte[])) as byte[] ?? Array.Empty<byte>());

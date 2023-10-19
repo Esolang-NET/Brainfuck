@@ -33,16 +33,27 @@ public readonly struct SerializableArrayWrapper<T> : ISerializable, IEquatable<T
     public static implicit operator T[](SerializableArrayWrapper<T> other) => other.Array;
 
     public static implicit operator ReadOnlyMemory<T>(SerializableArrayWrapper<T> other) => other.Array;
+    public static implicit operator SerializableArrayWrapper<T>(T[] array) => new(array);
 
     public override bool Equals(object? obj) => obj is SerializableArrayWrapper<T> wrapper && Equals(wrapper);
 
     public override int GetHashCode()
     {
+#if NETSTANDARD2_1_OR_GREATER
         var hash = new HashCode();
         hash.Add(Array.Length);
         foreach (var a in Array)
             hash.Add(a);
         return hash.ToHashCode();
+#else
+        var seed = 1009;
+        var factor = 9176;
+        var hash = seed;
+        hash = (hash * factor) + Array.Length.GetHashCode();
+        foreach (var a in Array)
+            hash = (hash * factor) + (a?.GetHashCode() ?? 0);
+        return hash;
+#endif
     }
 
     public static bool operator ==(SerializableArrayWrapper<T> left, SerializableArrayWrapper<T> right) => left.Equals(right);
@@ -54,5 +65,5 @@ public readonly struct SerializableArrayWrapper<T> : ISerializable, IEquatable<T
 /// </summary>
 internal static class SerializableArrayWrapper
 {
-    public static SerializableArrayWrapper<T> Create<T>(T[] array) => new(array);
+    public static SerializableArrayWrapper<T> ToSerializable<T>(this T[] array) => new(array);
 }

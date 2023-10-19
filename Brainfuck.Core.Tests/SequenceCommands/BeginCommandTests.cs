@@ -9,7 +9,7 @@ namespace Brainfuck.Core.SequenceCommands.Tests;
 public class BeginCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object?[]> ExecuteAsyncTestData
+    static IEnumerable<object?[]> ExecuteTestData
     {
         get
         {
@@ -86,12 +86,19 @@ public class BeginCommandTests
     }
 
     [TestMethod]
-    [DynamicData(nameof(ExecuteAsyncTestData))]
+    [DynamicData(nameof(ExecuteTestData))]
     public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
 
         var actual = await new Command(context).ExecuteAsync(token);
+        Assert.AreEqual(expected, actual);
+    }
+    [TestMethod]
+    [DynamicData(nameof(ExecuteTestData))]
+    public void ExecuteTest(BrainfuckContext context, BrainfuckContext expected)
+    {
+        var actual = new Command(context).Execute();
         Assert.AreEqual(expected, actual);
     }
     [TestMethod]

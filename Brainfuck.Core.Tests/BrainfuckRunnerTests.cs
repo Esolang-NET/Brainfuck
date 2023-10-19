@@ -12,20 +12,28 @@ public class BrainfuckRunnerTests
     {
         get
         {
-            yield return RunAndOutputStringAsyncTest(
+            yield return RunAndOutputStringTest(
                 source: "+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.",
                 expected: "Hello, world!"
             );
-            yield return RunAndOutputStringAsyncTest(
+            yield return RunAndOutputStringTest(
                 source: "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.+.+.>++++++++++.",
                 expected: "ABC\n"
             );
-            yield return RunAndOutputStringAsyncTest(
+            yield return RunAndOutputStringTest(
                 source: "++++++[>++++++++<-]++++++++++[>.+<-]",
                 expected: "0123456789"
             );
-
-            static object?[] RunAndOutputStringAsyncTest(string source, string? input = default, string? expected = default)
+            yield return RunAndOutputStringTest(
+                source: "++++++[>++++++++<-]++++++++++[>.+<-]",
+                expected: "0123456789"
+            );
+            yield return RunAndOutputStringTest(
+                source: "+[,.]",
+                input: "1234567890",
+                expected: "1234567890\0"
+            );
+            static object?[] RunAndOutputStringTest(string source, string? input = default, string? expected = default)
                 => new object?[] { source, input, expected };
         }
     }
@@ -40,7 +48,10 @@ public class BrainfuckRunnerTests
         var runner = new BrainfuckRunner(sequences, input: pipe.Reader);
         var awaiter = runner.RunAndOutputStringAsync(token);
         if (!string.IsNullOrEmpty(input))
+        {
             await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes(input), token);
+            await pipe.Writer.CompleteAsync();
+        }
         var actual = await awaiter;
         Assert.AreEqual(expected, actual);
     }
@@ -58,6 +69,7 @@ public class BrainfuckRunnerTests
             var dest = pipe.Writer.GetSpan(input2.Length);
             input2.CopyTo(dest);
             pipe.Writer.Advance(input2.Length);
+            pipe.Writer.Complete();
         }
         var actual = runner.RunAndOutputString();
         Assert.AreEqual(expected, actual);
