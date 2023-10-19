@@ -6,6 +6,7 @@ public partial class BrainfuckSequenceEnumerable
 {
     public struct Enumerator : IEnumerator<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Text)>
     {
+        readonly ReadOnlyMemory<char> original;
         (BrainfuckSequence, ReadOnlyMemory<char>) current;
         ReadOnlyMemory<char> memory;
 
@@ -15,6 +16,7 @@ public partial class BrainfuckSequenceEnumerable
         readonly object IEnumerator.Current => current;
         internal Enumerator(ReadOnlyMemory<char> memory, (BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)[] optionSyntaxes)
         {
+            original = memory;
             this.memory = memory;
             this.optionSyntaxes = optionSyntaxes;
         }
@@ -51,6 +53,10 @@ public partial class BrainfuckSequenceEnumerable
             current = default;
             memory = default;
         }
-        public void Reset() => throw new NotImplementedException();
+        public void Reset()
+        {
+            memory = original;
+            current = default;
+        }
     }
 }
