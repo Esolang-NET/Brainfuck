@@ -3,17 +3,42 @@
 public record OutputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
     public override bool RequiredOutput => true;
+
+    public override BrainfuckContext Execute()
+    {
+        var sequenceIndex = Output();
+        return Context with
+        {
+            SequencesIndex = sequenceIndex,
+        };
+    }
+
     public override async ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (Context.Output is null) throw new InvalidOperationException("required context.Output.");
-        var sequencesIndex = Context.SequencesIndex + 1;
-        var current = Context.Stack[Context.StackIndex];
-        var memory = new byte[] { current }.AsMemory();
-        await Context.Output.WriteAsync(memory, cancellationToken);
+        var sequencesIndex = await OutputAsync(cancellationToken);
         return Context with
         {
             SequencesIndex = sequencesIndex,
         };
+    }
+    async ValueTask<int> OutputAsync(CancellationToken cancellationToken)
+    {
+        if (Context.Output is null) throw new InvalidOperationException("required context.Output.");
+        var sequencesIndex = Context.SequencesIndex + 1;
+        var memory = Context.Stack.AsMemory().Slice(Context.StackIndex, 1);
+        await Context.Output.WriteAsync(memory, cancellationToken);
+        return sequencesIndex;
+    }
+    int Output()
+    {
+
+        if (Context.Output is null) throw new InvalidOperationException("required context.Output.");
+        var sequencesIndex = Context.SequencesIndex + 1;
+        var input = Context.Stack.AsMemory().Slice(Context.StackIndex, 1).Span;
+        var dest = Context.Output.GetSpan(1);
+        input.CopyTo(dest);
+        Context.Output.Advance(1);
+        return sequencesIndex;
     }
 }

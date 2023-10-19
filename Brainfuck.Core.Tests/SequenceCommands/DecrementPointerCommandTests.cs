@@ -16,7 +16,7 @@ public class DecrementPointerCommandTests
             {
                 // stackPointer -1 
                 var sequences = new[] { DecrementPointer }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0, 0);
+                var stack = ImmutableArray.Create<byte>(0, 0);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack,
@@ -34,7 +34,7 @@ public class DecrementPointerCommandTests
             {
                 // no op pattern.
                 var sequences = new[] { DecrementPointer }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0);
+                var stack = ImmutableArray.Create<byte>(0);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack

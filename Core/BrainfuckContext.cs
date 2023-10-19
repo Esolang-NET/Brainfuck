@@ -18,16 +18,16 @@ namespace Brainfuck;
 /// <param name="Output"></param>
 [Serializable]
 [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence> Sequences, ImmutableList<byte> Stack, int SequencesIndex = default, int StackIndex = default, PipeReader? Input = default, PipeWriter? Output = default) : ISerializable, IEquatable<BrainfuckContext>
+public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence> Sequences, ImmutableArray<byte> Stack, int SequencesIndex = default, int StackIndex = default, PipeReader? Input = default, PipeWriter? Output = default) : ISerializable, IEquatable<BrainfuckContext>
 {
-    public void Deconstruct(out ReadOnlyMemory<BrainfuckSequence> sequences, out ImmutableList<byte> stack, out int sequencesIndex, out int stackIndex, out PipeReader? input, out PipeWriter? output)
+    public void Deconstruct(out ReadOnlyMemory<BrainfuckSequence> sequences, out ImmutableArray<byte> stack, out int sequencesIndex, out int stackIndex, out PipeReader? input, out PipeWriter? output)
         => (sequences, stack, sequencesIndex, stackIndex, input, output) = (Sequences, Stack, SequencesIndex, StackIndex, Input, Output);
     public BrainfuckContext(SerializationInfo info, StreamingContext context) : this(Sequences: default, Stack: default!)
     {
         if (info is null) throw new ArgumentNullException(nameof(info));
         Sequences = (info.GetValue(nameof(Sequences), typeof(BrainfuckSequence[])) as BrainfuckSequence[] ?? Array.Empty<BrainfuckSequence>()).AsMemory();
         SequencesIndex = info.GetInt32(nameof(SequencesIndex));
-        Stack = ImmutableList.Create(info.GetValue(nameof(Stack), typeof(byte[])) as byte[] ?? Array.Empty<byte>());
+        Stack = ImmutableArray.Create(info.GetValue(nameof(Stack), typeof(byte[])) as byte[] ?? Array.Empty<byte>());
         StackIndex = info.GetInt32(nameof(StackIndex));
     }
     public bool IsEmpty

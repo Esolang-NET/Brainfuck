@@ -2,6 +2,17 @@
 
 public record DecrementPointerCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    public override BrainfuckContext Execute()
+    {
+        if (!TryDecrementPointer(out var sequencesIndex, out var stackIndex))
+            return Next();
+        return Context with
+        {
+            SequencesIndex = sequencesIndex,
+            StackIndex = stackIndex,
+        };
+    }
+
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -10,7 +21,7 @@ public record DecrementPointerCommand(BrainfuckContext Context) : BrainfuckSeque
         return new(Context with
         {
             SequencesIndex = sequencesIndex,
-            StackIndex = stackIndex
+            StackIndex = stackIndex,
         });
     }
     bool TryDecrementPointer(out int sequencesIndex, out int stackIndex)

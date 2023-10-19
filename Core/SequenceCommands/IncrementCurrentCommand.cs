@@ -2,6 +2,8 @@
 
 public record IncrementCurrentCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    public override BrainfuckContext Execute() => IncrementCurrent();
+
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

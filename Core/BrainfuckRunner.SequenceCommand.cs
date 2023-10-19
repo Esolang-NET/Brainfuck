@@ -20,6 +20,12 @@ public sealed partial class BrainfuckRunner
             Executed = result;
             return result;
         }
+        public override BrainfuckContext Execute()
+        {
+            var result = Command.Execute();
+            Executed = result;
+            return result;
+        }
         public override bool RequiredInput => Command.RequiredInput;
         public override bool RequiredOutput => Command.RequiredOutput;
         protected override bool PrintMembers(StringBuilder builder)
@@ -30,5 +36,6 @@ public sealed partial class BrainfuckRunner
             builder.Append(Executed);
             return true;
         }
+
     }
 }

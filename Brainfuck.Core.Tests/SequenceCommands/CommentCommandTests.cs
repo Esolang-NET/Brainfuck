@@ -16,7 +16,7 @@ public class CommentCommandTests
             {
                 // noop
                 var sequences = new[] { Comment }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0);
+                var stack = ImmutableArray.Create<byte>(0);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack

@@ -15,6 +15,7 @@ public abstract record class BrainfuckSequenceCommand(BrainfuckContext Context)
     /// </summary>
     public virtual bool RequiredOutput => false;
     abstract public ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default);
+    abstract public BrainfuckContext Execute();
     public static bool TryGetCommand(BrainfuckContext context, [NotNullWhen(true)] out BrainfuckSequenceCommand command)
     {
         command = default!;

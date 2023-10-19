@@ -16,7 +16,7 @@ public class IncrementPointerCommandTests
             {
                 // stackPointer +1 (and extends stack)
                 var sequences = new[] { IncrementPointer }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0);
+                var stack = ImmutableArray.Create<byte>(0);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
@@ -25,7 +25,7 @@ public class IncrementPointerCommandTests
                     context,
                     context with
                     {
-                        Stack = ImmutableList.Create<byte>(0, 0),
+                        Stack = ImmutableArray.Create<byte>(0, 0),
                         SequencesIndex = 1,
                         StackIndex = 1
                     }
@@ -34,7 +34,7 @@ public class IncrementPointerCommandTests
             {
                 // stackPointer +1
                 var sequences = new[] { IncrementPointer }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0, 0);
+                var stack = ImmutableArray.Create<byte>(0, 0);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack

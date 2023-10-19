@@ -18,7 +18,7 @@ public class BeginCommandTests
                 // }
                 // ← after
                 var sequences = new[] { Begin, Comment, End }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0);
+                var stack = ImmutableArray.Create<byte>(0);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
@@ -35,7 +35,7 @@ public class BeginCommandTests
                 // ← after
                 // }
                 var sequences = new[] { Begin, Comment, End }.AsMemory();
-                var stack = ImmutableList.Create<byte>(1);
+                var stack = ImmutableArray.Create<byte>(1);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
@@ -50,7 +50,7 @@ public class BeginCommandTests
             {
                 // invalid pattern 1
                 var sequences = new[] { Comment, Begin, Comment, Comment }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0);
+                var stack = ImmutableArray.Create<byte>(0);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack,
@@ -67,7 +67,7 @@ public class BeginCommandTests
             {
                 // invalid pattern 2
                 var sequences = new[] { Begin, Begin, End }.AsMemory();
-                var stack = ImmutableList.Create<byte>(0);
+                var stack = ImmutableArray.Create<byte>(0);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack

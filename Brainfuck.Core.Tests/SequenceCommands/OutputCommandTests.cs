@@ -17,7 +17,7 @@ public class OutputCommandTests
             {
                 // input set.
                 var sequences = new[] { Output }.AsMemory();
-                var stack = ImmutableList.Create<byte>(1);
+                var stack = ImmutableArray.Create<byte>(1);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack

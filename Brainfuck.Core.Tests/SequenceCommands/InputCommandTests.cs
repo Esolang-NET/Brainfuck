@@ -17,7 +17,7 @@ public class InputCommandTests
             {
                 // input set.
                 var sequences = new[] { Input }.AsMemory();
-                var stack = ImmutableList.Create<byte>(2);
+                var stack = ImmutableArray.Create<byte>(2);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
@@ -27,7 +27,7 @@ public class InputCommandTests
                     new byte[] { 1 },
                     context with
                     {
-                        Stack = ImmutableList.Create<byte>(1),
+                        Stack = ImmutableArray.Create<byte>(1),
                         SequencesIndex = 1,
                     }
                 );
@@ -35,7 +35,7 @@ public class InputCommandTests
             {
                 // input nodata.
                 var sequences = new[] { Input }.AsMemory();
-                var stack = ImmutableList.Create<byte>(2);
+                var stack = ImmutableArray.Create<byte>(2);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
@@ -45,7 +45,7 @@ public class InputCommandTests
                     Array.Empty<byte>(),
                     context with
                     {
-                        Stack = ImmutableList.Create<byte>(0),
+                        Stack = ImmutableArray.Create<byte>(0),
                         SequencesIndex = 1,
                     }
                 );

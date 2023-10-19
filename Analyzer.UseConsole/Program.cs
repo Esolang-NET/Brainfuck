@@ -7,5 +7,5 @@ Console.WriteLine("Hello, World!");
 partial class BrainfuckSample
 {
     [GenerateBrainfuckMethod("++++++++++++++++++++++++++++++++++++++++\r\n+++++++++++++++++++++++++.+.+.>++++++++++")]
-    public static partial string SampleMethod();
+    public static partial Task<string> SampleMethod();
 }

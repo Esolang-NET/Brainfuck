@@ -16,7 +16,7 @@ public class DecrementCurrentCommandTests
             {
                 // currentStack -1
                 var sequences = new[] { DecrementCurrent }.AsMemory();
-                var stack = ImmutableList.Create<byte>(1);
+                var stack = ImmutableArray.Create<byte>(1);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
@@ -26,14 +26,14 @@ public class DecrementCurrentCommandTests
                     context with
                     {
                         SequencesIndex = 1,
-                        Stack = ImmutableList.Create<byte>(0),
+                        Stack = ImmutableArray.Create<byte>(0),
                     }
                 );
             }
             {
                 // stackPointer -1 underflow 0 → 255
                 var sequences = new[] { DecrementCurrent }.AsMemory();
-                var stack = ImmutableList.Create(byte.MinValue);
+                var stack = ImmutableArray.Create(byte.MinValue);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack
@@ -43,7 +43,7 @@ public class DecrementCurrentCommandTests
                     context with
                     {
                         SequencesIndex = 1,
-                        Stack = ImmutableList.Create(byte.MaxValue),
+                        Stack = ImmutableArray.Create(byte.MaxValue),
                     }
                 );
             }

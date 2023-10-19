@@ -3,6 +3,15 @@ namespace Brainfuck.Core.SequenceCommands;
 
 public record BeginCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    public override BrainfuckContext Execute()
+    {
+        if (!TryBegin(out var sequencesIndex))
+            return Next();
+        return Context with
+        {
+            SequencesIndex = sequencesIndex,
+        };
+    }
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
