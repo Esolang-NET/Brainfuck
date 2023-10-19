@@ -20,9 +20,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Build.targets = Directory.Build.targets
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Core.Tests", "Brainfuck.Core.Tests\Brainfuck.Core.Tests.csproj", "{E83D67D2-9F99-4E8E-885F-866823E1790F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Core.Tests", "Core.Tests\Brainfuck.Core.Tests.csproj", "{E83D67D2-9F99-4E8E-885F-866823E1790F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Abstructions.Tests", "Brainfuck.Abstructions.Tests\Brainfuck.Abstructions.Tests.csproj", "{66D9655E-1757-4774-A8E5-BE9D05BD090B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Abstructions.Tests", "Abstructions.Tests\Brainfuck.Abstructions.Tests.csproj", "{66D9655E-1757-4774-A8E5-BE9D05BD090B}"
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "TestShared", "TestShared\TestShared.shproj", "{6877DEB4-30DD-4C0A-988F-B92D2AA94B7C}"
 EndProject
