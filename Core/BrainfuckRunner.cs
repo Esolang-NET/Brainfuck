@@ -58,8 +58,8 @@ public sealed partial class BrainfuckRunner
             var before = context;
             var command2 = new SequenceCommand(command);
             yield return command2;
-            if (command2.Executed is null) throw new InvalidOperationException($"required {nameof(command2.ExecuteAsync)}() or {nameof(command2.Execute)}() call.");
-            context = command2.Executed.Value;
+            if (command2 is not (_, { } executed)) throw new InvalidOperationException($"required {nameof(command2.ExecuteAsync)}() or {nameof(command2.Execute)}() call.");
+            context = executed;
         }
     }
 

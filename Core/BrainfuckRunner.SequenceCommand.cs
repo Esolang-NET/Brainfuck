@@ -8,7 +8,6 @@ public sealed partial class BrainfuckRunner
     public sealed record SequenceCommand : BrainfuckSequenceCommand
     {
         private readonly BrainfuckSequenceCommand Command;
-        public Type CommandType => Command.GetType();
         public BrainfuckContext? Executed;
         public SequenceCommand(BrainfuckSequenceCommand command) : this(command, null) { }
         public SequenceCommand(BrainfuckSequenceCommand command, BrainfuckContext? executed) : base((BrainfuckContext)command) => (Command, Executed) = (command, executed);
