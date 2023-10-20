@@ -7,7 +7,7 @@ public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequenc
 {
     readonly BrainfuckOptions options;
     readonly ReadOnlyMemory<char> source;
-    public BrainfuckSequenceEnumerable(string source) : this(source.AsMemory(), null) { }
+    public BrainfuckSequenceEnumerable(string source) : this(source.AsMemory()) { }
     public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source) : this(source, null) { }
 
     public BrainfuckSequenceEnumerable(string source, BrainfuckOptions? options) : this(source.AsMemory(), options) { }
@@ -26,7 +26,7 @@ public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequenc
         })
     { }
     [MemberNotNull(nameof(_needInput), nameof(_needOutput))]
-    void InitializeNeeds()
+    void InitializeRequired()
     {
         if (_needInput is not null && _needOutput is not null) return;
         foreach (var (sequence, _) in this)
@@ -40,21 +40,21 @@ public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequenc
         _needOutput ??= false;
     }
     bool? _needInput;
-    public bool NeedInput
+    public bool RequiredInput
     {
         get
         {
-            InitializeNeeds();
+            InitializeRequired();
             return _needInput.Value;
         }
     }
 
     bool? _needOutput;
-    public bool NeedOutput
+    public bool RequiredOutput
     {
         get
         {
-            InitializeNeeds();
+            InitializeRequired();
             return _needOutput.Value;
         }
     }

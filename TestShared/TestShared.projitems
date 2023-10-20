@@ -18,4 +18,5 @@
   <Target Name="TestResultCleaning" AfterTargets="Clean">
     <RemoveDir Directories="$(TestResultsFolderPath)" Condition="Exists('$(TestResultsFolderPath)')" />
   </Target>
+  <Import Project="..\Shared\Shared.projitems" Label="Shared" />
 </Project>

@@ -15,9 +15,10 @@ public sealed partial class BrainfuckRunner
     readonly PipeReader? Input;
     readonly PipeWriter? Output;
     BrainfuckContext Context => new(Sequences, SequencesIndex: 0, Stack: ImmutableArray.Create<byte>(0), StackIndex: 0, Input: Input, Output: Output);
-    public BrainfuckRunner(string source, IBrainfuckOptions? sourceOptions = default, PipeWriter? output = default, PipeReader? input = default)
+    public BrainfuckRunner(string source, PipeWriter? output = default, PipeReader? input = default) : this(source, new(), output, input) { }
+    public BrainfuckRunner(string source, IBrainfuckOptions? sourceOptions, PipeWriter? output = default, PipeReader? input = default)
         : this(SourceToSequences(source, sourceOptions), output: output, input: input) { }
-    public BrainfuckRunner(string source, BrainfuckOptions? sourceOptions = default, PipeWriter? output = default, PipeReader? input = default)
+    public BrainfuckRunner(string source, BrainfuckOptions sourceOptions, PipeWriter? output = default, PipeReader? input = default)
         : this(SourceToSequences(source, sourceOptions), output: output, input: input) { }
     static ReadOnlyMemory<BrainfuckSequence> SourceToSequences(string source, IBrainfuckOptions? sourceOptions)
         => new BrainfuckSequenceEnumerable(source, sourceOptions).Select(v => v.Sequence).ToArray().AsMemory();
@@ -30,11 +31,11 @@ public sealed partial class BrainfuckRunner
         => (sequences, input, output) = (Sequences, Input, Output);
     public BrainfuckContext Run() => Run(Context);
     public ValueTask<BrainfuckContext> RunAsync(CancellationToken cancellationToken = default) => RunAsync(Context, cancellationToken);
-    public IEnumerable<BrainfuckSequenceCommand> RunStep() => InternalRunStep(Context);
+    public IEnumerable<SequenceCommand> StepCommands() => InternalStepCommands(Context);
     static async ValueTask<BrainfuckContext> RunAsync(BrainfuckContext context, CancellationToken cancellationToken = default)
     {
         var lastContext = context;
-        foreach (var command in InternalRunStep(context))
+        foreach (var command in InternalStepCommands(context))
         {
             lastContext = await command.ExecuteAsync(cancellationToken);
         }
@@ -43,14 +44,14 @@ public sealed partial class BrainfuckRunner
     static BrainfuckContext Run(BrainfuckContext context)
     {
         var lastContext = context;
-        foreach (var command in InternalRunStep(context))
+        foreach (var command in InternalStepCommands(context))
         {
             lastContext = command.Execute();
         }
         return lastContext;
     }
 
-    internal static IEnumerable<SequenceCommand> InternalRunStep(BrainfuckContext context)
+    internal static IEnumerable<SequenceCommand> InternalStepCommands(BrainfuckContext context)
     {
         while (BrainfuckSequenceCommand.TryGetCommand(context, out var command))
         {

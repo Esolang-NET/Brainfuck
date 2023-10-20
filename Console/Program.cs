@@ -57,7 +57,7 @@ BrainfuckOptionBinder option;
         var cancellationToken = context.GetCancellationToken();
         var encoding = Encoding.UTF8;
         var runner = new BrainfuckRunner(source: source, sourceOptions: o, output: output.Writer, input: input.Reader);
-        foreach (var command in runner.RunStep())
+        foreach (var command in runner.StepCommands())
         {
             if (command.RequiredInput)
             {

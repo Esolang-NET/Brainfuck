@@ -5,7 +5,7 @@ namespace Brainfuck;
 
 public sealed partial class BrainfuckRunner
 {
-    internal sealed record SequenceCommand : BrainfuckSequenceCommand
+    public sealed record SequenceCommand : BrainfuckSequenceCommand
     {
         private readonly BrainfuckSequenceCommand Command;
         public Type CommandType => Command.GetType();

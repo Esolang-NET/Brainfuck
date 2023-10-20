@@ -70,7 +70,7 @@ public partial class BrainfuckMethodGenerator
         {space}var {options.VariableStack} = new List<byte>();{Environment.NewLine}
         {space}var {options.VariableStackIndex} = 0;
         """);
-        if (sequences.NeedOutput)
+        if (sequences.RequiredOutput)
         {
             builder.AppendLine($"""
             {space}var outputPipe = new Pipe();
@@ -84,7 +84,7 @@ public partial class BrainfuckMethodGenerator
                 {space}using var output = outputPipe.Writer;
                 """);
         }
-        if (sequences.NeedInput)
+        if (sequences.RequiredInput)
         {
             builder.AppendLine($"""
             {space}var inputPipe = new Pipe();

@@ -70,10 +70,13 @@ Global
 		SolutionGuid = {F1A42DE3-62D2-460D-A96B-AECE9694EE19}
 	EndGlobalSection
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Shared\Shared.projitems*{66d9655e-1757-4774-a8e5-be9d05bd090b}*SharedItemsImports = 5
 		TestShared\TestShared.projitems*{66d9655e-1757-4774-a8e5-be9d05bd090b}*SharedItemsImports = 5
+		Shared\Shared.projitems*{6877deb4-30dd-4c0a-988f-b92d2aa94b7c}*SharedItemsImports = 13
 		TestShared\TestShared.projitems*{6877deb4-30dd-4c0a-988f-b92d2aa94b7c}*SharedItemsImports = 13
 		Shared\Shared.projitems*{99a9246f-d0c0-4524-b444-d5e04ffad131}*SharedItemsImports = 5
 		Shared\Shared.projitems*{c3362c8f-0789-461e-a5c3-a0a7553ccb42}*SharedItemsImports = 5
+		Shared\Shared.projitems*{e83d67d2-9f99-4e8e-885f-866823e1790f}*SharedItemsImports = 5
 		TestShared\TestShared.projitems*{e83d67d2-9f99-4e8e-885f-866823e1790f}*SharedItemsImports = 5
 		Shared\Shared.projitems*{f926ca6b-e500-4ab7-9bc7-8cf3c8e5d353}*SharedItemsImports = 5
 		Shared\Shared.projitems*{fa275398-8f11-42e3-ad4d-6dde946c9d4a}*SharedItemsImports = 13

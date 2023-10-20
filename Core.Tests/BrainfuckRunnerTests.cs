@@ -60,7 +60,7 @@ public class BrainfuckRunnerTests
     public void RunAdnOutputStringTest(string source, string? input, string? expected = default)
     {
         var pipe = new Pipe();
-        var enumerable = new BrainfuckSequenceEnumerable(source);
+        var enumerable = new BrainfuckSequenceEnumerable(source.AsMemory());
         var sequences = enumerable.Select(v => v.Sequence).ToArray().AsMemory();
         var runner = new BrainfuckRunner(sequences, input: pipe.Reader);
         if (!string.IsNullOrEmpty(input))
@@ -73,5 +73,33 @@ public class BrainfuckRunnerTests
         }
         var actual = runner.RunAndOutputString();
         Assert.AreEqual(expected, actual);
+    }
+    [TestMethod]
+
+    public void BrainfuckRunnerTest()
+    {
+        var runner = new BrainfuckRunner("]");
+        var (sequence, _, _) = runner;
+        CollectionAssert.AreEqual(new[] { BrainfuckSequence.End }, sequence.ToArray());
+        TestContext.WriteLine(runner.ToString());
+    }
+    [TestMethod]
+    public void BrainfuckRunnerWithOptionTest()
+    {
+        {
+            BrainfuckOptions options = new();
+            var runner = new BrainfuckRunner("]", options);
+            var (sequence, _, _) = runner;
+            CollectionAssert.AreEqual(new[] { BrainfuckSequence.End }, sequence.ToArray());
+            TestContext.WriteLine(runner.ToString());
+        }
+        {
+            TestShared.BrainfuckOptions options = new();
+            var runner = new BrainfuckRunner("[", options);
+            var (sequence, _, _) = runner;
+            CollectionAssert.AreEqual(new[] { BrainfuckSequence.Begin }, sequence.ToArray());
+            TestContext.WriteLine(runner.ToString());
+        }
+
     }
 }
