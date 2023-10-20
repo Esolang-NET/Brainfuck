@@ -35,9 +35,8 @@ public record OutputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand
 
         if (Context.Output is null) throw new InvalidOperationException("required context.Output.");
         var sequencesIndex = Context.SequencesIndex + 1;
-        var input = Context.Stack.AsMemory().Slice(Context.StackIndex, 1).Span;
-        var dest = Context.Output.GetSpan(1);
-        input.CopyTo(dest);
+        Context.Stack.AsMemory().Slice(Context.StackIndex, 1)
+            .Span.CopyTo(Context.Output.GetSpan(1));
         Context.Output.Advance(1);
         return sequencesIndex;
     }

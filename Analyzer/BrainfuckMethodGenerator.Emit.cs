@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.IO.Pipelines;
 using System.Text;
 using static Brainfuck.BrainfuckSequence;
 
@@ -19,11 +20,13 @@ public partial class BrainfuckMethodGenerator
         var (openingDefinitionCode, codeForClosingDefinition) = Utils.GenerateOpeningClosingTypeDefinitionCode(methodSymbol);
         var methodModifier = $"{SyntaxFacts.GetText(methodSymbol.DeclaredAccessibility)}{(methodSymbol.IsStatic ? " static" : string.Empty)} partial";
         InternalOptions writeOption = new(
-            IsAsync: true,
+            IsAsync: methodSymbol.ReturnType is { Name: "Task" or "ValueTask" },
             Space: SPACE,
             VariableStack: STACK_NAME,
             VariableStackIndex: STACK_INDEX,
-            VariableCancellationToken: "cancellationToken"
+            VariableCancellationToken: "cancellationToken",
+            VariablePipeWriter: "output",
+            VariablePipeReader: "input"
         );
         var methodBodyCode = GenerateMethodBodyCode(2, sequences, writeOption);
         var generatedSourceCode = $$"""
@@ -31,7 +34,7 @@ public partial class BrainfuckMethodGenerator
             #nullable enable
 
             {{openingDefinitionCode}}
-                {{methodModifier}} {{AsyncCom(methodSymbol.ReturnType)}} {{methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}} {{methodSymbol.Name}}()
+                {{methodModifier}} {{(writeOption.IsAsync ? "async" : string.Empty)}} {{methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}} {{methodSymbol.Name}}()
                 {
             {{methodBodyCode}}
                 }
@@ -40,11 +43,10 @@ public partial class BrainfuckMethodGenerator
             """;
 
         var classPart = containingClassSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? "__global__";
-        var returnTypePart = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+        var returnTypePart = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var generatingSourceFileName = Utils.SanitizeForFileName($"{classPart}.{methodSymbol.Name}.{returnTypePart}.g.cs");
         context.AddSource(generatingSourceFileName, generatedSourceCode);
     }
-    static string AsyncCom(ITypeSymbol symbol) => "async";
     const string SPACE = "    ";
     const string STACK_NAME = "stack";
     const string STACK_INDEX = "stackIndex";
@@ -53,6 +55,8 @@ public partial class BrainfuckMethodGenerator
         string Space,
         string VariableStack,
         string VariableStackIndex,
+        string VariablePipeWriter,
+        string VariablePipeReader,
         string VariableCancellationToken
     );
     /// <summary>
@@ -66,6 +70,8 @@ public partial class BrainfuckMethodGenerator
     {
         var builder = new StringBuilder();
         var space = string.Join("", Enumerable.Range(0, indent).Select(v => options.Space));
+        var pipeWriter = options.VariablePipeWriter;
+        var pipeReader = options.VariablePipeReader;
         builder.AppendLine($"""
         {space}var {options.VariableStack} = new List<byte>();{Environment.NewLine}
         {space}var {options.VariableStackIndex} = 0;
@@ -77,11 +83,11 @@ public partial class BrainfuckMethodGenerator
             """);
             if (options.IsAsync)
                 builder.AppendLine($"""
-                {space}await using var output = outputPipe.Writer;
+                {space}await using var {pipeWriter} = outputPipe.Writer;
                 """);
             else
                 builder.AppendLine($"""
-                {space}using var output = outputPipe.Writer;
+                {space}using var {pipeWriter} = outputPipe.Writer;
                 """);
         }
         if (sequences.RequiredInput)
@@ -91,11 +97,11 @@ public partial class BrainfuckMethodGenerator
             """);
             if (options.IsAsync)
                 builder.AppendLine($"""
-                {space}await using var input = inputPipe.Reader;
+                {space}await using var {pipeReader} = inputPipe.Reader;
                 """);
             else
                 builder.AppendLine($"""
-                {space}using var input = inputPipe.Reader;
+                {space}using var {pipeReader} = inputPipe.Reader;
                 """);
         }
 
@@ -132,6 +138,9 @@ public partial class BrainfuckMethodGenerator
         var space = string.Join("", Enumerable.Range(0, indent).Select(v => SPACE));
         var stackIndex = options.VariableStackIndex;
         var stack = options.VariableStack;
+        var pipeReader = options.VariablePipeReader;
+        var pipeWriter = options.VariablePipeWriter;
+        var ct = options.VariableCancellationToken;
         builder.AppendLine(sequence switch
         {
             IncrementPointer => $"""
@@ -153,16 +162,37 @@ public partial class BrainfuckMethodGenerator
             End => $$"""
                 {{space}}}
             """,
-            Input => $"""
-                {space}
-                """,
-            Output => options.IsAsync switch
+            Input => options.IsAsync switch
             {
                 true => $$"""
-                {{space}}await output.WriteAsync(new byte[]{{{stack}}[{{stackIndex}}]}.AsMemory(), {{options.VariableCancellationToken}});
+                {{space}}{
+                {{space}}{{SPACE}}if (await {{pipeReader}}.ReadAtLeastAsync(1,{{ct}}) is { } result && result.Buffer.Length >= 0)
+                {{space}}{{SPACE}}{
+                {{space}}{{SPACE}}{{SPACE}}var readableSeq = result.Buffer.Slice(result.Buffer.Start, 1);
+                {{space}}{{SPACE}}{{SPACE}}readableSeq.CopyTo({{stack}}.Slice({{stackIndex}}, 1));
+                {{space}}{{SPACE}}{{SPACE}}{{pipeReader}}.AdvanceTo(readableSeq.End);
+                {{space}}{{SPACE}}}
+                {{space}}}
+                """,
+                false => $$"""
+                {{space}}{
+                {{space}}{{SPACE}}if ({{pipeReader}}.TryRead(out var result) && result.Buffer.Length >= 0)
+                {{space}}{{SPACE}}{
+                {{space}}{{SPACE}}{{SPACE}}var readableSeq = result.Buffer.Slice(result.Buffer.Start, 1);
+                {{space}}{{SPACE}}{{SPACE}}readableSeq.CopyTo({{stack}}.Slice({{stackIndex}}, 1));
+                {{space}}{{SPACE}}{{SPACE}}{{pipeReader}}.AdvanceTo(readableSeq.End);
+                {{space}}{{SPACE}}}
+                {{space}}}
+                """,
+            },
+            Output => options.IsAsync switch
+            {
+                true => $"""
+                {space}await {pipeWriter}.WriteAsync({stack}.AsMemory().Slice({stackIndex},1), {ct});
                 """,
                 false => $"""
-                {space}
+                {space}{stack}.AsMemory().Slice({stackIndex}, 1).Span.CopyTo({pipeWriter}.GetSpan(1));
+                {space}{pipeWriter}.Advance(1);
                 """,
             },
             _ => string.Empty,

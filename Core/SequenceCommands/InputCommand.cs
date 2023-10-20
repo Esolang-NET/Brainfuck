@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
 
@@ -32,32 +33,30 @@ public record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(
     {
         if (Context.Input is null) throw new InvalidOperationException("required context.Input.");
         var sequencesIndex = Context.SequencesIndex + 1;
-        var result = await Context.Input.ReadAtLeastAsync(1, cancellationToken);
-        if (!TryReadFromResult(Context.Input, result, out var current))
-            current = 0;
-        var stack = Context.Stack.SetItem(Context.StackIndex, current);
+        var memory = new byte[1].AsMemory();
+        if ((await Context.Input.ReadAtLeastAsync(memory.Length, cancellationToken)) is { } result)
+            TryReadWriteFromResult(Context.Input, result, ref memory);
+        var stack = Context.Stack.SetItem(Context.StackIndex, memory.Span[0]);
         return (sequencesIndex, stack);
     }
     (int SequenceIndex, ImmutableArray<byte> Stack) Input()
     {
         if (Context.Input is null) throw new InvalidOperationException("required context.Input.");
         var sequencesIndex = Context.SequencesIndex + 1;
-        if (!(Context.Input.TryRead(out var result) && TryReadFromResult(Context.Input, result, out var current)))
-            current = 0;
-        var stack = Context.Stack.SetItem(Context.StackIndex, current);
+        var memory = new byte[1].AsMemory();
+        if (Context.Input.TryRead(out var result))
+            TryReadWriteFromResult(Context.Input, result, ref memory);
+        var stack = Context.Stack.SetItem(Context.StackIndex, memory.Span[0]);
         return (sequencesIndex, stack);
     }
-    bool TryReadFromResult(PipeReader reader, ReadResult result, out byte current)
-    {
-        current = 0;
-        var buffer = result.Buffer;
-        if (buffer.Length <= 0)
-            return false;
 
-        var readableSeq = buffer.Slice(buffer.Start, 1);
-        current = readableSeq.First.Span[0];
+    static bool TryReadWriteFromResult(PipeReader reader, ReadResult result, ref Memory<byte> dest)
+    {
+        var buffer = result.Buffer;
+        var readableSeq = buffer.IsEmpty ? buffer : buffer.Slice(buffer.Start, dest.Length);
+        if (readableSeq.Length > 0) readableSeq.CopyTo(dest.Span);
         reader.AdvanceTo(readableSeq.End);
-        return true;
+        return readableSeq.Length == dest.Length;
     }
 
 }

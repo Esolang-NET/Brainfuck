@@ -57,7 +57,7 @@ public class BrainfuckRunnerTests
     }
     [TestMethod]
     [DynamicData(nameof(RunAndOutputStringTestData))]
-    public void RunAdnOutputStringTest(string source, string? input, string? expected = default)
+    public void RunAndOutputStringTest(string source, string? input, string? expected = default)
     {
         var pipe = new Pipe();
         var enumerable = new BrainfuckSequenceEnumerable(source.AsMemory());
