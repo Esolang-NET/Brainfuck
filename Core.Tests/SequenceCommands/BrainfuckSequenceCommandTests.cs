@@ -57,13 +57,13 @@ public class BrainfuckSequenceCommandTests
                 new() { Sequences = new[] { IncrementPointer }, SequencesIndex = 1, Stack = ImmutableArray.Create<byte>(0), },
                 null
             );
-            static object?[] TryGetCommandTest(BrainfuckContext context, Type? expected)
+            static object?[] TryGetCommandTest(TestShared.BrainfuckContext context, Type? expected)
                 => new object?[] { context, expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(TryGetCommandTestData))]
-    public void TryGetCommandTest(BrainfuckContext context, Type expected)
+    public void TryGetCommandTest(TestShared.BrainfuckContext context, Type expected)
     {
         var result = Command.TryGetCommand(context, out var command);
         Assert.AreEqual(expected is not null, result);
@@ -77,9 +77,9 @@ public class BrainfuckSequenceCommandTests
     }
     [TestMethod]
     [DynamicData(nameof(TryGetCommandTestData))]
-    public void Cast(BrainfuckContext context, Type expected)
+    public void Cast(TestShared.BrainfuckContext context, Type expected)
     {
-        var command = (Command?)context;
+        var command = (Command?)(BrainfuckContext)context;
         Assert.AreEqual(expected is not null, command is not null);
         if (command is null)
         {

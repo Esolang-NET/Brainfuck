@@ -16,7 +16,7 @@ public class OutputCommandTests
         get
         {
             {
-                // input set.
+                // output set.
                 var sequences = new[] { Output }.AsMemory();
                 var stack = ImmutableArray.Create<byte>(1);
                 BrainfuckContext context = new(
@@ -32,13 +32,13 @@ public class OutputCommandTests
                     }
                 );
             }
-            static object[] ExecuteAsyncTest(BrainfuckContext context, byte[] output, BrainfuckContext expected)
+            static object[] ExecuteAsyncTest(TestShared.BrainfuckContext context, byte[] output, TestShared.BrainfuckContext expected)
                 => new object[] { context, output.ToSerializable(), expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, SerializableArrayWrapper<byte> outputExpected, BrainfuckContext expected)
+    public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, SerializableArrayWrapper<byte> outputExpected, TestShared.BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
@@ -56,13 +56,13 @@ public class OutputCommandTests
         await pipe.Writer.CompleteAsync();
         await waiter;
         stream.Seek(0, SeekOrigin.Begin);
-        Assert.AreEqual(expected, actual);
+        Assert.AreEqual<BrainfuckContext>(expected, actual);
         var outputActual = stream.ToArray();
         CollectionAssert.AreEqual((byte[])outputExpected, outputActual);
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
-    public void ExecuteTest(BrainfuckContext context, SerializableArrayWrapper<byte> outputExpected, BrainfuckContext expected)
+    public void ExecuteTest(TestShared.BrainfuckContext context, SerializableArrayWrapper<byte> outputExpected, TestShared.BrainfuckContext expected)
     {
         var pipe = new Pipe();
         context = context with
@@ -75,7 +75,7 @@ public class OutputCommandTests
         };
         var actual = new Command(context).Execute();
         pipe.Writer.Complete();
-        Assert.AreEqual(expected, actual);
+        Assert.AreEqual<BrainfuckContext>(expected, actual);
         var outputActual = pipe.Reader.TryRead(out var result) ? result.Buffer.ToArray() : Array.Empty<byte>();
         CollectionAssert.AreEqual((byte[])outputExpected, outputActual);
     }

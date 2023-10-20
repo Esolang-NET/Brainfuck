@@ -47,26 +47,26 @@ public class DecrementCurrentCommandTests
                     }
                 );
             }
-            static object[] ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
+            static object[] ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
                 => new object[] { context, expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
-    public async Task ExecuteAsyncTest(BrainfuckContext context, BrainfuckContext expected)
+    public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
 
         var actual = await new Command(context).ExecuteAsync(token);
-        Assert.AreEqual(expected, actual);
+        Assert.AreEqual<BrainfuckContext>(expected, actual);
     }
 
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
-    public void ExecuteTest(BrainfuckContext context, BrainfuckContext expected)
+    public void ExecuteTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
     {
         var actual = new Command(context).Execute();
-        Assert.AreEqual(expected, actual);
+        Assert.AreEqual<BrainfuckContext>(expected, actual);
     }
 
     [TestMethod]
