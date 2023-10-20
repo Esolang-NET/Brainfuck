@@ -34,7 +34,7 @@ public record EndCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Co
         for (; lastIndex >= 0; lastIndex--)
         {
             var sequence = Context.Sequences.Span[lastIndex];
-            if (sequence is not BrainfuckSequence.Begin or BrainfuckSequence.End)
+            if (sequence is not (BrainfuckSequence.Begin or BrainfuckSequence.End))
                 continue;
             if (sequence is BrainfuckSequence.End)
                 hierarchy++;

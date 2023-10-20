@@ -36,12 +36,12 @@ public class EndCommandTests
                 // while(true) {
                 // ← after
                 // } ← before
-                var sequences = new[] { Begin, Comment, End, Comment }.AsMemory();
+                var sequences = new[] { Begin, Comment, Begin, Comment, End, End, Comment }.AsMemory();
                 var stack = ImmutableArray.Create<byte>(1);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack,
-                    SequencesIndex: 2
+                    SequencesIndex: 5
                 );
                 yield return ExecuteAsyncTest(
                     context,
@@ -53,6 +53,7 @@ public class EndCommandTests
             }
             {
                 // invalid pattern 1
+                // loop out end -> other
                 var sequences = new[] { Comment, End, Comment }.AsMemory();
                 var stack = ImmutableArray.Create<byte>(0);
                 BrainfuckContext context = new(
@@ -70,8 +71,26 @@ public class EndCommandTests
             }
             {
                 // invalid pattern 2
+                // loop out end -> end
                 var sequences = new[] { End, End, Comment }.AsMemory();
                 var stack = ImmutableArray.Create<byte>(0);
+                BrainfuckContext context = new(
+                    Sequences: sequences,
+                    Stack: stack
+                );
+                yield return ExecuteAsyncTest(
+                    context,
+                    context with
+                    {
+                        SequencesIndex = 1,
+                    }
+                );
+            }
+            {
+                // invalid pattern 3
+                // invalid loop skip loop
+                var sequences = new[] { End, End, Comment }.AsMemory();
+                var stack = ImmutableArray.Create<byte>(1);
                 BrainfuckContext context = new(
                     Sequences: sequences,
                     Stack: stack

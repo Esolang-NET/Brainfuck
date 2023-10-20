@@ -5,7 +5,6 @@ namespace Brainfuck.Core.SequenceCommands;
 public abstract record class BrainfuckSequenceCommand(BrainfuckContext Context)
 {
     protected readonly BrainfuckContext Context = Context;
-    public void Deconstruct(out BrainfuckContext context) => context = Context;
     /// <summary>
     /// <see cref="Context"/> need Input
     /// </summary>
