@@ -38,7 +38,7 @@ public class OutputCommandTests
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
-    public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, SerializableArrayWrapper<byte> outputExpected, TestShared.BrainfuckContext expected)
+    public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, Array<byte> outputExpected, TestShared.BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
@@ -62,7 +62,7 @@ public class OutputCommandTests
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
-    public void ExecuteTest(TestShared.BrainfuckContext context, SerializableArrayWrapper<byte> outputExpected, TestShared.BrainfuckContext expected)
+    public void ExecuteTest(TestShared.BrainfuckContext context, Array<byte> outputExpected, TestShared.BrainfuckContext expected)
     {
         var pipe = new Pipe();
         context = context with
@@ -78,6 +78,19 @@ public class OutputCommandTests
         Assert.AreEqual<BrainfuckContext>(expected, actual);
         var outputActual = pipe.Reader.TryRead(out var result) ? result.Buffer.ToArray() : Array.Empty<byte>();
         CollectionAssert.AreEqual((byte[])outputExpected, outputActual);
+    }
+    [TestMethod]
+    public void ExecuteAsync_ThrowTest()
+    {
+        var token = TestContext.CancellationTokenSource.Token;
+        var command = new Command(new BrainfuckContext(Sequences: new[] { Output }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await command.ExecuteAsync(token)); ;
+    }
+    [TestMethod]
+    public void Execute_ThrowTest()
+    {
+        var command = new Command(new BrainfuckContext(Sequences: new[] { Output }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        Assert.ThrowsException<InvalidOperationException>(() => command.Execute());
     }
 
     [TestMethod]

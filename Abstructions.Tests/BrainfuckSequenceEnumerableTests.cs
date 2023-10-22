@@ -70,13 +70,13 @@ public class BrainfuckSequenceEnumerableTests
     }
     [TestMethod]
     [DynamicData(nameof(GetEnumerableTestData))]
-    public void GetEnumerableTest(string source, TestShared.BrainfuckOptions? options, SerializableArrayWrapper<Tuple<BrainfuckSequence, string>> expected)
+    public void GetEnumerableTest(string source, TestShared.BrainfuckOptions? options, Array<Tuple<BrainfuckSequence, string>> expected)
     {
         var actual = new BrainfuckSequenceEnumerable(source, options).ToArray();
         TestContext.WriteLine("expected:[{0}] actual:[{1}]",
-            string.Join(", ", expected.Array.Select(v => $"{v.Item1}:\"{v.Item2}\"")),
+            string.Join(", ", expected.AsArray().Select(v => $"{v.Item1}:\"{v.Item2}\"")),
             string.Join(", ", actual.Select(v => $"{v.Sequence}:\"{v.Syntax}\"")));
-        CollectionAssert.AreEqual(expected.Array.Select(v => (v.Item1, v.Item2)).ToArray(), actual.Select(v => (v.Sequence, v.Syntax.ToString())).ToArray());
+        CollectionAssert.AreEqual(expected.AsArray().Select(v => (v.Item1, v.Item2)).ToArray(), actual.Select(v => (v.Sequence, v.Syntax.ToString())).ToArray());
     }
     [TestMethod]
     public void RequiredInputTest()

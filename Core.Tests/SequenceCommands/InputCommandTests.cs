@@ -56,7 +56,7 @@ public class InputCommandTests
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
-    public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, SerializableArrayWrapper<byte> input, TestShared.BrainfuckContext expected)
+    public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, Array<byte> input, TestShared.BrainfuckContext expected)
     {
         var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
@@ -70,8 +70,8 @@ public class InputCommandTests
         };
 
         var waiter = new Command(context).ExecuteAsync(token);
-        if (input.Array.Length > 0)
-            await pipe.Writer.WriteAsync(input, token);
+        if (input.AsArray().Length > 0)
+            await pipe.Writer.WriteAsync(input.AsArray(), token);
         await pipe.Writer.CompleteAsync();
         var actual = await waiter;
         Assert.AreEqual<BrainfuckContext>(expected, actual);
@@ -79,7 +79,7 @@ public class InputCommandTests
 
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
-    public void ExecuteTest(TestShared.BrainfuckContext context, SerializableArrayWrapper<byte> input, TestShared.BrainfuckContext expected)
+    public void ExecuteTest(TestShared.BrainfuckContext context, Array<byte> input, TestShared.BrainfuckContext expected)
     {
         var pipe = new Pipe();
         context = context with
@@ -91,15 +91,28 @@ public class InputCommandTests
             Input = pipe.Reader,
         };
 
-        if (input.Array.Length > 0)
+        if (input.Length > 0)
         {
-            var dest = pipe.Writer.GetSpan(input.Array.Length);
-            input.Array.AsSpan().CopyTo(dest);
-            pipe.Writer.Advance(input.Array.Length);
+            var dest = pipe.Writer.GetSpan(input.Length);
+            input.AsArray().AsSpan().CopyTo(dest);
+            pipe.Writer.Advance(input.AsArray().Length);
         }
         pipe.Writer.Complete();
         var actual = new Command(context).Execute();
         Assert.AreEqual<BrainfuckContext>(expected, actual);
+    }
+    [TestMethod]
+    public void ExecuteAsync_ThrowTest()
+    {
+        var token = TestContext.CancellationTokenSource.Token;
+        var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await command.ExecuteAsync(token)); ;
+    }
+    [TestMethod]
+    public void Execute_ThrowTest()
+    {
+        var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        Assert.ThrowsException<InvalidOperationException>(() => command.Execute());
     }
 
     [TestMethod]
