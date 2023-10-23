@@ -10,7 +10,15 @@ public sealed partial class BrainfuckRunner
         private readonly BrainfuckSequenceCommand Command;
         public BrainfuckContext? Executed;
         public SequenceCommand(BrainfuckSequenceCommand command) : this(command, null) { }
-        public SequenceCommand(BrainfuckSequenceCommand command, BrainfuckContext? executed) : base((BrainfuckContext)command) => (Command, Executed) = (command, executed);
+        public SequenceCommand(BrainfuckSequenceCommand command, BrainfuckContext? executed) : base(ToContextAndCommand(ref command))
+            => (Command, Executed) = (command, executed);
+        static BrainfuckContext ToContextAndCommand( ref BrainfuckSequenceCommand command)
+        {
+            while (command is SequenceCommand command_)
+                (command, _) = command_;
+            return command;
+        }
+
         public void Deconstruct(out BrainfuckSequenceCommand command, out BrainfuckContext? executed) => (command, executed) = (Command, Executed);
 
         public override async ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
