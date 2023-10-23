@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Immutable;
 
 namespace Brainfuck.Tests;
@@ -50,8 +51,9 @@ public class BrainfuckContextTests
         var hashCode2 = context2.GetHashCode();
         var hashCode3 = context3.GetHashCode();
         TestContext.WriteLine($"{nameof(context1)}:{hashCode1}");
-        TestContext.WriteLine($"{nameof(context2)}:{context2.GetHashCode()}");
-        TestContext.WriteLine($"{nameof(context3)}:{context3.GetHashCode()}");
-        Assert.IsTrue(true);
+        TestContext.WriteLine($"{nameof(context2)}:{hashCode2}");
+        TestContext.WriteLine($"{nameof(context3)}:{hashCode3}");
+        Assert.AreNotEqual(hashCode1, hashCode2, $"{nameof(hashCode1)} != {nameof(hashCode2)}");
+        Assert.AreEqual(hashCode1, hashCode3, $"{nameof(hashCode1)} == {nameof(hashCode3)}");
     }
 }

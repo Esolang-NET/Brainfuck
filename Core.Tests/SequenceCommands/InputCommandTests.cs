@@ -45,7 +45,6 @@ public class InputCommandTests
                     Array.Empty<byte>(),
                     context with
                     {
-                        Stack = ImmutableArray.Create<byte>(0),
                         SequencesIndex = 1,
                     }
                 );

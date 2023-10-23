@@ -10,7 +10,7 @@
     },
     "[root] in/out ": {
       "commandName": "Project",
-      "commandLineArgs": "\"+[,.]\""
+      "commandLineArgs": "\"+[[-],.]\""
     },
     "[root] out 0123456789": {
       "commandName": "Project",

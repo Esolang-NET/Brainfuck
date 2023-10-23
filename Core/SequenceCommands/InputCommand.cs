@@ -10,7 +10,8 @@ public record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(
 
     public override BrainfuckContext Execute()
     {
-        var (sequencesIndex, stack) = Input();
+        if (!TryInput(out var sequencesIndex, out var stack))
+            return Next();
         return Context with
         {
             SequencesIndex = sequencesIndex,
@@ -21,39 +22,42 @@ public record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(
     public override async ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var (sequencesIndex, stack) = await InputAsync(cancellationToken);
+        if (await InputAsync(cancellationToken) is not (var sequencesIndex, var stack))
+            return Next();
         return Context with
         {
             SequencesIndex = sequencesIndex,
             Stack = stack,
         };
     }
-    async ValueTask<(int SequencesIndex, ImmutableArray<byte> Stack)> InputAsync(CancellationToken cancellationToken = default)
+    async ValueTask<(int SequencesIndex, ImmutableArray<byte> Stack)?> InputAsync(CancellationToken cancellationToken = default)
     {
         if (Context.Input is null) throw new InvalidOperationException("required context.Input.");
         var sequencesIndex = Context.SequencesIndex + 1;
         var memory = new byte[1].AsMemory();
-        if ((await Context.Input.ReadAtLeastAsync(memory.Length, cancellationToken)) is { } result)
-            TryReadWriteFromResult(Context.Input, result, ref memory);
+        if (!((await Context.Input.ReadAtLeastAsync(memory.Length, cancellationToken)) is { } result
+            && TryReadWriteFromResult(Context.Input, result, memory.Span)))
+            return null;
         var stack = Context.Stack.SetItem(Context.StackIndex, memory.Span[0]);
         return (sequencesIndex, stack);
     }
-    (int SequenceIndex, ImmutableArray<byte> Stack) Input()
+    bool TryInput(out int sequencesIndex, out ImmutableArray<byte> stack)
     {
+        sequencesIndex = default;
+        stack = default!;
         if (Context.Input is null) throw new InvalidOperationException("required context.Input.");
-        var sequencesIndex = Context.SequencesIndex + 1;
-        var memory = new byte[1].AsMemory();
-        if (Context.Input.TryRead(out var result))
-            TryReadWriteFromResult(Context.Input, result, ref memory);
-        var stack = Context.Stack.SetItem(Context.StackIndex, memory.Span[0]);
-        return (sequencesIndex, stack);
+        sequencesIndex = Context.SequencesIndex + 1;
+        Span<byte> span = stackalloc byte[1];
+        if (!Context.Input.TryRead(out var result)) return false;
+        if (!TryReadWriteFromResult(Context.Input, result, span)) return false;
+        stack = Context.Stack.SetItem(Context.StackIndex, span[0]);
+        return true;
     }
-
-    static bool TryReadWriteFromResult(PipeReader reader, ReadResult result, ref Memory<byte> dest)
+    static bool TryReadWriteFromResult(PipeReader reader, ReadResult result, Span<byte> dest)
     {
         var buffer = result.Buffer;
         var readableSeq = buffer.IsEmpty ? buffer : buffer.Slice(buffer.Start, dest.Length);
-        if (readableSeq.Length > 0) readableSeq.CopyTo(dest.Span);
+        if (readableSeq.Length > 0) readableSeq.CopyTo(dest);
         reader.AdvanceTo(readableSeq.End);
         return readableSeq.Length == dest.Length;
     }

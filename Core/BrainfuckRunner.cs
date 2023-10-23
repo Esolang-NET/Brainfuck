@@ -31,7 +31,7 @@ public sealed partial class BrainfuckRunner
         => (sequences, input, output) = (Sequences, Input, Output);
     public BrainfuckContext Run(BrainfuckContext? context = null) => InternalRun(context ?? Context);
     public ValueTask<BrainfuckContext> RunAsync(CancellationToken cancellationToken = default) => RunAsync(null, cancellationToken);
-    public ValueTask<BrainfuckContext> RunAsync(BrainfuckContext? context, CancellationToken cancellationToken = default) => RunAsync(context ?? Context, cancellationToken);
+    public ValueTask<BrainfuckContext> RunAsync(BrainfuckContext? context, CancellationToken cancellationToken = default) => InternalRunAsync(context ?? Context, cancellationToken);
     public IEnumerable<SequenceCommand> StepCommands() => InternalStepCommands(Context);
     static async ValueTask<BrainfuckContext> InternalRunAsync(BrainfuckContext context, CancellationToken cancellationToken = default)
     {
@@ -100,6 +100,7 @@ public sealed partial class BrainfuckRunner
             return null;
         var array = result.Buffer.ToArray();
         pipe.Reader.AdvanceTo(result.Buffer.End);
+        if (array.Length == 0) return null;
         return Encoding.UTF8.GetString(array);
     }
 

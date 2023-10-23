@@ -11,7 +11,6 @@ rootCommand
     .AddParseCommand(option);
 var app = new CommandLineBuilder(rootCommand)
     .UseDefaults()
-    .UseHelp()
     .Build();
 await app.InvokeAsync(args);
 
