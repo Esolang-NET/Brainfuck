@@ -2,6 +2,7 @@
 using System.CommandLine;
 using System.CommandLine.Binding;
 using System.CommandLine.Invocation;
+using System.CommandLine.IO;
 using System.CommandLine.Parsing;
 using System.IO.Pipelines;
 using System.Text;
@@ -63,7 +64,7 @@ public static class BrainfuckConsoleExtensions
         {
             Argument<T> argument => result.GetValueForArgument(argument),
             Option<T> option => result.GetValueForOption(option),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => throw new ArgumentOutOfRangeException(nameof(symbol))
         };
     }
     public static RootCommand AddDefaultCommand(this RootCommand rootCommand, BrainfuckOptionBinder option)
@@ -131,7 +132,7 @@ public static class BrainfuckConsoleExtensions
 
         var sourceArgument = new Argument<string>("source", "brainfuck source");
         parseCommand.AddArgument(sourceArgument);
-        parseCommand.SetHandler((context) =>
+        parseCommand.SetHandler((InvocationContext context) =>
         {
 
             var console = context.Console;
@@ -139,7 +140,7 @@ public static class BrainfuckConsoleExtensions
             var source = context.ParseResult.GetValueForArgument(sourceArgument);
             foreach (var (sequence, syntaxes) in new BrainfuckSequenceEnumerable(source, o))
             {
-                System.Console.WriteLine($"{sequence}: {syntaxes}");
+                console.Out.WriteLine($"{sequence}: {syntaxes}");
             }
             context.ExitCode = 0;
             return;
