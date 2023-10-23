@@ -17,6 +17,7 @@ public class BrainfuckRunner_SequenceCommandTests
         var (command2, _) = command;
         Assert.AreEqual(innerCommand, command2);
     }
+    [TestMethod]
     public void RequiredInputTest()
     {
 
@@ -24,6 +25,7 @@ public class BrainfuckRunner_SequenceCommandTests
         var command = new Command(innerCommand);
         Assert.AreEqual(innerCommand.RequiredInput, command.RequiredInput);
     }
+    [TestMethod]
     public void RequiredOutputTest()
     {
 
@@ -31,6 +33,7 @@ public class BrainfuckRunner_SequenceCommandTests
         var command = new Command(innerCommand);
         Assert.AreEqual(innerCommand.RequiredOutput, command.RequiredOutput);
     }
+    [TestMethod]
     public void ToStringTest()
     {
 

@@ -34,6 +34,10 @@ public class BrainfuckRunnerTests
                 input: "1234567890",
                 expected: "1234567890\0"
             );
+            yield return RunAndOutputStringTest(
+                source: "++",
+                expected: null
+            );
             static object?[] RunAndOutputStringTest(string source, string? input = default, string? expected = default)
                 => new object?[] { source, input, expected };
         }

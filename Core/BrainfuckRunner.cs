@@ -29,10 +29,11 @@ public sealed partial class BrainfuckRunner
 
     public void Deconstruct(out ReadOnlyMemory<BrainfuckSequence> sequences, out PipeWriter? output, out PipeReader? input)
         => (sequences, input, output) = (Sequences, Input, Output);
-    public BrainfuckContext Run() => Run(Context);
-    public ValueTask<BrainfuckContext> RunAsync(CancellationToken cancellationToken = default) => RunAsync(Context, cancellationToken);
+    public BrainfuckContext Run(BrainfuckContext? context = null) => InternalRun(context ?? Context);
+    public ValueTask<BrainfuckContext> RunAsync(CancellationToken cancellationToken = default) => RunAsync(null, cancellationToken);
+    public ValueTask<BrainfuckContext> RunAsync(BrainfuckContext? context, CancellationToken cancellationToken = default) => RunAsync(context ?? Context, cancellationToken);
     public IEnumerable<SequenceCommand> StepCommands() => InternalStepCommands(Context);
-    static async ValueTask<BrainfuckContext> RunAsync(BrainfuckContext context, CancellationToken cancellationToken = default)
+    static async ValueTask<BrainfuckContext> InternalRunAsync(BrainfuckContext context, CancellationToken cancellationToken = default)
     {
         var lastContext = context;
         foreach (var command in InternalStepCommands(context))
@@ -41,7 +42,7 @@ public sealed partial class BrainfuckRunner
         }
         return lastContext;
     }
-    static BrainfuckContext Run(BrainfuckContext context)
+    static BrainfuckContext InternalRun(BrainfuckContext context)
     {
         var lastContext = context;
         foreach (var command in InternalStepCommands(context))

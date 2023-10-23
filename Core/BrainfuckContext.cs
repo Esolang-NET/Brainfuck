@@ -69,7 +69,7 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
             if (s1IsEmpty != s2IsEmpty) return false;
             if (!s1IsEmpty && !s2IsEmpty && !Stack.SequenceEqual(other.Stack)) return false;
         }
-        return 
+        return
             SequencesIndex == other.SequencesIndex
             && StackIndex == other.StackIndex
             && Equals(Input, other.Input)
