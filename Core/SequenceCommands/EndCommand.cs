@@ -2,7 +2,7 @@
 
 public record EndCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    public override BrainfuckContext Execute()
+    public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         if (!TryGetNextSequencesIndex(out var sequencesIndex))
             return Next();

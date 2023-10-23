@@ -4,7 +4,7 @@ namespace Brainfuck.Core.SequenceCommands;
 
 public record IncrementPointerCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    public override BrainfuckContext Execute()
+    public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         IncrementPointer(out var sequencesIndex, out var stack, out var stackIndex);
         return Context with

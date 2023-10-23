@@ -4,7 +4,7 @@ public record OutputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand
 {
     public override bool RequiredOutput => true;
 
-    public override BrainfuckContext Execute()
+    public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         var sequenceIndex = Output();
         return Context with

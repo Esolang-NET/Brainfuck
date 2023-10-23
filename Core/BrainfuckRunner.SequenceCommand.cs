@@ -19,9 +19,9 @@ public sealed partial class BrainfuckRunner
             Executed = result;
             return result;
         }
-        public override BrainfuckContext Execute()
+        public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
         {
-            var result = Command.Execute();
+            var result = Command.Execute(cancellationToken);
             Executed = result;
             return result;
         }

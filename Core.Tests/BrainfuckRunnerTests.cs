@@ -62,22 +62,27 @@ public class BrainfuckRunnerTests
     }
     [TestMethod]
     [DynamicData(nameof(RunAndOutputStringTestData))]
-    public void RunAndOutputStringTest(string source, string? input, string? expected = default)
+    public async Task RunAndOutputStringTest(string source, string? input, string? expected = default)
     {
+        var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
         var enumerable = new BrainfuckSequenceEnumerable(source.AsMemory());
         var sequences = enumerable.Select(v => v.Sequence).ToArray().AsMemory();
         var runner = new BrainfuckRunner(sequences, input: pipe.Reader);
-        if (!string.IsNullOrEmpty(input))
+        var awaiter = Task<string?>.Factory.StartNew(() => runner.RunAndOutputString(), token, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
+        WriteIsNotNullOrEmpty(input, pipe);
+        var actual = await awaiter;
+        Assert.AreEqual(expected, actual);
+        static void WriteIsNotNullOrEmpty(string? input, Pipe pipe)
         {
+            if (string.IsNullOrEmpty(input))
+                return;
             var input2 = Encoding.UTF8.GetBytes(input);
             var dest = pipe.Writer.GetSpan(input2.Length);
             input2.CopyTo(dest);
             pipe.Writer.Advance(input2.Length);
             pipe.Writer.Complete();
         }
-        var actual = runner.RunAndOutputString();
-        Assert.AreEqual(expected, actual);
     }
     [TestMethod]
 

@@ -2,7 +2,7 @@
 
 public record IncrementCurrentCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    public override BrainfuckContext Execute() => IncrementCurrent();
+    public override BrainfuckContext Execute(CancellationToken cancellationToken = default) => IncrementCurrent();
 
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {

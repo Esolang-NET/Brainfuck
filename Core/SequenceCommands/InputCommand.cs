@@ -8,9 +8,9 @@ public record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(
 {
     public override bool RequiredInput => true;
 
-    public override BrainfuckContext Execute()
+    public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
-        if (!TryInput(out var sequencesIndex, out var stack))
+        if (!TryInput(out var sequencesIndex, out var stack, cancellationToken))
             return Next();
         return Context with
         {
@@ -33,23 +33,25 @@ public record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(
     async ValueTask<(int SequencesIndex, ImmutableArray<byte> Stack)?> InputAsync(CancellationToken cancellationToken = default)
     {
         if (Context.Input is null) throw new InvalidOperationException("required context.Input.");
-        var sequencesIndex = Context.SequencesIndex + 1;
         var memory = new byte[1].AsMemory();
         if (!((await Context.Input.ReadAtLeastAsync(memory.Length, cancellationToken)) is { } result
             && TryReadWriteFromResult(Context.Input, result, memory.Span)))
             return null;
+        var sequencesIndex = Context.SequencesIndex + 1;
         var stack = Context.Stack.SetItem(Context.StackIndex, memory.Span[0]);
         return (sequencesIndex, stack);
     }
-    bool TryInput(out int sequencesIndex, out ImmutableArray<byte> stack)
+    bool TryInput(out int sequencesIndex, out ImmutableArray<byte> stack, CancellationToken cancellationToken)
     {
         sequencesIndex = default;
         stack = default!;
         if (Context.Input is null) throw new InvalidOperationException("required context.Input.");
-        sequencesIndex = Context.SequencesIndex + 1;
         Span<byte> span = stackalloc byte[1];
-        if (!Context.Input.TryRead(out var result)) return false;
+        ReadResult result;
+        while (!Context.Input.TryRead(out result))
+            if (cancellationToken.IsCancellationRequested) return false;
         if (!TryReadWriteFromResult(Context.Input, result, span)) return false;
+        sequencesIndex = Context.SequencesIndex + 1;
         stack = Context.Stack.SetItem(Context.StackIndex, span[0]);
         return true;
     }

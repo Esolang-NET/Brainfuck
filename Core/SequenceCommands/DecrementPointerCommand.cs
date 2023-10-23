@@ -2,7 +2,7 @@
 
 public record DecrementPointerCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    public override BrainfuckContext Execute()
+    public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         if (!TryDecrementPointer(out var sequencesIndex, out var stackIndex))
             return Next();
