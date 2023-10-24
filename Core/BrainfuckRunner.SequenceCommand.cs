@@ -14,6 +14,11 @@ public sealed partial class BrainfuckRunner
             => (Command, Executed) = (command, executed);
         static BrainfuckContext ToContextAndCommand( ref BrainfuckSequenceCommand command)
         {
+#if NET5_0_OR_GREATER
+            ArgumentNullException.ThrowIfNull(command);
+#else
+            if (command is null) throw new ArgumentNullException(nameof(command));
+#endif
             while (command is SequenceCommand command_)
                 (command, _) = command_;
             return command;
