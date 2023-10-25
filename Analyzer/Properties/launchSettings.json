@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "プロファイル 1": {
+    "debug": {
       "commandName": "DebugRoslynComponent",
       "targetProject": "..\\Analyzer.UseConsole\\Brainfuck.Analyzer.UseConsole.csproj"
     }

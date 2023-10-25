@@ -12,4 +12,11 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+    public static readonly DiagnosticDescriptor InvalidReturnType = new(
+        id: "BF0004",
+        title: "not support return type",
+        messageFormat: "The method is support return type is not support.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }

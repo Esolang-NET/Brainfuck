@@ -1,7 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.IO.Pipelines;
 using System.Text;
 using static Brainfuck.BrainfuckSequence;
 
@@ -16,7 +15,8 @@ public partial class BrainfuckMethodGenerator
             return;
         var containingClassSymbol = methodSymbol.ContainingType ??
             throw new InvalidOperationException($"IMethodSymbol.ContainingType is null");
-
+        if (GetReturnType(methodSymbol.ReturnType, context, methodDeclarationSyntax) is not (var returnType, var taskType))
+            return;
         var (openingDefinitionCode, codeForClosingDefinition) = Utils.GenerateOpeningClosingTypeDefinitionCode(methodSymbol);
         var methodModifier = $"{SyntaxFacts.GetText(methodSymbol.DeclaredAccessibility)}{(methodSymbol.IsStatic ? " static" : string.Empty)} partial";
         InternalOptions writeOption = new(
@@ -26,7 +26,9 @@ public partial class BrainfuckMethodGenerator
             VariableStackIndex: STACK_INDEX,
             VariableCancellationToken: "cancellationToken",
             VariablePipeWriter: "output",
-            VariablePipeReader: "input"
+            VariablePipeReader: "input",
+            ReturnType: returnType,
+            TaskType: taskType
         );
         var methodBodyCode = GenerateMethodBodyCode(2, sequences, writeOption);
         var generatedSourceCode = $$"""
@@ -47,6 +49,37 @@ public partial class BrainfuckMethodGenerator
         var generatingSourceFileName = Utils.SanitizeForFileName($"{classPart}.{methodSymbol.Name}.{returnTypePart}.g.cs");
         context.AddSource(generatingSourceFileName, generatedSourceCode);
     }
+    static (ReturnType ReturnType, TaskType TaskType)? GetReturnType(
+        ITypeSymbol returnType,
+        SourceProductionContext context,
+        MethodDeclarationSyntax methodDeclarationSyntax)
+    {
+        var typeName = returnType.GetDocumentationCommentId();
+        // return void 
+        if (typeof(void).ToString() == typeName)
+            return (ReturnType.Void, TaskType.Non);
+        if (typeof(Task).ToString() == typeName)
+            return (ReturnType.Void, TaskType.Task);
+        if (typeof(ValueTask).ToString() == typeName)
+            return (ReturnType.Void, TaskType.ValueTask);
+        // return string
+        if (typeof(Task<string>).ToString() == typeName)
+            return (ReturnType.String, TaskType.Task);
+        if (typeof(string).ToString() == typeName)
+            return (ReturnType.String, TaskType.Non);
+        if (typeof(ValueTask<string>).ToString() == typeName)
+            return (ReturnType.String, TaskType.ValueTask);
+        // return enumerable byte
+        if (typeof(IEnumerable<byte>).ToString() == typeName)
+            return (ReturnType.ByteEnumerable, TaskType.Non);
+        if (typeof(IAsyncEnumerable<byte>).ToString() == typeName)
+            return (ReturnType.ByteAsyncEnumerable, TaskType.ValueTask);
+        context.ReportDiagnostic(
+            Diagnostic.Create(
+                DiagnosticDescriptors.InvalidReturnType,
+                methodDeclarationSyntax.Identifier.GetLocation()));
+        return null;
+    }
     const string SPACE = "    ";
     const string STACK_NAME = "stack";
     const string STACK_INDEX = "stackIndex";
@@ -57,7 +90,9 @@ public partial class BrainfuckMethodGenerator
         string VariableStackIndex,
         string VariablePipeWriter,
         string VariablePipeReader,
-        string VariableCancellationToken
+        string VariableCancellationToken,
+        ReturnType ReturnType,
+        TaskType TaskType
     );
     /// <summary>
     /// 
@@ -108,6 +143,7 @@ public partial class BrainfuckMethodGenerator
         var seq = sequences.Select((v, i) => new Sequence(i, v.Sequence, v.Syntax)).ToArray().AsMemory();
         var nest = Nest(seq);
         WriteNest(indent, nest, builder, options);
+        
         return builder.ToString();
     }
     static void WriteNest(int indent, IEnumerable<INestableSequence> sequences, StringBuilder builder, InternalOptions options)
@@ -329,11 +365,18 @@ public partial class BrainfuckMethodGenerator
         ReadOnlyMemoryChar,
 
     }
+    enum TaskType
+    {
+        Non,
+        Task,
+        ValueTask,
+    }
     enum ReturnType
     {
         Void = default,
         String,
         ByteArray,
-        ReadOnlyMemoryChar
+        ByteEnumerable,
+        ByteAsyncEnumerable,
     }
 }
