@@ -8,7 +8,8 @@
 				"$msCompile"
 			],
 			"group": "build",
-			"label": "dotnet build"
+			"label": "dotnet build",
+			"detail": "build"
 		},
 		{
 			"type": "shell",
@@ -24,6 +25,7 @@
 				"-p:PublishProfile=FolderProfile",
 			],
 			"label": "dotnet publish Console --framework net6.0 -p:PublishProfile=FolderProfile",
+			"detail": "dotnet publish Console (net6.0)"
 		},
 		{
 			"type": "shell",
@@ -39,6 +41,7 @@
 				"-p:PublishProfile=FolderProfile",
 			],
 			"label": "dotnet publish Console --framework net8.0 -p:PublishProfile=FolderProfile",
+			"detail": "dotnet publish Console (net8.0)"
 		}
 	]
 }
