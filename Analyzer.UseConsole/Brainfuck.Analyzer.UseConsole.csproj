@@ -6,6 +6,7 @@
 	  <LangVersion>11</LangVersion>
     <IsPackable>false</IsPackable>
     <IsPublishable>false</IsPublishable>
+    <IsTestProject>false</IsTestProject>
   </PropertyGroup>
 
   <ItemGroup>
