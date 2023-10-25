@@ -7,12 +7,15 @@ public sealed partial class BrainfuckRunner
 {
     public sealed record SequenceCommand : BrainfuckSequenceCommand
     {
-        private readonly BrainfuckSequenceCommand Command;
-        public BrainfuckContext? Executed;
+        public BrainfuckSequenceCommand Command { get; init; }
+        public BrainfuckContext? Executed { get; private set; }
+        public SequenceCommand(BrainfuckSequenceCommand Command, BrainfuckContext? Executed) : base(ToContextAndCommand(ref Command))
+        {
+            this.Command = Command;
+            this.Executed = Executed;
+        }
         public SequenceCommand(BrainfuckSequenceCommand command) : this(command, null) { }
-        public SequenceCommand(BrainfuckSequenceCommand command, BrainfuckContext? executed) : base(ToContextAndCommand(ref command))
-            => (Command, Executed) = (command, executed);
-        static BrainfuckContext ToContextAndCommand( ref BrainfuckSequenceCommand command)
+        static BrainfuckContext ToContextAndCommand(ref BrainfuckSequenceCommand command)
         {
 #if NET5_0_OR_GREATER
             ArgumentNullException.ThrowIfNull(command);

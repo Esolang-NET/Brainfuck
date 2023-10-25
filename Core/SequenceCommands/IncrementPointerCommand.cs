@@ -2,7 +2,7 @@
 
 namespace Brainfuck.Core.SequenceCommands;
 
-public record IncrementPointerCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
+public sealed record IncrementPointerCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {

@@ -4,7 +4,7 @@ using System.IO.Pipelines;
 
 namespace Brainfuck.Core.SequenceCommands;
 
-public record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
+public sealed record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
     public override bool RequiredInput => true;
 

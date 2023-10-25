@@ -5,6 +5,9 @@
     <!-- Analyzer(Source Generator)ですという設定 -->
     <IsRoslynComponent>true</IsRoslynComponent>
     <AnalyzerLanguage>cs</AnalyzerLanguage>
+    <IsPublishable>false</IsPublishable>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +16,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Core\Brainfuck.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />

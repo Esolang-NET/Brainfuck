@@ -19,13 +19,12 @@
 			"command": "dotnet",
 			"args": [
 				"publish",
-				"Console",
 				"--framework",
 				"net8.0",
 				"-p:PublishProfile=FolderProfile",
 			],
-			"label": "dotnet publish Console --framework net6.0 -p:PublishProfile=FolderProfile",
-			"detail": "dotnet publish Console (net6.0)"
+			"label": "dotnet publish --framework net6.0 -p:PublishProfile=FolderProfile",
+			"detail": "dotnet publish (net6.0)"
 		},
 		{
 			"type": "shell",
@@ -35,13 +34,24 @@
 			"command": "dotnet",
 			"args": [
 				"publish",
-				"Console",
 				"--framework",
 				"net8.0",
 				"-p:PublishProfile=FolderProfile",
 			],
-			"label": "dotnet publish Console --framework net8.0 -p:PublishProfile=FolderProfile",
-			"detail": "dotnet publish Console (net8.0)"
+			"label": "dotnet publish --framework net8.0 -p:PublishProfile=FolderProfile",
+			"detail": "dotnet publish (net8.0)"
+		},
+		{
+			"type": "shell",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"command": "dotnet",
+			"args": [
+				"pack",
+			],
+			"label": "dotnet pack",
+			"detail": "pack"
 		}
 	]
 }

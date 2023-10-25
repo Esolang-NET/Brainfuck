@@ -1,6 +1,6 @@
 ﻿namespace Brainfuck.Core.SequenceCommands;
 
-public record DecrementPointerCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
+public sealed record DecrementPointerCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {

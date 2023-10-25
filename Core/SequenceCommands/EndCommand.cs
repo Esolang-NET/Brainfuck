@@ -1,6 +1,6 @@
 ﻿namespace Brainfuck.Core.SequenceCommands;
 
-public record EndCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
+public sealed record EndCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {

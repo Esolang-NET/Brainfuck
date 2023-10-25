@@ -1,6 +1,6 @@
 ﻿namespace Brainfuck.Core.SequenceCommands;
 
-public record OutputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
+public sealed record OutputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
     public override bool RequiredOutput => true;
 

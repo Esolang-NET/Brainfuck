@@ -1,6 +1,6 @@
 ﻿namespace Brainfuck.Core.SequenceCommands;
 
-public record IncrementCurrentCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
+public sealed record IncrementCurrentCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default) => IncrementCurrent();
 
