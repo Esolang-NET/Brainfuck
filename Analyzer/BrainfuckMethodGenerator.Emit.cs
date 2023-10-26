@@ -252,9 +252,9 @@ public partial class BrainfuckMethodGenerator
         var pipeWriter = options.VariablePipeWriter;
         var pipeReader = options.VariablePipeReader;
         var isAsync = options.ReturnType.IsAsync();
-        builder.AppendLine($"""
-            {space}var {options.VariableStack} = new System.Collections.Generic.List<byte>();{Environment.NewLine}
-            {space}var {options.VariableStackIndex} = 0;
+        builder.AppendLine($$"""
+            {{space}}var {{options.VariableStack}} = new System.Collections.Generic.List<byte>(){ 0 };{{Environment.NewLine}}
+            {{space}}var {{options.VariableStackIndex}} = 0;
             """);
         if (sequences.RequiredOutput)
         {
@@ -356,7 +356,7 @@ public partial class BrainfuckMethodGenerator
                         {{space}}{{SPACE}}{{pipeWriter}}.Complete();
                         {{space}}{{SPACE}}if (!outputPipe.Reader.TryRead(out var outputResult))
                         {{space}}{{SPACE}}{{SPACE}}return null!;
-                        {{space}}{{SPACE}}var resultArray = outputResult.Buffer.ToArray();
+                        {{space}}{{SPACE}}var resultArray = System.Buffers.BuffersExtensions.ToArray(outputResult.Buffer).ToArray();
                         {{space}}{{SPACE}}outputPipe.Reader.AdvanceTo(outputResult.Buffer.End);
                         {{space}}{{SPACE}}if (resultArray.Length == 0) return null!;
                         {{space}}{{SPACE}}return System.Text.Encoding.UTF8.GetString(resultArray);
@@ -482,7 +482,7 @@ public partial class BrainfuckMethodGenerator
                         {space}await {pipeWriter}.WriteAsync(AsMemory({stack}).Slice({stackIndex},1){withCancel});
                         """,
                 false => $"""
-                        {space}AsMemory({stack}).Slice({stackIndex}, 1).CopyTo({pipeWriter}.GetSpan(1));
+                        {space}AsMemory({stack}).Slice({stackIndex}, 1).Span.CopyTo({pipeWriter}.GetSpan(1));
                         {space}{pipeWriter}.Advance(1);
                         """,
             };
