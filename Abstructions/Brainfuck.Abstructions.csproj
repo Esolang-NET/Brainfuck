@@ -19,7 +19,6 @@
 
   <ItemGroup>
     <PackageReference Include="IndexRange" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="System.Memory" />
   </ItemGroup>
 

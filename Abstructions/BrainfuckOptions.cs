@@ -1,6 +1,4 @@
-﻿using System.Runtime.Serialization;
-
-namespace Brainfuck;
+﻿namespace Brainfuck;
 /// <summary>
 /// brainfuck options
 /// </summary>

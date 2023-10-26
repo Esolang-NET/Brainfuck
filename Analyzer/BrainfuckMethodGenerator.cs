@@ -15,7 +15,7 @@ public partial class BrainfuckMethodGenerator : IIncrementalGenerator
                 using System;
                 using System.Diagnostics;
                 namespace {{NameSpaceName}} {
-                    // [Conditional("COMPILE_TIME_ONLY")]
+                    [Conditional("COMPILE_TIME_ONLY")]
                     [AttributeUsage(AttributeTargets.Method, AllowMultiple =false, Inherited = false)]
                     internal sealed class {{ClassNameBrainfuckAttribution}} : Attribute
                     {

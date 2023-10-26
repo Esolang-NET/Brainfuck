@@ -1,5 +1,4 @@
-﻿using Brainfuck.Core.SequenceCommands;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO.Pipelines;
 using System.Text;
 

@@ -15,15 +15,31 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Core\Brainfuck.Core.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="README.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Generator dependencies -->
+    <ProjectReference Include="..\Abstructions\Brainfuck.Abstructions.csproj" />
+  </ItemGroup>
+
+
+  <!-- See https://github.com/dotnet/roslyn-sdk/blob/0313c80ed950ac4f4eef11bb2e1c6d1009b328c4/samples/CSharp/SourceGenerators/SourceGeneratorSamples/SourceGeneratorSamples.csproj#L13-L30
+  and https://github.com/dotnet/roslyn/discussions/47517#discussioncomment-64145 -->
+  <PropertyGroup>
+    <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+  </PropertyGroup>
+
+  <Target Name="GetDependencyTargetPaths">
+    <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker 
+        Include="$(ProjectDir)..\Abstructions\$(OutputPath)\*.dll"
+        IncludeRuntimeDependency="false" />
+    </ItemGroup>
+  </Target>
 
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
 </Project>

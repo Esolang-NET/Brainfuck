@@ -16,7 +16,7 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
 #if NET5_0_OR_GREATER
         ArgumentNullException.ThrowIfNull(info);
 #else
-        if(info is null) throw new ArgumentNullException(nameof(info));
+        if (info is null) throw new ArgumentNullException(nameof(info));
 #endif
         Sequences = (info.GetValue(nameof(Sequences), typeof(BrainfuckSequence[])) as BrainfuckSequence[] ?? Array.Empty<BrainfuckSequence>()).AsMemory();
         SequencesIndex = info.GetInt32(nameof(SequencesIndex));
