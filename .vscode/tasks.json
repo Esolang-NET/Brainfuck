@@ -1,0 +1,57 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "dotnet",
+			"task": "build",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": "build",
+			"label": "dotnet build",
+			"detail": "build"
+		},
+		{
+			"type": "shell",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"command": "dotnet",
+			"args": [
+				"publish",
+				"--framework",
+				"net8.0",
+				"-p:PublishProfile=FolderProfile",
+			],
+			"label": "dotnet publish --framework net6.0 -p:PublishProfile=FolderProfile",
+			"detail": "dotnet publish (net6.0)"
+		},
+		{
+			"type": "shell",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"command": "dotnet",
+			"args": [
+				"publish",
+				"--framework",
+				"net8.0",
+				"-p:PublishProfile=FolderProfile",
+			],
+			"label": "dotnet publish --framework net8.0 -p:PublishProfile=FolderProfile",
+			"detail": "dotnet publish (net8.0)"
+		},
+		{
+			"type": "shell",
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"command": "dotnet",
+			"args": [
+				"pack",
+			],
+			"label": "dotnet pack",
+			"detail": "pack"
+		}
+	]
+}

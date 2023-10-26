@@ -1,0 +1,28 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "[root] help": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
+    },
+    "[root] in/out ": {
+      "commandName": "Project",
+      "commandLineArgs": "\"+[[-],.]\""
+    },
+    "[root] out 0123456789": {
+      "commandName": "Project",
+      "commandLineArgs": "\"++++++[>++++++++<-]++++++++++[>.+<-]\""
+    },
+    "[parse] help": {
+      "commandName": "Project",
+      "commandLineArgs": "parse --help"
+    },
+    "[parse] 0123456789": {
+      "commandName": "Project",
+      "commandLineArgs": "parse \"++++++[>++++++++<-]++++++++++[>.+<-]\""
+    }
+  }
+}
