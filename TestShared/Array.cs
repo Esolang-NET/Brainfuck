@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Collections;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Brainfuck.TestShared;
@@ -7,10 +8,15 @@ namespace Brainfuck.TestShared;
 /// </summary>
 /// <typeparam name="T">要素型</typeparam>
 [Serializable]
-public readonly struct Array<T> : ISerializable, IEquatable<T[]>, IEquatable<Array<T>>
+public readonly struct Array<T> : ISerializable, IEquatable<T[]>, IEquatable<Array<T>>, IReadOnlyList<T>
 {
     readonly T[] InnerArray;
     public readonly int Length => InnerArray.Length;
+
+    int IReadOnlyCollection<T>.Count => Length;
+
+    public T this[int index] => InnerArray[index];
+
     public Array(T[] array) => InnerArray = array;
 
     public Array(SerializationInfo info, StreamingContext context) => InnerArray = info.GetValue(nameof(InnerArray), typeof(T[])) as T[] ?? System.Array.Empty<T>();
@@ -56,6 +62,9 @@ public readonly struct Array<T> : ISerializable, IEquatable<T[]>, IEquatable<Arr
         return hash;
 #endif
     }
+
+    public IEnumerator<T> GetEnumerator() => ((IEnumerable<T>)InnerArray).GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => InnerArray.GetEnumerator();
 
     public static bool operator ==(Array<T> left, Array<T> right) => left.Equals(right);
 

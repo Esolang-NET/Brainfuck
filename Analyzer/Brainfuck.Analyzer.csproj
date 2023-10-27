@@ -40,9 +40,7 @@
 
   <Target Name="GetDependencyTargetPaths">
     <ItemGroup>
-      <TargetPathWithTargetPlatformMoniker 
-        Include="$(ProjectDir)..\Abstructions\$(OutputPath)\*.dll"
-        IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(ProjectDir)..\Abstructions\$(OutputPath)\*.dll" IncludeRuntimeDependency="false" />
     </ItemGroup>
   </Target>
 

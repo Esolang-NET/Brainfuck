@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Brainfuck.Analyzer.Sequences;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text;
@@ -339,7 +340,7 @@ public partial class BrainfuckMethodGenerator
         }
 
         var seq = sequences.Select((v, i) => new Sequence(i, v.Sequence, v.Syntax)).ToArray().AsMemory();
-        var nest = Nest(seq);
+        var nest = seq.Nest();
         WriteNest(indent, nest, builder, ref options);
         var isEnumerable = options.ReturnType.IsEnumerable();
         var withCancellation = string.IsNullOrEmpty(options.VariableCancellationToken) ? string.Empty : ", " + options.VariableCancellationToken;
@@ -399,7 +400,7 @@ public partial class BrainfuckMethodGenerator
             if (sequence is Sequence simple)
             {
                 if (simple is { Value: Begin or End })
-                    WriteComment(indent, simple.Value, simple.Syntax, builder);
+                    WriteComment(indent, Comment, simple.Syntax, builder);
                 WriteSequence(indent, simple.Value, simple.Syntax, builder, ref options);
                 continue;
             }
@@ -510,54 +511,7 @@ public partial class BrainfuckMethodGenerator
         var comment = syntax.ToString().Replace("\r", "\\r").Replace("\n", "\\n");
         builder.AppendLine($"{space}// {sequence}:{comment}");
     }
-    static IEnumerable<INestableSequence> Nest(ReadOnlyMemory<Sequence> sequences)
-    {
-        while (sequences.Length > 0)
-        {
-            var current = sequences.Span[0];
-            sequences = sequences[1..];
-            if (current is not { Value: Begin })
-            {
-                yield return current;
-                continue;
-            }
-            if (!TryGetPairEnd(sequences, out var nest, out var end))
-            {
-                yield return current;
-                continue;
-            }
-            sequences = sequences[nest.Length..];
-            yield return new NestableSequence(Nest(nest), current, end);
-        }
-    }
-    static bool TryGetPairEnd(ReadOnlyMemory<Sequence> sequences, out ReadOnlyMemory<Sequence> nest, out Sequence end)
-    {
-        nest = ReadOnlyMemory<Sequence>.Empty;
-        end = null!;
-        var inc = 0;
-        for (var i = 0; i < sequences.Length; i++)
-        {
-            var current = sequences.Span[i];
-            if (current is not { Value: Begin or End }) continue;
-            if (current is { Value: Begin })
-            {
-                inc++;
-                continue;
-            }
-            if (current is { Value: End })
-            {
-                if (inc > 0)
-                {
-                    inc--;
-                    continue;
-                }
-                nest = sequences[..Math.Max(i - 1, 0)];
-                end = current;
-                return true;
-            }
-        }
-        return false;
-    }
+
     static BrainfuckSequenceEnumerable? GetSources(
         SourceProductionContext context,
         IMethodSymbol methodSymbol,
@@ -573,17 +527,7 @@ public partial class BrainfuckMethodGenerator
             throw new InvalidOperationException($"ConstructorArguments.Length is {attributeData.ConstructorArguments.Length}");
 
         var typedConstantForValueParameter = attributeData.ConstructorArguments[0];
-        if (typedConstantForValueParameter.IsNull)
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    DiagnosticDescriptors.InvalidValueParameter,
-                    methodDeclarationSyntax.Identifier.GetLocation(),
-                    methodSymbol.Name));
-            return null;
-        }
-        var source = typedConstantForValueParameter.Value as string;
-        if (string.IsNullOrEmpty(source))
+        if (typedConstantForValueParameter.IsNull || typedConstantForValueParameter.Value is not string source || string.IsNullOrEmpty(source))
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(
@@ -624,9 +568,6 @@ public partial class BrainfuckMethodGenerator
         }
     }
 }
-public interface INestableSequence { }
-internal record NestableSequence(IEnumerable<INestableSequence> Nest, Sequence Begin, Sequence End) : INestableSequence;
-internal record Sequence(int Index, BrainfuckSequence Value, ReadOnlyMemory<char> Syntax) : INestableSequence;
 internal record InternalOptions(
     string Space,
     string VariableStack,

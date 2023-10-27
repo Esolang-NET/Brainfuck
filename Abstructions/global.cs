@@ -1,4 +1,4 @@
 ﻿
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Brainfuck.Analyzer")]
+[assembly: InternalsVisibleTo("Brainfuck.Abstructions.Tests")]

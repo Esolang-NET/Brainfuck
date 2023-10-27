@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Immutable;
 
 namespace Brainfuck.Analyzer.Tests;
 
@@ -27,6 +28,20 @@ public class BrainfuckMethodGeneratorTests
         {
             // 依存DLLがある場合はそれも追加しておく
             systemAssemblies = systemAssemblies.Append(typeof(System.IO.Pipelines.Pipe).Assembly.Location);
+            systemAssemblies = systemAssemblies.Append(typeof(Span<>).Assembly.Location);
+            systemAssemblies = systemAssemblies.Append(typeof(System.Runtime.CompilerServices.Unsafe).Assembly.Location);
+#if !NETCOREAPP1_0_OR_GREATER && !NET5_0_OR_GREATER
+            var exclude = new HashSet<string>(new string[] {
+                "System.tlb",
+                "System.Web.tlb",
+                "System.Drawing.tlb",
+                "System.Windows.Forms.tlb",
+                "System.EnterpriseServices.tlb",
+                "System.EnterpriseServices.Wrapper.dll",
+                "System.EnterpriseServices.Thunk.dll",
+            });
+            systemAssemblies = systemAssemblies.Where(path => !exclude.Any(exc => path.Contains(exc)));
+#endif
             references = systemAssemblies
                 .Select(x => MetadataReference.CreateFromFile(x))
                 .ToArray();
@@ -40,20 +55,26 @@ public class BrainfuckMethodGeneratorTests
 
         baseCompilation = compilation;
     }
-    [TestMethod]
-    public void SourceGeneratorTest()
+
+    GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics)
     {
-        InitializeCompilation();
-        var source = $$"""
-        using Brainfuck;
-        namespace TestProject;
-        partial class TestClass
-        {
-            [GenerateBrainfuckMethod("++++++++++++++++++++++++++++++++++++.")]
-            public static partial string SampleMethod(string input);
-        }
-        """;
-        var preprocessorSymbols = new[] { "NET7_0_OR_GREATER" };
+        var preprocessorSymbols = new string[] {
+#if NETCOREAPP3_0_OR_GREATER
+            "NETCOREAPP3_0_OR_GREATER",
+#endif
+#if NETSTANDARD2_1
+            "NETSTANDARD2_1",
+#endif
+#if NETSTANDARD2_1_OR_GREATER
+            "NETSTANDARD2_1_OR_GREATER",
+#endif
+#if NET5_0_OR_GREATER
+            "NET5_0_OR_GREATER",
+#endif
+#if NET7_0_OR_GREATER
+            "NET7_0_OR_GREATER" 
+#endif
+        };
 
         var parseOptions = new CSharpParseOptions(LanguageVersion.CSharp11, preprocessorSymbols: preprocessorSymbols);
 
@@ -69,7 +90,23 @@ public class BrainfuckMethodGeneratorTests
         var compilation = baseCompilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(source, parseOptions));
 
         // Run the generator
-        driver = driver.RunGeneratorsAndUpdateCompilation(compilation, out var outputCompilation, out var diagnostics);
+        return driver.RunGeneratorsAndUpdateCompilation(compilation, out outputCompilation, out diagnostics);
+    }
+
+    [TestMethod]
+    public void SourceGeneratorTest()
+    {
+        var source = $$"""
+        using Brainfuck;
+        namespace TestProject;
+        partial class TestClass
+        {
+            [GenerateBrainfuckMethod("+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.")]
+            public static partial string SampleMethod(string input);
+        }
+        """;
+
+        var driver = RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
 
         if (!diagnostics.IsEmpty)
         {

@@ -20,4 +20,6 @@
     <ProjectReference Include="..\Analyzer\Brainfuck.Analyzer.csproj" />
   </ItemGroup>
 
+  <Import Project="..\TestShared\TestShared.projitems" Label="Shared" />
+
 </Project>
