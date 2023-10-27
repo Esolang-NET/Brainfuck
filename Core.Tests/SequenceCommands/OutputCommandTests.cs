@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Brainfuck.TestShared;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.IO.Pipelines;

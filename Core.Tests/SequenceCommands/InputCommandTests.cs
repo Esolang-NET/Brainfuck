@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Brainfuck.TestShared;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
 using static Brainfuck.BrainfuckSequence;
@@ -78,7 +79,7 @@ public class InputCommandTests
 
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
-    public void ExecuteTest(TestShared.BrainfuckContext context, Array<byte> input, TestShared.BrainfuckContext expected)
+    public void ExecuteTest(TestShared.BrainfuckContext context, TestShared.Array<byte> input, TestShared.BrainfuckContext expected)
     {
         var pipe = new Pipe();
         context = context with

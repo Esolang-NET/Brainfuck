@@ -76,7 +76,7 @@ public static class Utils
                 openingDefinitionCode.Append(' ');
             }
 
-            openingDefinitionCode.Append(Utils.ToTypeDeclarationBeforeOpeningBrace(typeSymbol, true));
+            openingDefinitionCode.Append(ToTypeDeclarationBeforeOpeningBrace(typeSymbol, true));
             openingDefinitionCode.Append(" {");
             closingBracketCount++;
         }

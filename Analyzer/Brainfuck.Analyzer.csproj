@@ -22,6 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Generator dependencies -->
     <ProjectReference Include="..\Abstructions\Brainfuck.Abstructions.csproj" />
   </ItemGroup>
@@ -42,4 +47,9 @@
   </Target>
 
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
+
+  <PropertyGroup>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+  </PropertyGroup>
+
 </Project>

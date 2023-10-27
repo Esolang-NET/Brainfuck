@@ -1,6 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using System.Text;
 
+namespace Brainfuck.TestShared;
 /// <summary>
 /// MSTest 向けの serialize な Array wrapper
 /// </summary>
