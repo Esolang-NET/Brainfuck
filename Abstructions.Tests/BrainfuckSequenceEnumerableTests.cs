@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Brainfuck.TestShared;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using static Brainfuck.BrainfuckSequence;
 namespace Brainfuck.Tests;
 

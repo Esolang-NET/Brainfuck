@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Brainfuck.Analyzer.Sequences;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text;
@@ -134,13 +135,15 @@ public partial class BrainfuckMethodGenerator
 
             if (typeName is CANCELLATION_TOKEN)
             {
-                //多重宣言は不可
                 if (!string.IsNullOrEmpty(variableCancellation))
                 {
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.DuplicateParameter,
-                        methodDeclarationSyntax.GetLocation(),
-                        typeName);
+                    //多重宣言は不可
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.DuplicateParameter,
+                            methodDeclarationSyntax.GetLocation(),
+                            typeName)
+                    );
                     return null;
                 }
                 variableCancellation = param.Name;
@@ -152,18 +155,22 @@ public partial class BrainfuckMethodGenerator
                 if (!string.IsNullOrEmpty(variablePipeReder))
                 {
                     // pipeReader / input string とどちらかのみ可
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.NotSupportParameterPattern,
-                        methodDeclarationSyntax.GetLocation());
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.NotSupportParameterPattern,
+                            methodDeclarationSyntax.GetLocation())
+                    );
                     return null;
                 }
                 if (!string.IsNullOrEmpty(variableInputString))
                 {
                     //多重宣言は不可
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.DuplicateParameter,
-                        methodDeclarationSyntax.GetLocation(),
-                        typeName);
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.DuplicateParameter,
+                            methodDeclarationSyntax.GetLocation(),
+                            typeName)
+                    );
                     return null;
                 }
                 variableInputString = param.Name;
@@ -175,18 +182,22 @@ public partial class BrainfuckMethodGenerator
                 if (!string.IsNullOrEmpty(variableInputString))
                 {
                     // pipeReader / input string とどちらかのみ可
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.NotSupportParameterPattern,
-                        methodDeclarationSyntax.GetLocation());
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.NotSupportParameterPattern,
+                            methodDeclarationSyntax.GetLocation())
+                    );
                     return null;
                 }
                 //多重宣言は不可
                 if (!string.IsNullOrEmpty(variablePipeReder))
                 {
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.DuplicateParameter,
-                        methodDeclarationSyntax.GetLocation(),
-                        typeName);
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.DuplicateParameter,
+                            methodDeclarationSyntax.GetLocation(),
+                            typeName)
+                    );
                     return null;
                 }
                 variablePipeReder = param.Name;
@@ -195,33 +206,39 @@ public partial class BrainfuckMethodGenerator
             }
             if (typeName is PIPE_WRITER_TYPE)
             {
-                // 戻り型が string | 列挙モード の場合は設定不可
                 if ((returnType & (ReturnType.String | ReturnType.Enumerable)) > 0)
                 {
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
-                        methodDeclarationSyntax.GetLocation(),
-                        typeName,
-                        returnTypeName);
+                    // 戻り型が string | 列挙モード の場合は設定不可
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
+                            methodDeclarationSyntax.GetLocation(),
+                            typeName,
+                            returnTypeName)
+                    );
                     return null;
                 }
-                //多重宣言は不可
                 if (!string.IsNullOrEmpty(variablePipeWriter))
                 {
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.DuplicateParameter,
-                        methodDeclarationSyntax.GetLocation(),
-                        typeName);
+                    //多重宣言は不可
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            DiagnosticDescriptors.DuplicateParameter,
+                            methodDeclarationSyntax.GetLocation(),
+                            typeName)
+                    );
                     return null;
                 }
                 variablePipeWriter = "output";
                 (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
                 continue;
             }
-            Diagnostic.Create(
-                DiagnosticDescriptors.InvalidParameter,
-                methodDeclarationSyntax.GetLocation(),
-                typeName
+
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.InvalidParameter,
+                    methodDeclarationSyntax.GetLocation(),
+                    typeName)
             );
             return null;
         }
@@ -253,7 +270,7 @@ public partial class BrainfuckMethodGenerator
         var pipeReader = options.VariablePipeReader;
         var isAsync = options.ReturnType.IsAsync();
         builder.AppendLine($$"""
-            {{space}}var {{options.VariableStack}} = new System.Collections.Generic.List<byte>(){ 0 };{{Environment.NewLine}}
+            {{space}}var {{options.VariableStack}} = new System.Collections.Generic.List<byte>(){ 0 };
             {{space}}var {{options.VariableStackIndex}} = 0;
             """);
         if (sequences.RequiredOutput)
@@ -323,7 +340,7 @@ public partial class BrainfuckMethodGenerator
         }
 
         var seq = sequences.Select((v, i) => new Sequence(i, v.Sequence, v.Syntax)).ToArray().AsMemory();
-        var nest = Nest(seq);
+        var nest = seq.Nest();
         WriteNest(indent, nest, builder, ref options);
         var isEnumerable = options.ReturnType.IsEnumerable();
         var withCancellation = string.IsNullOrEmpty(options.VariableCancellationToken) ? string.Empty : ", " + options.VariableCancellationToken;
@@ -356,7 +373,7 @@ public partial class BrainfuckMethodGenerator
                         {{space}}{{SPACE}}{{pipeWriter}}.Complete();
                         {{space}}{{SPACE}}if (!outputPipe.Reader.TryRead(out var outputResult))
                         {{space}}{{SPACE}}{{SPACE}}return null!;
-                        {{space}}{{SPACE}}var resultArray = System.Buffers.BuffersExtensions.ToArray(outputResult.Buffer).ToArray();
+                        {{space}}{{SPACE}}var resultArray = System.Buffers.BuffersExtensions.ToArray(outputResult.Buffer);
                         {{space}}{{SPACE}}outputPipe.Reader.AdvanceTo(outputResult.Buffer.End);
                         {{space}}{{SPACE}}if (resultArray.Length == 0) return null!;
                         {{space}}{{SPACE}}return System.Text.Encoding.UTF8.GetString(resultArray);
@@ -368,9 +385,9 @@ public partial class BrainfuckMethodGenerator
         if (options.UseListAsSpan)
         {
             builder.AppendLine($$"""
-                {{space}}static System.Memory<T> AsMemory<T>(List<T> self)
+                {{space}}static System.Memory<T> AsMemory<T>(System.Collections.Generic.List<T> self)
                 {{space}}{
-                {{space}}{{SPACE}} return System.Runtime.CompilerServices.Unsafe.As<ListDummy<T>>(self).Items.AsMemory().Slice(0, self.Count);
+                {{space}}{{SPACE}} return new System.Memory<T>(System.Runtime.CompilerServices.Unsafe.As<ListDummy<T>>(self).Items).Slice(0, self.Count);
                 {{space}}}
                 """);
         }
@@ -383,7 +400,7 @@ public partial class BrainfuckMethodGenerator
             if (sequence is Sequence simple)
             {
                 if (simple is { Value: Begin or End })
-                    WriteComment(indent, simple.Value, simple.Syntax, builder);
+                    WriteComment(indent, Comment, simple.Syntax, builder);
                 WriteSequence(indent, simple.Value, simple.Syntax, builder, ref options);
                 continue;
             }
@@ -494,54 +511,7 @@ public partial class BrainfuckMethodGenerator
         var comment = syntax.ToString().Replace("\r", "\\r").Replace("\n", "\\n");
         builder.AppendLine($"{space}// {sequence}:{comment}");
     }
-    static IEnumerable<INestableSequence> Nest(ReadOnlyMemory<Sequence> sequences)
-    {
-        while (sequences.Length > 0)
-        {
-            var current = sequences.Span[0];
-            sequences = sequences[1..];
-            if (current is not { Value: Begin })
-            {
-                yield return current;
-                continue;
-            }
-            if (!TryGetPairEnd(sequences, out var nest, out var end))
-            {
-                yield return current;
-                continue;
-            }
-            sequences = sequences[nest.Length..];
-            yield return new NestableSequence(Nest(nest), current, end);
-        }
-    }
-    static bool TryGetPairEnd(ReadOnlyMemory<Sequence> sequences, out ReadOnlyMemory<Sequence> nest, out Sequence end)
-    {
-        nest = ReadOnlyMemory<Sequence>.Empty;
-        end = null!;
-        var inc = 0;
-        for (var i = 0; i < sequences.Length; i++)
-        {
-            var current = sequences.Span[i];
-            if (current is not { Value: Begin or End }) continue;
-            if (current is { Value: Begin })
-            {
-                inc++;
-                continue;
-            }
-            if (current is { Value: End })
-            {
-                if (inc > 0)
-                {
-                    inc--;
-                    continue;
-                }
-                nest = sequences[..Math.Max(i - 1, 0)];
-                end = current;
-                return true;
-            }
-        }
-        return false;
-    }
+
     static BrainfuckSequenceEnumerable? GetSources(
         SourceProductionContext context,
         IMethodSymbol methodSymbol,
@@ -557,7 +527,7 @@ public partial class BrainfuckMethodGenerator
             throw new InvalidOperationException($"ConstructorArguments.Length is {attributeData.ConstructorArguments.Length}");
 
         var typedConstantForValueParameter = attributeData.ConstructorArguments[0];
-        if (typedConstantForValueParameter.IsNull)
+        if (typedConstantForValueParameter.IsNull || typedConstantForValueParameter.Value is not string source || string.IsNullOrEmpty(source))
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(
@@ -566,36 +536,25 @@ public partial class BrainfuckMethodGenerator
                     methodSymbol.Name));
             return null;
         }
-        var source = typedConstantForValueParameter.Value as string;
-        if (string.IsNullOrEmpty(source))
-        {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    DiagnosticDescriptors.InvalidValueParameter,
-                    methodDeclarationSyntax.Identifier.GetLocation(),
-                    methodSymbol.Name));
-            return null;
-        }
-        var incrementPointer = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.IncrementPointer), BrainfuckOptionsDefault.IncrementPointer);
-        var decrementPointer = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.DecrementPointer), BrainfuckOptionsDefault.DecrementPointer);
-        var incrementCurrent = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.IncrementCurrent), BrainfuckOptionsDefault.IncrementCurrent);
-        var decrementCurrent = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.DecrementCurrent), BrainfuckOptionsDefault.DecrementCurrent);
-        var output = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.Output), BrainfuckOptionsDefault.Output);
-        var input = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.Input), BrainfuckOptionsDefault.Input);
-        var begin = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.Begin), BrainfuckOptionsDefault.Begin);
-        var end = GetNamedArgumentOrDefault(nameof(BrainfuckOptions.End), BrainfuckOptionsDefault.End);
-        return new BrainfuckSequenceEnumerable(source!.AsMemory(), new BrainfuckOptions
-        {
-            IncrementPointer = incrementPointer,
-            DecrementPointer = decrementPointer,
-            IncrementCurrent = incrementCurrent,
-            DecrementCurrent = decrementCurrent,
-            Output = output,
-            Input = input,
-            Begin = begin,
-            End = end,
-        });
-        T GetNamedArgumentOrDefault<T>(string name, T defaultValue)
+        var incrementPointer = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.IncrementPointer), BrainfuckOptionsDefault.IncrementPointer);
+        var decrementPointer = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.DecrementPointer), BrainfuckOptionsDefault.DecrementPointer);
+        var incrementCurrent = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.IncrementCurrent), BrainfuckOptionsDefault.IncrementCurrent);
+        var decrementCurrent = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.DecrementCurrent), BrainfuckOptionsDefault.DecrementCurrent);
+        var output = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.Output), BrainfuckOptionsDefault.Output);
+        var input = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.Input), BrainfuckOptionsDefault.Input);
+        var begin = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.Begin), BrainfuckOptionsDefault.Begin);
+        var end = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.End), BrainfuckOptionsDefault.End);
+        return new BrainfuckSequenceEnumerable(source!.AsMemory(), new BrainfuckOptions(
+            IncrementPointer: incrementPointer,
+            DecrementPointer: decrementPointer,
+            IncrementCurrent: incrementCurrent,
+            DecrementCurrent: decrementCurrent,
+            Output: output,
+            Input: input,
+            Begin: begin,
+            End: end
+        ));
+        static T GetNamedArgumentOrDefault<T>(AttributeData attributeData, string name, T defaultValue)
         {
             // ImmutbaleArray<T> does not have a Find method...
             foreach (var namedArgument in attributeData.NamedArguments)
@@ -609,9 +568,6 @@ public partial class BrainfuckMethodGenerator
         }
     }
 }
-public interface INestableSequence { }
-internal record NestableSequence(IEnumerable<INestableSequence> Nest, Sequence Begin, Sequence End) : INestableSequence;
-internal record Sequence(int Index, BrainfuckSequence Value, ReadOnlyMemory<char> Syntax) : INestableSequence;
 internal record InternalOptions(
     string Space,
     string VariableStack,
