@@ -1,12 +1,13 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using Brainfuck;
 
-Console.WriteLine("Hello, World!");
-
-Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod)}: {await BrainfuckSample.SampleMethod()}");
+Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod1)}: {await BrainfuckSample.SampleMethod1()}");
+Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod2)}: {await BrainfuckSample.SampleMethod2()}");
 
 partial class BrainfuckSample
 {
-    [GenerateBrainfuckMethod("+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.")]
-    public static partial Task<string> SampleMethod();
+    [GenerateBrainfuckMethod("++++++[>++++++++<-]++++++++++[>.+<-]")]
+    public static partial Task<string> SampleMethod1();
+    [GenerateBrainfuckMethod("1+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.")]
+    public static partial Task<string> SampleMethod2();
 }

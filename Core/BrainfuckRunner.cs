@@ -85,8 +85,9 @@ public sealed partial class BrainfuckRunner
         await pipe.Reader.CopyToAsync(stream, cancellationToken);
         stream.Seek(0, SeekOrigin.Begin);
         if (stream.Length == 0) return null;
-        return await reader.ReadToEndAsync();
-
+        var returnString = (await reader.ReadToEndAsync()).TrimEnd('\0');
+        if (returnString.Length == 0) return null;
+        return returnString;
     }
     public string? RunAndOutputString()
     {
@@ -102,7 +103,9 @@ public sealed partial class BrainfuckRunner
         var array = result.Buffer.ToArray();
         pipe.Reader.AdvanceTo(result.Buffer.End);
         if (array.Length == 0) return null;
-        return Encoding.UTF8.GetString(array);
+        var returnString = Encoding.UTF8.GetString(array).TrimEnd('\0');
+        if (returnString.Length == 0) return null;
+        return returnString;
     }
 
     bool PrintMembers(StringBuilder builder)

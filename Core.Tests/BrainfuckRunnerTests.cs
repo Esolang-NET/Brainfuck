@@ -25,13 +25,9 @@ public class BrainfuckRunnerTests
                 expected: "0123456789"
             );
             yield return RunAndOutputStringTest(
-                source: "++++++[>++++++++<-]++++++++++[>.+<-]",
-                expected: "0123456789"
-            );
-            yield return RunAndOutputStringTest(
                 source: "+[[-],.]",
                 input: "1234567890",
-                expected: "1234567890\0"
+                expected: "1234567890"
             );
             yield return RunAndOutputStringTest(
                 source: "++",

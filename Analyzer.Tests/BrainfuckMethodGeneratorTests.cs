@@ -97,38 +97,35 @@ public class BrainfuckMethodGeneratorTests
         // Run the generator
         return driver.RunGeneratorsAndUpdateCompilation(compilation, out outputCompilation, out diagnostics);
     }
-    Assembly Emit(Compilation compilation, CancellationToken cancellationToken = default)
+    (TestShared.TestAssemblyLoadContext Context, Assembly Assembly) Emit(Compilation compilation, CancellationToken cancellationToken = default)
     {
         var dllFileName = Path.Combine(TestContext.TestRunResultsDirectory!, $"dynamiclinklib{$"{DateTime.Now:o}"
-            .Replace(' ','_')
-            .Replace(':','_')}.dll");
+            .Replace(' ', '_')
+            .Replace(':', '_')}.dll");
         {
             using var stream = new FileStream(dllFileName, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
             var emitResult = compilation.Emit(stream, cancellationToken: cancellationToken);
             Assert.IsTrue(emitResult.Success);
             stream.Seek(0, SeekOrigin.Begin);
             TestContext.WriteLine($"assembly Name:{dllFileName} Length:{new FileInfo(dllFileName).Length}");
-#if NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER
-            return AssemblyLoadContext.Default.LoadFromStream(stream);
+            var context = new TestShared.TestAssemblyLoadContext();
+            var assembly = context.LoadFromStream(stream);
+            return (context, assembly);
         }
-#else
-        }
-        return Assembly.LoadFrom(dllFileName);
-#endif
     }
     static IEnumerable<object?[]> SourceGeneratorTest1Data
     {
         get
         {
-            yield return SourceGeneratorTest1("0+.", null);
-            yield return SourceGeneratorTest1("1+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.", "Hello World!");
+            yield return SourceGeneratorTest1("0.", null);
+            yield return SourceGeneratorTest1("1+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.", "Hello, world!");
             static object?[] SourceGeneratorTest1(string source, string? expected)
                 => new object?[] { source, expected };
         }
     }
     [TestMethod]
     [DynamicData(nameof(SourceGeneratorTest1Data))]
-    public void SourceGeneratorTest1(string source, string? expected)
+    public async Task SourceGeneratorTest1(string source, string? expected)
     {
         TestContext.CancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30));
         var cancellationToken = TestContext.CancellationTokenSource.Token;
@@ -159,20 +156,28 @@ public class BrainfuckMethodGeneratorTests
             OutputSource(outputCompilation.SyntaxTrees);
         }
         Assert.IsTrue(diagnostics2.IsEmpty);
-        var assembly = Emit(outputCompilation, cancellationToken);
-        var testClassType = assembly.GetType("TestProject.TestClass");
-        Assert.IsNotNull(testClassType);
-        var sampleMethod = testClassType.GetMethod("SampleMethod");
-        Assert.IsNotNull(sampleMethod);
-        try
+        var (context, assembly) = Emit(outputCompilation, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        using (context)
         {
-            var actual = (string?)sampleMethod.Invoke(null, Array.Empty<object?>());
-            Assert.AreEqual(expected, actual);
-        }
-        catch (TargetInvocationException)
-        {
-            OutputSource(outputCompilation.SyntaxTrees);
-            throw;
+            await Task.Factory.StartNew(() =>
+            {
+                var testClassType = assembly.GetType("TestProject.TestClass");
+                Assert.IsNotNull(testClassType);
+                var sampleMethod = testClassType.GetMethod("SampleMethod");
+                Assert.IsNotNull(sampleMethod);
+                try
+                {
+                    var actual = (string?)sampleMethod.Invoke(null, Array.Empty<object?>());
+                    Assert.AreEqual(expected, actual);
+                }
+                catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+                {
+                    OutputSource(outputCompilation.SyntaxTrees);
+                    throw;
+                }
+            }, cancellationToken, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
+            cancellationToken.ThrowIfCancellationRequested();
         }
         void OutputSource(IEnumerable<SyntaxTree> syntaxTrees)
         {

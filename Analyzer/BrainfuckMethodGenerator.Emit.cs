@@ -362,7 +362,9 @@ public partial class BrainfuckMethodGenerator
                         {{space}}{{SPACE}}await outputPipe.Reader.CopyToAsync(stream{{withCancellation}});
                         {{space}}{{SPACE}}stream.Seek(0, SeekOrigin.Begin);
                         {{space}}{{SPACE}}if (stream.Length == 0) return null!;
-                        {{space}}{{SPACE}}return await reader.ReadToEndAsync();
+                        {{space}}{{SPACE}}var returnString = (await reader.ReadToEndAsync()).TrimEnd('\0');
+                        {{space}}{{SPACE}}if (returnString.Length == 0) return null!;
+                        {{space}}{{SPACE}}return returnString;
                         {{space}}}
                         """);
                 }
@@ -376,7 +378,9 @@ public partial class BrainfuckMethodGenerator
                         {{space}}{{SPACE}}var resultArray = System.Buffers.BuffersExtensions.ToArray(outputResult.Buffer);
                         {{space}}{{SPACE}}outputPipe.Reader.AdvanceTo(outputResult.Buffer.End);
                         {{space}}{{SPACE}}if (resultArray.Length == 0) return null!;
-                        {{space}}{{SPACE}}return System.Text.Encoding.UTF8.GetString(resultArray);
+                        {{space}}{{SPACE}}var returnString = System.Text.Encoding.UTF8.GetString(resultArray).TrimEnd('\0');
+                        {{space}}{{SPACE}}if (returnString.Length == 0) return null!;
+                        {{space}}{{SPACE}}return returnString;
                         {{space}}}
                         """);
                 }
@@ -440,17 +444,17 @@ public partial class BrainfuckMethodGenerator
             IncrementCurrent => $$"""
                 {{space}}{
                 {{space}}{{SPACE}}var value = {{stack}}[{{stackIndex}}];
-                {{space}}{{SPACE}}{{stack}}[{{stackIndex}}] = unchecked(value++);
+                {{space}}{{SPACE}}{{stack}}[{{stackIndex}}] = unchecked((byte)(value + 1));
                 {{space}}}
                 """,
             DecrementCurrent => $$"""
                 {{space}}{
                 {{space}}{{SPACE}}var value = {{stack}}[{{stackIndex}}];
-                {{space}}{{SPACE}}{{stack}}[{{stackIndex}}] = unchecked(value--);
+                {{space}}{{SPACE}}{{stack}}[{{stackIndex}}] = unchecked((byte)(value - 1));
                 {{space}}}
                 """,
             Begin => $$"""
-                {{space}}while({{stack}}[{{stackIndex}}] is 0) {
+                {{space}}while({{stack}}[{{stackIndex}}] is not 0) {
                 """,
             End => $$"""
                 {{space}}}
