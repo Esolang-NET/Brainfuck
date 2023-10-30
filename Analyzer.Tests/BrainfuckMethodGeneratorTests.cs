@@ -97,65 +97,57 @@ public class BrainfuckMethodGeneratorTests
         // Run the generator
         return driver.RunGeneratorsAndUpdateCompilation(compilation, out outputCompilation, out diagnostics);
     }
-
-    class AssemblyAndScope : IDisposable
+    Assembly Emit(Compilation compilation, CancellationToken cancellationToken = default)
     {
-        public Assembly Assembly { get; init; }
-        readonly IDisposable? disposable;
-        public AssemblyAndScope(Assembly assembly): this(assembly, null) { }
-        public AssemblyAndScope(Assembly assembly, IDisposable? disposable) => (Assembly, this.disposable) = (assembly, disposable);
-        public void Dispose() => disposable?.Dispose();
-    }
-    AssemblyAndScope Emit(Compilation compilation)
-    {
-        var cancellationToken = TestContext.CancellationTokenSource.Token;
-#if NET5_0_OR_GREATER
-        MemoryStream? disposable = null;
-        try {
-            var assemblyStream = new MemoryStream();
-            disposable = assemblyStream;
-            var emitResult = compilation.Emit(assemblyStream, cancellationToken: cancellationToken);
-            assemblyStream.Seek(0, SeekOrigin.Begin);
+        var dllFileName = Path.Combine(TestContext.TestRunResultsDirectory!, $"dynamiclinklib{$"{DateTime.Now:o}"
+            .Replace(' ','_')
+            .Replace(':','_')}.dll");
+        {
+            using var stream = new FileStream(dllFileName, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+            var emitResult = compilation.Emit(stream, cancellationToken: cancellationToken);
             Assert.IsTrue(emitResult.Success);
-            var assembly = AssemblyLoadContext.Default.LoadFromStream(assemblyStream);
-            return new AssemblyAndScope(assembly, disposable);
-        }catch{
-            disposable?.Dispose();
-            throw;
+            stream.Seek(0, SeekOrigin.Begin);
+            TestContext.WriteLine($"assembly Name:{dllFileName} Length:{new FileInfo(dllFileName).Length}");
+#if NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER
+            return AssemblyLoadContext.Default.LoadFromStream(stream);
         }
 #else
-        var dllFileName = Path.Combine(TestContext.TestRunResultsDirectory, "dynamiclinklib.dll");
-        var emitResult = compilation.Emit(dllFileName, cancellationToken: cancellationToken);
-        Assert.IsTrue(emitResult.Success);
-        using var stream = new FileStream(dllFileName, FileMode.Open, FileAccess.Read, FileShare.None);
-        using var memory = new MemoryStream();
-        stream.CopyTo(memory);
-        memory.Seek(0, SeekOrigin.Begin);
-        var assembly = Assembly.Load(memory.ToArray());
-        return new AssemblyAndScope(assembly);
+        }
+        return Assembly.LoadFrom(dllFileName);
 #endif
     }
-
+    static IEnumerable<object?[]> SourceGeneratorTest1Data
+    {
+        get
+        {
+            yield return SourceGeneratorTest1("0+.", null);
+            yield return SourceGeneratorTest1("1+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.", "Hello World!");
+            static object?[] SourceGeneratorTest1(string source, string? expected)
+                => new object?[] { source, expected };
+        }
+    }
     [TestMethod]
-    public void SourceGeneratorTest()
+    [DynamicData(nameof(SourceGeneratorTest1Data))]
+    public void SourceGeneratorTest1(string source, string? expected)
     {
         TestContext.CancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30));
-        var source = $$"""
+        var cancellationToken = TestContext.CancellationTokenSource.Token;
+        source = $$"""
         using Brainfuck;
         namespace TestProject;
         partial class TestClass
         {
-            [GenerateBrainfuckMethod("+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.")]
+            [GenerateBrainfuckMethod("{{source}}")]
             public static partial string SampleMethod();
         }
         """;
-        var cancellationToken = TestContext.CancellationTokenSource.Token;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
 
         if (!diagnostics.IsEmpty)
         {
             foreach (var diagnostic in diagnostics)
                 TestContext.WriteLine($"{diagnostic}");
+            OutputSource(outputCompilation.SyntaxTrees);
         }
         Assert.IsTrue(diagnostics.IsEmpty);
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
@@ -164,15 +156,30 @@ public class BrainfuckMethodGeneratorTests
         {
             foreach (var diagnostic in diagnostics2)
                 TestContext.WriteLine($"{diagnostic}");
+            OutputSource(outputCompilation.SyntaxTrees);
         }
         Assert.IsTrue(diagnostics2.IsEmpty);
-        using var emitAssembly = Emit(outputCompilation);
-        var assembly = emitAssembly.Assembly;
+        var assembly = Emit(outputCompilation, cancellationToken);
         var testClassType = assembly.GetType("TestProject.TestClass");
         Assert.IsNotNull(testClassType);
         var sampleMethod = testClassType.GetMethod("SampleMethod");
         Assert.IsNotNull(sampleMethod);
-        var returnvalue = (string?)sampleMethod.Invoke(null, Array.Empty<object?>());
-        Assert.AreEqual("Hello World!", returnvalue);
+        try
+        {
+            var actual = (string?)sampleMethod.Invoke(null, Array.Empty<object?>());
+            Assert.AreEqual(expected, actual);
+        }
+        catch (TargetInvocationException)
+        {
+            OutputSource(outputCompilation.SyntaxTrees);
+            throw;
+        }
+        void OutputSource(IEnumerable<SyntaxTree> syntaxTrees)
+        {
+            foreach (var tree in syntaxTrees)
+            {
+                TestContext.WriteLine($"FilePath:{tree.FilePath}\r\nsource:↓\r\n{tree}");
+            }
+        }
     }
 }
