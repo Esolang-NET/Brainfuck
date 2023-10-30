@@ -3,10 +3,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Immutable;
 using System.Reflection;
-#if NET5_0_OR_GREATER
-using System.Runtime.Loader;
-using System.Threading;
-#endif
 
 namespace Brainfuck.Analyzer.Tests;
 
@@ -115,6 +111,13 @@ public class BrainfuckMethodGeneratorTests
             return (context, assembly);
         }
     }
+    void OutputSource(IEnumerable<SyntaxTree> syntaxTrees)
+    {
+        foreach (var tree in syntaxTrees)
+        {
+            TestContext.WriteLine($"FilePath:{tree.FilePath}\r\nsource:↓\r\n{tree}");
+        }
+    }
     static IEnumerable<object?[]> SourceGeneratorTest1Data
     {
         get
@@ -134,10 +137,11 @@ public class BrainfuckMethodGeneratorTests
         source = $$"""
         using Brainfuck;
         namespace TestProject;
+        #nullable enable
         partial class TestClass
         {
             [GenerateBrainfuckMethod("{{source}}")]
-            public static partial string SampleMethod();
+            public static partial string? SampleMethod();
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
@@ -181,12 +185,39 @@ public class BrainfuckMethodGeneratorTests
             }, cancellationToken, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
             cancellationToken.ThrowIfCancellationRequested();
         }
-        void OutputSource(IEnumerable<SyntaxTree> syntaxTrees)
+    }
+    [TestMethod]
+    public void SourceGenerator_DiagnoticsBF001Test()
+    {
+        var source = $$"""
+        using Brainfuck;
+        namespace TestProject;
+        partial class TestClass
         {
-            foreach (var tree in syntaxTrees)
-            {
-                TestContext.WriteLine($"FilePath:{tree.FilePath}\r\nsource:↓\r\n{tree}");
-            }
+            [GenerateBrainfuckMethod("")]
+            public static partial void SampleMethod();
         }
+        """;
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
+        Assert.IsFalse(diagnostics.IsEmpty);
+        CollectionAssert.AreEqual(new[] { "BF0001" }, diagnostics.Select(v => v.Id).ToArray());
+        Assert.AreEqual(2, outputCompilation.SyntaxTrees.Count());
+    }
+    [TestMethod]
+    public void SourceGenerator_DiagnoticsBF002Test()
+    {
+        var source = $$"""
+        using Brainfuck;
+        namespace TestProject;
+        partial class TestClass
+        {
+            [GenerateBrainfuckMethod("0")]
+            public static partial int SampleMethod();
+        }
+        """;
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
+        Assert.IsFalse(diagnostics.IsEmpty);
+        CollectionAssert.AreEqual(new[] { "BF0002" }, diagnostics.Select(v => v.Id).ToArray());
+        Assert.AreEqual(2, outputCompilation.SyntaxTrees.Count());
     }
 }

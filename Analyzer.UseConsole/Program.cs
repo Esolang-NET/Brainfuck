@@ -7,7 +7,7 @@ Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod2)}: {await BrainfuckSam
 partial class BrainfuckSample
 {
     [GenerateBrainfuckMethod("++++++[>++++++++<-]++++++++++[>.+<-]")]
-    public static partial Task<string> SampleMethod1();
+    public static partial Task<string?> SampleMethod1();
     [GenerateBrainfuckMethod("1+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.")]
-    public static partial Task<string> SampleMethod2();
+    public static partial Task<string?> SampleMethod2();
 }
