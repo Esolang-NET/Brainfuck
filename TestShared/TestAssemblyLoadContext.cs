@@ -30,26 +30,48 @@ internal class TestAssemblyLoadContext :
     }
 #if !(NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER)
     public Assembly LoadFromAssemblyPath(string assemblyFile) => Assembly.LoadFrom(assemblyFile);
-    public Assembly LoadFromStream(Stream assembly)
+    public Assembly LoadFromStream(Stream assembly, Stream? pdbStream = null)
     {
         if (assembly == null)
         {
             throw new ArgumentNullException(nameof(assembly));
         }
         byte[] rowAssembly;
-        if (assembly is MemoryStream memoryStream)
         {
-            if (memoryStream.CanSeek)
-                memoryStream.Seek(0, SeekOrigin.Begin);
-            rowAssembly = memoryStream.ToArray();
+            if (assembly is MemoryStream memoryStream)
+            {
+                if (memoryStream.CanSeek && memoryStream.Position > 0)
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                rowAssembly = memoryStream.ToArray();
+            }
+            else
+            {
+                using var stream = new MemoryStream();
+                assembly.CopyTo(stream);
+                stream.Seek(0, SeekOrigin.End);
+                rowAssembly = stream.ToArray();
+            }
         }
-        else
+        byte[]? rawSymbolStore = null;
+        if (pdbStream != null)
         {
-            using var stream = new MemoryStream();
-            assembly.CopyTo(stream);
-            stream.Seek(0, SeekOrigin.End);
-            rowAssembly = stream.ToArray();
+
+            if (assembly is MemoryStream memoryStream)
+            {
+                if (memoryStream.CanSeek && memoryStream.Position > 0)
+                    memoryStream.Seek(0, SeekOrigin.Begin);
+                rawSymbolStore = memoryStream.ToArray();
+            }
+            else
+            {
+                using var stream = new MemoryStream();
+                assembly.CopyTo(stream);
+                stream.Seek(0, SeekOrigin.End);
+                rawSymbolStore = stream.ToArray();
+            }
         }
+        if (rawSymbolStore is { Length: > 0 })
+            return Assembly.Load(rowAssembly, rawSymbolStore);
         return Assembly.Load(rowAssembly);
     }
 #endif

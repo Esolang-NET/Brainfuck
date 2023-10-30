@@ -104,12 +104,14 @@ public class BrainfuckMethodGeneratorTests
             .Replace(':', '_')}.dll");
         {
             using var stream = new FileStream(dllFileName, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
-            var emitResult = compilation.Emit(stream, cancellationToken: cancellationToken);
+            using var pdbStream = new MemoryStream();
+            var emitResult = compilation.Emit(stream, pdbStream: pdbStream, cancellationToken: cancellationToken);
             Assert.IsTrue(emitResult.Success);
             stream.Seek(0, SeekOrigin.Begin);
+            pdbStream.Seek(0, SeekOrigin.Begin);
             TestContext.WriteLine($"assembly Name:{dllFileName} Length:{new FileInfo(dllFileName).Length}");
             var context = new TestShared.TestAssemblyLoadContext();
-            var assembly = context.LoadFromStream(stream);
+            var assembly = context.LoadFromStream(stream, pdbStream);
             return (context, assembly);
         }
     }
