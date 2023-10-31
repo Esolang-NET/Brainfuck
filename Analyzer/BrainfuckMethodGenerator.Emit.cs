@@ -22,11 +22,33 @@ public partial class BrainfuckMethodGenerator
         var containingClassSymbol = methodSymbol.ContainingType ??
             throw new InvalidOperationException($"IMethodSymbol.ContainingType is null");
         if (GetReturnType(methodSymbol.ReturnType,
-            source.SemanticModel.GetNullableContext(methodSymbol.ReturnType.Locations.First().SourceSpan.Start),
-            context, methodDeclarationSyntax) is not ReturnType returnType)
+            sequences,
+            context,
+            methodDeclarationSyntax) is not ReturnType returnType)
             return;
         if (GetParameterOptions(methodSymbol, returnType, methodSymbol.ReturnType.ToString(), sequences, context, methodDeclarationSyntax) is not { } parameterOptions)
             return;
+        if (sequences.RequiredOutput && (returnType & (ReturnType.String | ReturnType.Byte | ReturnType.Enumerable)) == 0 && string.IsNullOrEmpty(parameterOptions.VaribalePipeWriter))
+        {
+            // 出力機能不足
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.RequiredOutputInterface,
+                    methodDeclarationSyntax.Identifier.GetLocation())
+            );
+            return;
+        }
+        if (sequences.RequiredInput && string.IsNullOrEmpty(parameterOptions.VariablePipeReader) && string.IsNullOrEmpty(parameterOptions.VariableInputString))
+        {
+            // 入力機能不足
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.RequiredInputInterface,
+                    methodDeclarationSyntax.Identifier.GetLocation())
+            );
+            return;
+        }
+
         var (openingDefinitionCode, codeForClosingDefinition) = Utils.GenerateOpeningClosingTypeDefinitionCode(methodSymbol);
         var methodModifier = $"{SyntaxFacts.GetText(methodSymbol.DeclaredAccessibility)}{(methodSymbol.IsStatic ? " static" : string.Empty)} partial";
         InternalOptions writeOption = new(
@@ -67,209 +89,237 @@ public partial class BrainfuckMethodGenerator
         var returnTypePart = methodSymbol.ReturnType.ToDisplayString(format);
         var generatingSourceFileName = Utils.SanitizeForFileName($"{classPart}.{methodSymbol.Name}.{returnTypePart}.g.cs");
         context.AddSource(generatingSourceFileName, generatedSourceCode);
-    }
-    static ReturnType? GetReturnType(
-        ITypeSymbol returnType,
-        NullableContext nullableContext,
-        SourceProductionContext context,
-        MethodDeclarationSyntax methodDeclarationSyntax)
-    {
-        var returnType_ = (INamedTypeSymbol)returnType;
-        var typeName = returnType_.ToDisplayString(NullableFlowState.NotNull, SymbolDisplayFormat.FullyQualifiedFormat).Replace("string?", "string");
-        var nullable = returnType_.NullableAnnotation;
-        var innerNullable = returnType_.TypeArgumentNullableAnnotations.FirstOrDefault();
-        #region return void 
-        // void
-        const string VOID_TYPE = "global::System.Void";
-        // Task
-        const string VOID_TASK_TYPE = "global::System.Threading.Tasks.Task";
-        // ValueTask
-        const string VOID_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask";
-        #endregion
-        #region return string
-        // string
-        const string STRING_TYPE = "string";
-        // string?
-        const string NULLABLE_STRING_TYPE = "string";
-        // Task<string>
-        const string STRING_TASK_TYPE = "global::System.Threading.Tasks.Task<string>";
-        // Task<string?>
-        const string NULLABLE_STRING_TASK_TYPE = "global::System.Threading.Tasks.Task<string?>";
-        // ValueTask<string>
-        const string STRING_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask<string>";
-        // ValueTask<string?>
-        const string NULLABLE_STRING_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask<string?>";
-        #endregion
-        #region return enumerable byte
-        // IEnumerable<byte>
-        const string BYTE_ENUMERABLE_TYPE = "global::System.Collections.Generic.IEnumerable<byte>";
-        // IAsyncEnumerable<byte>
-        const string BYTE_ASYNCENUMERABLE_TYPE = "global::System.Collections.Generic.IAsyncEnumerable<byte>";
-        #endregion
-        if ((typeName, nullable, innerNullable) switch
+
+        static ReturnType? GetReturnType(
+            ITypeSymbol returnType,
+            BrainfuckSequenceEnumerable sequences,
+            SourceProductionContext context,
+            MethodDeclarationSyntax methodDeclarationSyntax)
         {
+            var returnType_ = (INamedTypeSymbol)returnType;
+            var typeName = returnType_.ToDisplayString(NullableFlowState.NotNull, SymbolDisplayFormat.FullyQualifiedFormat);
+            var nullable = returnType_.NullableAnnotation;
+            var innerNullable = returnType_.TypeArgumentNullableAnnotations.FirstOrDefault();
             #region return void 
-            (VOID_TYPE, _, _) => ReturnType.Void,
-            (VOID_TASK_TYPE, _, _) => ReturnType.Void | ReturnType.Task,
-            (VOID_VALUETASK_TYPE, _, _) => ReturnType.Void | ReturnType.ValueTask,
+            // void
+            const string VOID_TYPE = "void";
+            // Task
+            const string VOID_TASK_TYPE = "global::System.Threading.Tasks.Task";
+            // ValueTask
+            const string VOID_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask";
             #endregion
             #region return string
-            (STRING_TYPE or NULLABLE_STRING_TYPE, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnType.String,
-            (STRING_TASK_TYPE or NULLABLE_STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated) => ReturnType.String | ReturnType.Task,
-            (STRING_VALUETASK_TYPE or NULLABLE_STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated) => ReturnType.String | ReturnType.ValueTask,
+            // string
+            const string STRING_TYPE = "string";
+            // Task<string>
+            const string STRING_TASK_TYPE = "global::System.Threading.Tasks.Task<string>";
+            // ValueTask<string>
+            const string STRING_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask<string>";
             #endregion
             #region return enumerable byte
-            (BYTE_ENUMERABLE_TYPE, _, _) => ReturnType.Byte | ReturnType.Enumerable,
-            (BYTE_ASYNCENUMERABLE_TYPE, _, _) => ReturnType.Byte | ReturnType.Enumerable | ReturnType.ValueTask,
+            // IEnumerable<byte>
+            const string BYTE_ENUMERABLE_TYPE = "global::System.Collections.Generic.IEnumerable<byte>";
+            // IAsyncEnumerable<byte>
+            const string BYTE_ASYNCENUMERABLE_TYPE = "global::System.Collections.Generic.IAsyncEnumerable<byte>";
             #endregion
-            _ => (ReturnType?)null,
-        } is { } type)
-            return type;
-        // not found support returntype.
-        context.ReportDiagnostic(
-            Diagnostic.Create(
-                DiagnosticDescriptors.InvalidReturnType,
-                methodDeclarationSyntax.Identifier.GetLocation(),
-                typeName));
-        return null;
-    }
-    static ParameterOptions? GetParameterOptions(
-        IMethodSymbol methodSymbol,
-        ReturnType returnType,
-        string returnTypeName,
-        BrainfuckSequenceEnumerable sequences,
-        SourceProductionContext context,
-        MethodDeclarationSyntax methodDeclarationSyntax)
-    {
-        const string CANCELLATION_TOKEN = "System.Threading.CancellationToken";
-        const string STRING_TYPE = "string";
-        const string PIPE_WRITER_TYPE = "System.IO.Pipelines.PipeWriter";
-        const string PIPE_READER_TYPE = "System.IO.Pipelines.PipeReader";
-        var variableCancellation = string.Empty;
-        var variablePipeWriter = string.Empty;
-        var variablePipeReder = string.Empty;
-        var variableInputString = string.Empty;
-        List<string>? builder = null;
-        foreach (var param in methodSymbol.Parameters)
-        {
-            var typeName = param.Type.ToString();
-
-            if (typeName is CANCELLATION_TOKEN)
+            if ((typeName, nullable, innerNullable, sequences.RequiredOutput) switch
             {
-                if (!string.IsNullOrEmpty(variableCancellation))
-                {
-                    //多重宣言は不可
-                    context.ReportDiagnostic(
-                        Diagnostic.Create(
-                            DiagnosticDescriptors.DuplicateParameter,
-                            methodDeclarationSyntax.GetLocation(),
-                            typeName)
-                    );
-                    return null;
-                }
-                variableCancellation = param.Name;
-                (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableCancellation}");
-                continue;
-            }
-            if (typeName is STRING_TYPE)
-            {
-                if (!string.IsNullOrEmpty(variablePipeReder))
-                {
-                    // pipeReader / input string とどちらかのみ可
-                    context.ReportDiagnostic(
-                        Diagnostic.Create(
-                            DiagnosticDescriptors.NotSupportParameterPattern,
-                            methodDeclarationSyntax.GetLocation())
-                    );
-                    return null;
-                }
-                if (!string.IsNullOrEmpty(variableInputString))
-                {
-                    //多重宣言は不可
-                    context.ReportDiagnostic(
-                        Diagnostic.Create(
-                            DiagnosticDescriptors.DuplicateParameter,
-                            methodDeclarationSyntax.GetLocation(),
-                            typeName)
-                    );
-                    return null;
-                }
-                variableInputString = param.Name;
-                (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
-                continue;
-            }
-            if (typeName is PIPE_READER_TYPE)
-            {
-                if (!string.IsNullOrEmpty(variableInputString))
-                {
-                    // pipeReader / input string とどちらかのみ可
-                    context.ReportDiagnostic(
-                        Diagnostic.Create(
-                            DiagnosticDescriptors.NotSupportParameterPattern,
-                            methodDeclarationSyntax.GetLocation())
-                    );
-                    return null;
-                }
-                //多重宣言は不可
-                if (!string.IsNullOrEmpty(variablePipeReder))
-                {
-                    context.ReportDiagnostic(
-                        Diagnostic.Create(
-                            DiagnosticDescriptors.DuplicateParameter,
-                            methodDeclarationSyntax.GetLocation(),
-                            typeName)
-                    );
-                    return null;
-                }
-                variablePipeReder = param.Name;
-                (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
-                continue;
-            }
-            if (typeName is PIPE_WRITER_TYPE)
-            {
-                if ((returnType & (ReturnType.String | ReturnType.Enumerable)) > 0)
-                {
-                    // 戻り型が string | 列挙モード の場合は設定不可
-                    context.ReportDiagnostic(
-                        Diagnostic.Create(
-                            DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
-                            methodDeclarationSyntax.GetLocation(),
-                            typeName,
-                            returnTypeName)
-                    );
-                    return null;
-                }
-                if (!string.IsNullOrEmpty(variablePipeWriter))
-                {
-                    //多重宣言は不可
-                    context.ReportDiagnostic(
-                        Diagnostic.Create(
-                            DiagnosticDescriptors.DuplicateParameter,
-                            methodDeclarationSyntax.GetLocation(),
-                            typeName)
-                    );
-                    return null;
-                }
-                variablePipeWriter = "output";
-                (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
-                continue;
-            }
-
+                #region return void 
+                (VOID_TYPE, _, _, _) => ReturnType.Void,
+                (VOID_TASK_TYPE, _, _, _) => ReturnType.Void | ReturnType.Task,
+                (VOID_VALUETASK_TYPE, _, _, _) => ReturnType.Void | ReturnType.ValueTask,
+                #endregion
+                #region return string
+                (STRING_TYPE, NullableAnnotation.None or NullableAnnotation.Annotated, _, true) => ReturnType.String,
+                (STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, true) => ReturnType.String | ReturnType.Task,
+                (STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, true) => ReturnType.String | ReturnType.ValueTask,
+                #endregion
+                #region return enumerable byte
+                (BYTE_ENUMERABLE_TYPE, _, _, true) => ReturnType.Byte | ReturnType.Enumerable,
+                (BYTE_ASYNCENUMERABLE_TYPE, _, _, true) => ReturnType.Byte | ReturnType.Enumerable | ReturnType.ValueTask,
+                #endregion
+                _ => (ReturnType?)null,
+            } is { } type)
+                return type;
+            // not found support returntype.
             context.ReportDiagnostic(
                 Diagnostic.Create(
-                    DiagnosticDescriptors.InvalidParameter,
-                    methodDeclarationSyntax.GetLocation(),
-                    typeName)
-            );
+                    DiagnosticDescriptors.InvalidReturnType,
+                    methodDeclarationSyntax.Identifier.GetLocation(),
+                    returnType.ToDisplayString()));
             return null;
         }
-        return new(
-            ParameterSymbols: builder?.Count > 0 ? string.Join(", ", builder) : string.Empty,
-            VariableCancellation: variableCancellation,
-            VaribalePipeWriter: variablePipeWriter,
-            VariablePipeReader: variablePipeReder,
-            VariableInputString: variableInputString
-        );
+        static ParameterOptions? GetParameterOptions(
+            IMethodSymbol methodSymbol,
+            ReturnType returnType,
+            string returnTypeName,
+            BrainfuckSequenceEnumerable sequences,
+            SourceProductionContext context,
+            MethodDeclarationSyntax methodDeclarationSyntax)
+        {
+            const string CANCELLATION_TOKEN = "global::System.Threading.CancellationToken";
+            const string STRING_TYPE = "string";
+            const string PIPE_WRITER_TYPE = "global::System.IO.Pipelines.PipeWriter";
+            const string PIPE_READER_TYPE = "global::System.IO.Pipelines.PipeReader";
+            var variableCancellation = string.Empty;
+            var variablePipeWriter = string.Empty;
+            var variablePipeReder = string.Empty;
+            var variableInputString = string.Empty;
+            List<string>? builder = null;
+            foreach (var param in methodSymbol.Parameters)
+            {
+                var typeName = param.Type.ToDisplayString(NullableFlowState.NotNull, SymbolDisplayFormat.FullyQualifiedFormat);
+
+                if (typeName is CANCELLATION_TOKEN)
+                {
+                    if (!string.IsNullOrEmpty(variableCancellation))
+                    {
+                        //多重宣言は不可
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.DuplicateParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
+                    variableCancellation = param.Name;
+                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableCancellation}");
+                    continue;
+                }
+                if (typeName is STRING_TYPE)
+                {
+                    if (!sequences.RequiredInput)
+                    {
+                        // 入力不可なソースの場合
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.InvalidParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
+                    if (!string.IsNullOrEmpty(variablePipeReder))
+                    {
+                        // pipeReader / input string とどちらかのみ可
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.NotSupportParameterPattern,
+                                methodDeclarationSyntax.GetLocation())
+                        );
+                        return null;
+                    }
+                    if (!string.IsNullOrEmpty(variableInputString))
+                    {
+                        //多重宣言は不可
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.DuplicateParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
+                    variableInputString = param.Name;
+                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
+                    continue;
+                }
+                if (typeName is PIPE_READER_TYPE)
+                {
+                    if (!sequences.RequiredInput)
+                    {
+                        // 入力不可なソースの場合
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.InvalidParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
+                    if (!string.IsNullOrEmpty(variableInputString))
+                    {
+                        // pipeReader / input string とどちらかのみ可
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.NotSupportParameterPattern,
+                                methodDeclarationSyntax.GetLocation())
+                        );
+                        return null;
+                    }
+                    //多重宣言は不可
+                    if (!string.IsNullOrEmpty(variablePipeReder))
+                    {
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.DuplicateParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
+                    variablePipeReder = param.Name;
+                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
+                    continue;
+                }
+                if (typeName is PIPE_WRITER_TYPE)
+                {
+                    if (!sequences.RequiredOutput)
+                    {
+                        // 出力不可なソースの場合
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.InvalidParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
+                    if ((returnType & (ReturnType.String | ReturnType.Enumerable)) > 0)
+                    {
+                        // 戻り型が string | 列挙モード の場合は設定不可
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName,
+                                returnTypeName)
+                        );
+                        return null;
+                    }
+                    if (!string.IsNullOrEmpty(variablePipeWriter))
+                    {
+                        //多重宣言は不可
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.DuplicateParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
+                    variablePipeWriter = "output";
+                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
+                    continue;
+                }
+
+                context.ReportDiagnostic(
+                    Diagnostic.Create(
+                        DiagnosticDescriptors.InvalidParameter,
+                        methodDeclarationSyntax.GetLocation(),
+                        typeName)
+                );
+                return null;
+            }
+            return new(
+                ParameterSymbols: builder?.Count > 0 ? string.Join(", ", builder) : string.Empty,
+                VariableCancellation: variableCancellation,
+                VaribalePipeWriter: variablePipeWriter,
+                VariablePipeReader: variablePipeReder,
+                VariableInputString: variableInputString
+            );
+        }
     }
     const string SPACE = "    ";
     const string STACK_NAME = "stack";
@@ -325,12 +375,13 @@ public partial class BrainfuckMethodGenerator
                     {{space}}System.IO.Pipelines.PipeReader {{pipeReader}};
                     {{space}}{
                     {{space}}{{SPACE}}var inputPipe = new System.IO.Pipelines.Pipe();
-                    {{space}}{{SPACE}}var bytes = System.Text.Encoding.UTF8.GetBytes({{options.VariableInputString}});
+                    {{space}}{{SPACE}}var bytes = string.IsNullOrEmpty({{options.VariableInputString}}) ? System.Array.Empty<byte>() : System.Text.Encoding.UTF8.GetBytes({{options.VariableInputString}});
                     """);
                 if (isAsync)
                 {
                     var withCancel = string.IsNullOrEmpty(options.VariableCancellationToken) ? string.Empty : ", " + options.VariableCancellationToken;
                     builder.AppendLine($$"""
+                        {{space}}{{SPACE}}if (bytes)
                         {{space}}{{SPACE}}await inputPipe.Writer.WriteAsync(System.Text.Encoding.UTF8.GetBytes(bytes{{withCancel}})
                         {{space}}{{SPACE}}await inputPipe.Writer.CompleteAsync();
                         """);
@@ -348,15 +399,6 @@ public partial class BrainfuckMethodGenerator
                     {{space}}{{SPACE}}{{pipeReader}} = inputPipe.Reader;
                     {{space}}}
                     """);
-            }
-            else if (!string.IsNullOrEmpty(options.VariablePipeReader))
-            {
-                // 既に入力がある為、ここで必要となる処理が無い
-            }
-            else
-            {
-                // 入力が必要であるならばそもそもここを通るべきではない
-                throw new InvalidOperationException();
             }
         }
 
@@ -548,11 +590,9 @@ public partial class BrainfuckMethodGenerator
             x => x.AttributeClass?.ToDisplayString() == NameSpaceName + "." + ClassNameBrainfuckAttribution
         );
 
-        if (attributeData.ConstructorArguments.Length != 1)
-            throw new InvalidOperationException($"ConstructorArguments.Length is {attributeData.ConstructorArguments.Length}");
-
-        var typedConstantForValueParameter = attributeData.ConstructorArguments[0];
-        if (typedConstantForValueParameter.IsNull || typedConstantForValueParameter.Value is not string source || string.IsNullOrEmpty(source))
+        if (attributeData.ConstructorArguments is not { Length: >0 } 
+            || attributeData.ConstructorArguments[0] is not {IsNull: false, Value: string source }  
+            || string.IsNullOrEmpty(source))
         {
             context.ReportDiagnostic(
                 Diagnostic.Create(

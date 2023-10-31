@@ -10,3 +10,5 @@ BF0003 | Brainfuck | Error | DiagnosticDescriptors
 BF0004 | Brainfuck | Error | DiagnosticDescriptors
 BF0005 | Brainfuck | Error | DiagnosticDescriptors
 BF0006 | Brainfuck | Error | DiagnosticDescriptors
+BF0007 | Brainfuck | Error | DiagnosticDescriptors
+BF0008 | Brainfuck | Error | DiagnosticDescriptors

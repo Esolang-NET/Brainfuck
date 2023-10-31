@@ -15,6 +15,7 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
     /// <summary>
     /// BF0002: not support return type: The method is support return type {0} is not support.
     /// </summary>
@@ -25,6 +26,7 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
     /// <summary>
     /// BF0003: not support parameter type: The parameter of the method '{0}' not support type.
     /// </summary>
@@ -35,6 +37,7 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
     /// <summary>
     /// BF0004: not support duplicate parameter type: The parameter of the method '{0}' duplicate type.
     /// </summary>
@@ -45,6 +48,7 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
     /// <summary>
     /// BF0005: not support parameter pattern: The parameter of the method 'System.IO.Pipelines.PipeReader' and 'string' not support pattern.
     /// </summary>
@@ -55,6 +59,10 @@ public static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
+    /// <summary>
+    /// BF0006: not support parameter and return type pattern: The parameter of the method parameter '{0}' and return type '{1}' not support pattern
+    /// </summary>
     public static readonly DiagnosticDescriptor NotSupportParameterAndReturnTypePattern = new(
         id: "BF0006",
         title: "not support parameter and return type pattern",
@@ -63,4 +71,25 @@ public static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
+    /// <summary>
+    /// BF0007: required output interface in souce: required return 'string' or 'Task<string>' or 'ValueTask<string>' or parameter 'PipeWriter'
+    /// </summary>
+    public static readonly DiagnosticDescriptor RequiredOutputInterface = new(
+        id: "BF0007",
+        title: "required output interface in souce",
+        messageFormat: "required return 'string' or 'Task<string>' or 'ValueTask<string>' or parameter 'PipeWriter'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    /// <summary>
+    /// BF0008: required input interface in souce: required parameter 'string' or 'PipeReader'
+    /// </summary>
+    public static readonly DiagnosticDescriptor RequiredInputInterface = new(
+        id: "BF0008",
+        title: "required input interface in souce",
+        messageFormat: "required parameter 'string' or 'PipeReader'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
 }
