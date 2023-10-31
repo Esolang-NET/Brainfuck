@@ -10,4 +10,7 @@ partial class BrainfuckSample
     public static partial Task<string?> SampleMethod1();
     [GenerateBrainfuckMethod("1+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.")]
     public static partial Task<string?> SampleMethod2();
+
+    [GenerateBrainfuckMethod("😀😁😂🤣😃😄😅😅😅😅😆😆", IncrementPointer = "😀", DecrementPointer = "😁", IncrementCurrent = "😂", DecrementCurrent = "🤣", Output = "😃", Input = "😄", Begin = "😅", End = "😆")]
+    public static partial Task<string?> SampleMethod(string input);
 }

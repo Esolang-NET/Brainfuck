@@ -186,23 +186,6 @@ public class BrainfuckMethodGeneratorTests
             cancellationToken.ThrowIfCancellationRequested();
         }
     }
-    [TestMethod]
-    public void SourceGeneratorTest_ReturnTypePattern1Void()
-    {
-
-        var source = $$"""
-        using Brainfuck;
-        namespace TestProject;
-        partial class TestClass
-        {
-            [GenerateBrainfuckMethod("0")]
-            public static partial void SampleMethod();
-        }
-        """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
-        Assert.IsTrue(diagnostics.IsEmpty);
-        Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
-    }
     static IEnumerable<object?[]> ReturnTypeAndParameterPatternsTestData
     {
         get

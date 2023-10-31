@@ -376,21 +376,20 @@ public partial class BrainfuckMethodGenerator
                     {{space}}{
                     {{space}}{{SPACE}}var inputPipe = new System.IO.Pipelines.Pipe();
                     {{space}}{{SPACE}}var bytes = string.IsNullOrEmpty({{options.VariableInputString}}) ? System.Array.Empty<byte>() : System.Text.Encoding.UTF8.GetBytes({{options.VariableInputString}});
+                    {{space}}{{SPACE}}if (bytes.Length > 0)
                     """);
                 if (isAsync)
                 {
                     var withCancel = string.IsNullOrEmpty(options.VariableCancellationToken) ? string.Empty : ", " + options.VariableCancellationToken;
                     builder.AppendLine($$"""
-                        {{space}}{{SPACE}}if (bytes)
-                        {{space}}{{SPACE}}await inputPipe.Writer.WriteAsync(System.Text.Encoding.UTF8.GetBytes(bytes{{withCancel}})
+                        {{space}}{{SPACE}}{{SPACE}}await inputPipe.Writer.WriteAsync(bytes{{withCancel}});
                         {{space}}{{SPACE}}await inputPipe.Writer.CompleteAsync();
                         """);
                 }
                 else
                 {
                     builder.AppendLine($$"""
-                        
-                        {{space}}{{SPACE}}bytes.CopyTo(inputPipe.Writer.GetSpan(bytes.Length));
+                        {{space}}{{SPACE}}{{SPACE}}bytes.CopyTo(inputPipe.Writer.GetSpan(bytes.Length));
                         {{space}}{{SPACE}}inputPipe.Writer.Advance(bytes.Length);
                         {{space}}{{SPACE}}inputPipe.Writer.Complete();
                         """);
@@ -467,7 +466,10 @@ public partial class BrainfuckMethodGenerator
             if (sequence is Sequence simple)
             {
                 if (simple is { Value: Begin or End })
+                {
                     WriteComment(indent, Comment, simple.Syntax, builder);
+                    continue;
+                }
                 WriteSequence(indent, simple.Value, simple.Syntax, builder, ref options);
                 continue;
             }
@@ -529,7 +531,7 @@ public partial class BrainfuckMethodGenerator
                     {{space}}{{SPACE}}if (await {{pipeReader}}.ReadAtLeastAsync(1{{withCancel}}) is { } result && result.Buffer.Length >= 0)
                     {{space}}{{SPACE}}{
                     {{space}}{{SPACE}}{{SPACE}}var readableSeq = result.Buffer.Slice(result.Buffer.Start, 1);
-                    {{space}}{{SPACE}}{{SPACE}}readableSeq.CopyTo({{stack}}.Slice({{stackIndex}}, 1));
+                    {{space}}{{SPACE}}{{SPACE}}System.Buffers.BuffersExtensions.CopyTo(readableSeq, AsMemory({{stack}}).Slice({{stackIndex}}, 1).Span);
                     {{space}}{{SPACE}}{{SPACE}}{{pipeReader}}.AdvanceTo(readableSeq.End);
                     {{space}}{{SPACE}}}
                     {{space}}}
@@ -539,7 +541,7 @@ public partial class BrainfuckMethodGenerator
                     {{space}}{{SPACE}}if ({{pipeReader}}.TryRead(out var result) && result.Buffer.Length >= 0)
                     {{space}}{{SPACE}}{
                     {{space}}{{SPACE}}{{SPACE}}var readableSeq = result.Buffer.Slice(result.Buffer.Start, 1);
-                    {{space}}{{SPACE}}{{SPACE}}readableSeq.CopyTo({{stack}}.Slice({{stackIndex}}, 1));
+                    {{space}}{{SPACE}}{{SPACE}}System.Buffers.BuffersExtensions.CopyTo(readableSeq, AsMemory({{stack}}).Slice({{stackIndex}}, 1).Span);
                     {{space}}{{SPACE}}{{SPACE}}{{pipeReader}}.AdvanceTo(readableSeq.End);
                     {{space}}{{SPACE}}}
                     {{space}}}
