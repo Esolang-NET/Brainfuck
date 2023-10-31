@@ -9,6 +9,7 @@ public static class Utils
 {
     public static string SanitizeForFileName(string str) => str
             .Replace("global::", "")
+            .Replace("?", "")
             .Replace("<", "_")
             .Replace(">", "_");
 
