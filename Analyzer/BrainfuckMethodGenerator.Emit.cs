@@ -10,6 +10,11 @@ public partial class BrainfuckMethodGenerator
 {
     static void Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source)
     {
+        var format = SymbolDisplayFormat.FullyQualifiedFormat
+            .WithMiscellaneousOptions(
+                SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers |
+                SymbolDisplayMiscellaneousOptions.UseSpecialTypes |
+                SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
         var methodSymbol = (IMethodSymbol)source.TargetSymbol;
         var methodDeclarationSyntax = (MethodDeclarationSyntax)source.TargetNode;
         if (GetSources(context, methodSymbol, methodDeclarationSyntax) is not { } sequences)
@@ -34,6 +39,9 @@ public partial class BrainfuckMethodGenerator
             VariableInputString: parameterOptions.VariableInputString,
             ReturnType: returnType
         );
+        var returnTypeSyntax = methodSymbol.ReturnType.ToDisplayString(
+            returnType is ReturnType.String ? NullableFlowState.MaybeNull : NullableFlowState.None,
+            format);
         var methodBodyCode = GenerateMethodBodyCode(2, sequences, ref writeOption);
         var withAsync = writeOption.ReturnType.IsAsync() ? "async" : string.Empty;
         var generatedSourceCode = $$"""
@@ -41,7 +49,7 @@ public partial class BrainfuckMethodGenerator
             #nullable enable
 
             {{openingDefinitionCode}}
-                {{methodModifier}} {{withAsync}} {{methodSymbol.ReturnType.ToDisplayString(NullableFlowState.NotNull, SymbolDisplayFormat.FullyQualifiedFormat)}} {{methodSymbol.Name}}({{parameterOptions.ParameterSymbols}})
+                {{methodModifier}} {{withAsync}} {{returnTypeSyntax}} {{methodSymbol.Name}}({{parameterOptions.ParameterSymbols}})
                 {
             {{methodBodyCode}}
                 }
@@ -55,8 +63,8 @@ public partial class BrainfuckMethodGenerator
             """;
         }
 
-        var classPart = containingClassSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? "__global__";
-        var returnTypePart = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+        var classPart = containingClassSymbol?.ToDisplayString(format) ?? "__global__";
+        var returnTypePart = methodSymbol.ReturnType.ToDisplayString(format);
         var generatingSourceFileName = Utils.SanitizeForFileName($"{classPart}.{methodSymbol.Name}.{returnTypePart}.g.cs");
         context.AddSource(generatingSourceFileName, generatedSourceCode);
     }
@@ -67,16 +75,16 @@ public partial class BrainfuckMethodGenerator
         MethodDeclarationSyntax methodDeclarationSyntax)
     {
         var returnType_ = (INamedTypeSymbol)returnType;
-        var typeName = returnType_.ToDisplayString().Replace("string?", "string");
+        var typeName = returnType_.ToDisplayString(NullableFlowState.NotNull, SymbolDisplayFormat.FullyQualifiedFormat).Replace("string?", "string");
         var nullable = returnType_.NullableAnnotation;
         var innerNullable = returnType_.TypeArgumentNullableAnnotations.FirstOrDefault();
         #region return void 
         // void
-        const string VOID_TYPE = "System.Void";
+        const string VOID_TYPE = "global::System.Void";
         // Task
-        const string VOID_TASK_TYPE = "System.Threading.Tasks.Task";
+        const string VOID_TASK_TYPE = "global::System.Threading.Tasks.Task";
         // ValueTask
-        const string VOID_VALUETASK_TYPE = "System.Threading.Tasks.ValueTask";
+        const string VOID_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask";
         #endregion
         #region return string
         // string
@@ -84,19 +92,19 @@ public partial class BrainfuckMethodGenerator
         // string?
         const string NULLABLE_STRING_TYPE = "string";
         // Task<string>
-        const string STRING_TASK_TYPE = "System.Threading.Tasks.Task<string>";
+        const string STRING_TASK_TYPE = "global::System.Threading.Tasks.Task<string>";
         // Task<string?>
-        const string NULLABLE_STRING_TASK_TYPE = "System.Threading.Tasks.Task<string?>";
+        const string NULLABLE_STRING_TASK_TYPE = "global::System.Threading.Tasks.Task<string?>";
         // ValueTask<string>
-        const string STRING_VALUETASK_TYPE = "System.Threading.Tasks.ValueTask<string>";
+        const string STRING_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask<string>";
         // ValueTask<string?>
-        const string NULLABLE_STRING_VALUETASK_TYPE = "System.Threading.Tasks.ValueTask<string?>";
+        const string NULLABLE_STRING_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask<string?>";
         #endregion
         #region return enumerable byte
         // IEnumerable<byte>
-        const string BYTE_ENUMERABLE_TYPE = "System.Collections.Generic.IEnumerable<byte>";
+        const string BYTE_ENUMERABLE_TYPE = "global::System.Collections.Generic.IEnumerable<byte>";
         // IAsyncEnumerable<byte>
-        const string BYTE_ASYNCENUMERABLE_TYPE = "System.Collections.Generic.IAsyncEnumerable<byte>";
+        const string BYTE_ASYNCENUMERABLE_TYPE = "global::System.Collections.Generic.IAsyncEnumerable<byte>";
         #endregion
         if ((typeName, nullable, innerNullable) switch
         {
@@ -107,11 +115,11 @@ public partial class BrainfuckMethodGenerator
             #endregion
             #region return string
             (STRING_TYPE or NULLABLE_STRING_TYPE, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnType.String,
-            (STRING_TASK_TYPE or NULLABLE_STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated)=> ReturnType.String | ReturnType.Task,
+            (STRING_TASK_TYPE or NULLABLE_STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated) => ReturnType.String | ReturnType.Task,
             (STRING_VALUETASK_TYPE or NULLABLE_STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated) => ReturnType.String | ReturnType.ValueTask,
             #endregion
             #region return enumerable byte
-            (BYTE_ENUMERABLE_TYPE, _,_) => ReturnType.Byte | ReturnType.Enumerable,
+            (BYTE_ENUMERABLE_TYPE, _, _) => ReturnType.Byte | ReturnType.Enumerable,
             (BYTE_ASYNCENUMERABLE_TYPE, _, _) => ReturnType.Byte | ReturnType.Enumerable | ReturnType.ValueTask,
             #endregion
             _ => (ReturnType?)null,
