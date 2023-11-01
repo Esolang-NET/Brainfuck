@@ -1,18 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>dotnet-brainfuck</AssemblyName>
-    <Title>brainfuck runner</Title>
-    <IncludeSymbols>True</IncludeSymbols>
+    <TargetFrameworks>net6.0;net8.0;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <IsPublishable>false</IsPublishable>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PublishRelease>true</PublishRelease>
-    <IsPublishable>true</IsPublishable>
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>dotnet-brainfuck</ToolCommandName>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
@@ -29,11 +20,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.IO.Pipelines" />
+    <PackageReference Include="System.Memory" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Runner\Brainfuck.Runner.csproj" />
+    <ProjectReference Include="..\Parser\Brainfuck.Parser.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,4 +36,7 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+  <Import Project="..\Shared\Shared.projitems" Label="Shared" />
+
 </Project>

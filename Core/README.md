@@ -1,3 +1,0 @@
-# Brainfuck.Core
-
-brainfuck runner.

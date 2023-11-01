@@ -1,3 +1,0 @@
-# Brainfuck.Analyzer
-
-brainfuck analyzer.

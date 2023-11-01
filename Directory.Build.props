@@ -7,12 +7,25 @@
     <FileVersion>0.1.0.0</FileVersion>
     <Version>0.1.0.0-preview</Version>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>NETSDK1213</NoWarn>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <NoWarn>$(NoWarn);NETSDK1213;CS9057</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'!='DEBUG'">
-    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</RepoRoot>
-    <PathMap>$(RepoRoot)=.</PathMap>
+    <!-- このオプションの指定で、タイムスタンプとかを決定論的なハッシュ値に置き換える -->
+    <Deterministic>true</Deterministic>
+    
+    <!-- 「相対パス化」って機能は実はなくて、「このプロジェクトのパスを、この指定したパスに置き換える」みたいな処理を書くらしい -->
+    <DeterministicSourceRoot>/_/</DeterministicSourceRoot>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\'))</RepoRoot>
+    
+    <!-- これが、「あるパスを別のあるパスに置き換える」をやるための設定 -->
+    <PathMap>$(RepoRoot)=$(DeterministicSourceRoot)</PathMap>
+
+    <!-- おまけ。PDB 中にソースコード埋め込み -->
+    <EnableSourceLink>true</EnableSourceLink>
   </PropertyGroup>
 </Project>

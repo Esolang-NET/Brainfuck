@@ -1,21 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFrameworks>net6.0;net8.0</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AssemblyName>dotnet-brainfuck</AssemblyName>
-    <Title>brainfuck runner</Title>
-    <IncludeSymbols>True</IncludeSymbols>
+    <TargetFrameworks>net6.0;net8.0;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <IsPublishable>false</IsPublishable>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    <PublishRelease>true</PublishRelease>
-    <IsPublishable>true</IsPublishable>
-    <PackAsTool>true</PackAsTool>
-    <ToolCommandName>dotnet-brainfuck</ToolCommandName>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-
+  
   <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">
     <IsTrimmable>true</IsTrimmable>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
@@ -29,11 +21,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.CommandLine" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Runner\Brainfuck.Runner.csproj" />
+    <PackageReference Include="IndexRange" />
+    <PackageReference Include="System.Memory" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,4 +31,7 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+  <Import Project="..\Shared\Shared.projitems" Label="Shared" />
+
 </Project>
