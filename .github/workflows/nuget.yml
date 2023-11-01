@@ -25,7 +25,7 @@ jobs:
       
       - name: Pack
         run: |
-          dotnet pack MyGreatLib.csproj -o artifacts/
+          dotnet pack -o artifacts/
 
       - uses: actions/upload-artifact@v1
         with:
