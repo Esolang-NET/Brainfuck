@@ -13,7 +13,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 'preview'
+          dotnet-version: '8.0-preview'
       
       - name: Install dependencies
         run: |
@@ -35,4 +35,4 @@ jobs:
         run: |
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/juner/index.json"
           dotnet nuget push "*.*"  --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
-          dotnet nuget push "*.*" --api-key ${{secrets.NUGET_ORG_API_KEY}} --skip-duplicate
+          dotnet nuget push "*.*" --api-key ${{ secrets.NUGET_ORG_API_KEY }} --skip-duplicate
