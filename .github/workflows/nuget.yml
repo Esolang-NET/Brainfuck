@@ -13,7 +13,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 'preview'
+          dotnet-version: '8.0.100-rc.2.23502.2'
       
       - name: Install dependencies
         run: |
@@ -25,14 +25,16 @@ jobs:
       
       - name: Pack
         run: |
-          dotnet pack MyGreatLib.csproj -o artifacts/
+          dotnet pack -o artifacts/
 
       - uses: actions/upload-artifact@v1
         with:
           name: artifacts
           path: artifacts
-      - name: Publish to GitHub Packages
+      - name: push nupkg and snupkg
         run: |
           dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/juner/index.json"
-          dotnet nuget push "*.*"  --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
-          dotnet nuget push "*.*" --api-key ${{secrets.NUGET_ORG_API_KEY}} --skip-duplicate
+          dotnet nuget push "artifacts/*.nupkg"  --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
+          dotnet nuget push "artifacts/*.snupkg"  --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
+          dotnet nuget push "artifacts/*.nupkg" --api-key ${{ secrets.NUGET_ORG_API_KEY }} --skip-duplicate
+          dotnet nuget push "artifacts/*.snupkg" --api-key ${{ secrets.NUGET_ORG_API_KEY }} --skip-duplicate
