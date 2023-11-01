@@ -9,8 +9,6 @@ namespace Brainfuck.Generator.Tests;
 
 [TestClass]
 public class MethodGeneratorTests
-
-
 {
     public TestContext TestContext { get; set; } = default!;
     Compilation baseCompilation = default!;
