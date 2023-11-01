@@ -6,10 +6,11 @@ using System.Reflection;
 #endif
 
 namespace Brainfuck.TestShared;
-internal class TestAssemblyLoadContext :
+internal class AssemblyLoadContext
+    :
 
 #if NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER
-    AssemblyLoadContext,
+    System.Runtime.Loader.AssemblyLoadContext,
 #endif
     IDisposable
 {
@@ -18,7 +19,7 @@ internal class TestAssemblyLoadContext :
     private AppDomain _domain;
 #endif
 
-    public TestAssemblyLoadContext()
+    public AssemblyLoadContext()
 #if NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER
         : base(isCollectible: true)
 #endif

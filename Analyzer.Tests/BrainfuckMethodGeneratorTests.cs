@@ -31,6 +31,7 @@ public class BrainfuckMethodGeneratorTests
             systemAssemblies = systemAssemblies.Append(typeof(System.IO.Pipelines.Pipe).Assembly.Location);
             systemAssemblies = systemAssemblies.Append(typeof(Span<>).Assembly.Location);
             systemAssemblies = systemAssemblies.Append(typeof(System.Runtime.CompilerServices.Unsafe).Assembly.Location);
+            systemAssemblies = systemAssemblies.Append(typeof(ValueTask<>).Assembly.Location);
 #if !NETCOREAPP1_0_OR_GREATER && !NET5_0_OR_GREATER
             var exclude = new HashSet<string>(new string[] {
                 "System.tlb",
@@ -93,22 +94,27 @@ public class BrainfuckMethodGeneratorTests
         // Run the generator
         return driver.RunGeneratorsAndUpdateCompilation(compilation, out outputCompilation, out diagnostics);
     }
-    (TestShared.TestAssemblyLoadContext Context, Assembly Assembly) Emit(Compilation compilation, CancellationToken cancellationToken = default)
+    (TestShared.AssemblyLoadContext Context, Assembly Assembly) Emit(Compilation compilation, TestShared.AssemblyLoadContext? context = null, CancellationToken cancellationToken = default)
     {
-        var dllFileName = Path.Combine(TestContext.TestRunResultsDirectory!, $"dynamiclinklib{$"{DateTime.Now:o}"
-            .Replace(' ', '_')
-            .Replace(':', '_')}.dll");
+        using var stream = new MemoryStream();
+        using var pdbStream = new MemoryStream();
+        var emitResult = compilation.Emit(stream, pdbStream: pdbStream, cancellationToken: cancellationToken);
+        if (!emitResult.Success)
+            AssertDiagnostics(emitResult.Diagnostics, compilation);
+        Assert.IsTrue(emitResult.Success);
+        stream.Seek(0, SeekOrigin.Begin);
+        pdbStream.Seek(0, SeekOrigin.Begin);
+        TestContext.WriteLine($"assembly Length:{stream.Length}");
+        var isNew = context is null;
+        context ??= new TestShared.AssemblyLoadContext();
+        try
         {
-            using var stream = new FileStream(dllFileName, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
-            using var pdbStream = new MemoryStream();
-            var emitResult = compilation.Emit(stream, pdbStream: pdbStream, cancellationToken: cancellationToken);
-            Assert.IsTrue(emitResult.Success);
-            stream.Seek(0, SeekOrigin.Begin);
-            pdbStream.Seek(0, SeekOrigin.Begin);
-            TestContext.WriteLine($"assembly Name:{dllFileName} Length:{new FileInfo(dllFileName).Length}");
-            var context = new TestShared.TestAssemblyLoadContext();
             var assembly = context.LoadFromStream(stream, pdbStream);
             return (context, assembly);
+        }catch(Exception)
+        {
+            if (isNew) context?.Dispose();
+            throw;
         }
     }
     void OutputSource(IEnumerable<SyntaxTree> syntaxTrees)
@@ -117,6 +123,20 @@ public class BrainfuckMethodGeneratorTests
         {
             TestContext.WriteLine($"FilePath:{tree.FilePath}\r\nsource:↓\r\n{tree}");
         }
+    }
+    void OutputDiagnostics(ImmutableArray<Diagnostic> diagnostics)
+    {
+        foreach (var diagnostic in diagnostics)
+            TestContext.WriteLine($"{diagnostic}");
+    }
+    void AssertDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
+    {
+        if (!diagnostics.IsEmpty)
+        {
+            OutputDiagnostics(diagnostics);
+            OutputSource(compilation.SyntaxTrees);
+        }
+        Assert.IsTrue(diagnostics.IsEmpty);
     }
     static IEnumerable<object?[]> SourceGeneratorTest1Data
     {
@@ -145,24 +165,10 @@ public class BrainfuckMethodGeneratorTests
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
-
-        if (!diagnostics.IsEmpty)
-        {
-            foreach (var diagnostic in diagnostics)
-                TestContext.WriteLine($"{diagnostic}");
-            OutputSource(outputCompilation.SyntaxTrees);
-        }
-        Assert.IsTrue(diagnostics.IsEmpty);
+        AssertDiagnostics(diagnostics, outputCompilation);
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
-        var diagnostics2 = outputCompilation.GetDiagnostics();
-        if (!diagnostics2.IsEmpty)
-        {
-            foreach (var diagnostic in diagnostics2)
-                TestContext.WriteLine($"{diagnostic}");
-            OutputSource(outputCompilation.SyntaxTrees);
-        }
-        Assert.IsTrue(diagnostics2.IsEmpty);
-        var (context, assembly) = Emit(outputCompilation, cancellationToken);
+        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        var (context, assembly) = Emit(outputCompilation, cancellationToken: cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         using (context)
         {
@@ -202,33 +208,35 @@ public class BrainfuckMethodGeneratorTests
             yield return ReturnTypeAndParameterPatternsTest(
                 "2_1_1+.",
                 "string",
-                options: "#nullable disabled");
+                options: "#nullable disable");
             yield return ReturnTypeAndParameterPatternsTest(
                 "2_1_2+.",
                 "System.Threading.Tasks.Task<string>",
-                options: "#nullable disabled");
+                options: "#nullable disable");
             yield return ReturnTypeAndParameterPatternsTest(
                 "2_1_3+.",
                 "System.Threading.Tasks.ValueTask<string>",
-                options: "#nullable disabled");
+                options: "#nullable disable");
             yield return ReturnTypeAndParameterPatternsTest(
                 "2_2_1+.",
                 "string?",
-                options: "#nullable enabled");
+                options: "#nullable enable");
             yield return ReturnTypeAndParameterPatternsTest(
                 "2_2_2+.",
                 "System.Threading.Tasks.Task<string?>",
-                options: "#nullable enabled");
+                options: "#nullable enable");
             yield return ReturnTypeAndParameterPatternsTest(
                 "2_2_3+.",
                 "System.Threading.Tasks.ValueTask<string?>",
-                options: "#nullable enabled");
+                options: "#nullable enable");
             yield return ReturnTypeAndParameterPatternsTest(
                 "3_1+.",
                 "System.Collections.Generic.IEnumerable<byte>");
+#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER //netframework not support IAsyncEnumerable<>
             yield return ReturnTypeAndParameterPatternsTest(
                 "3_2+.",
                 "System.Collections.Generic.IAsyncEnumerable<byte>");
+#endif
             yield return ReturnTypeAndParameterPatternsTest(
                 "4_1+.",
                 "void",
@@ -278,15 +286,11 @@ public class BrainfuckMethodGeneratorTests
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
-        if (!diagnostics.IsEmpty)
-        {
-
-            foreach (var diagnostic in diagnostics)
-                TestContext.WriteLine($"{diagnostic}");
-            OutputSource(outputCompilation.SyntaxTrees);
-        }
-        Assert.IsTrue(diagnostics.IsEmpty);
+        AssertDiagnostics(diagnostics, outputCompilation);
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
+        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        var (context, _) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
+        using var context_ = context;
     }
     static IEnumerable<object?[]> DiagnoticsTestData
     {
@@ -299,7 +303,7 @@ public class BrainfuckMethodGeneratorTests
             // BF0002: not support return type string (in #nullable enable)
             yield return DiagnoticsTest("BF0002", "2_2.", "string", options: "#nullable enable"); ;
             // BF0002: not support return type string (in #nullable disabled and not output bf source)
-            yield return DiagnoticsTest("BF0002", "2_3", "string", options: "#nullable disabled");
+            yield return DiagnoticsTest("BF0002", "2_3", "string", options: "#nullable disable");
             // BF0003: not support parameter type int.
             yield return DiagnoticsTest("BF0003", "3_1", "void", "int param1");
             // BF0003: not support parameter type string (source no input)
@@ -328,8 +332,10 @@ public class BrainfuckMethodGeneratorTests
             yield return DiagnoticsTest("BF0006", "6_3.", "System.Threading.Tasks.ValueTask<string>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
             yield return DiagnoticsTest("BF0006", "6_4.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
+#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER  //netframework not support IAsyncEnumerable<>
             // BF0006: duplicate return IAsyncEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
             yield return DiagnoticsTest("BF0006", "6_5.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
+#endif
             // BF0007: no outuput
             yield return DiagnoticsTest("BF0007", "7_1.", "void");
             // BF0007: no outuput
@@ -391,7 +397,10 @@ public class BrainfuckMethodGeneratorTests
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
-        Assert.IsTrue(diagnostics.IsEmpty);
+        AssertDiagnostics(diagnostics, outputCompilation);
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
+        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        var (context, _) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
+        using var context_ = context;
     }
 }
