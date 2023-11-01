@@ -2,7 +2,7 @@
   "profiles": {
     "debug": {
       "commandName": "DebugRoslynComponent",
-      "targetProject": "..\\Analyzer.UseConsole\\Brainfuck.Analyzer.UseConsole.csproj"
+      "targetProject": "..\\Generator.UseConsole\\Brainfuck.Generator.UseConsole.csproj"
     }
   }
 }

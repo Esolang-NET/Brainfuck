@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Analyzer\Brainfuck.Analyzer.csproj" />
+    <ProjectReference Include="..\Generator\Brainfuck.Generator.csproj" />
   </ItemGroup>
 
   <Import Project="..\TestShared\TestShared.projitems" Label="Shared" />

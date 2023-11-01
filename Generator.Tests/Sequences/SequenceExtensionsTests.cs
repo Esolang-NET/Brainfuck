@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Brainfuck.Analyzer.Sequences.Tests;
+namespace Brainfuck.Generator.Sequences.Tests;
 [TestClass]
 public class SequenceExtensionsTests
 {

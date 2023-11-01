@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Text;
 
-namespace Brainfuck.Analyzer.Sequences;
+namespace Brainfuck.Generator.Sequences;
 
 internal sealed record NestableSequence(IEnumerable<INestableSequence> Nest, Sequence Begin, Sequence End) : INestableSequence, IEnumerable<Sequence>
 {

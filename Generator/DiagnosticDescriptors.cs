@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace Brainfuck.Analyzer;
+namespace Brainfuck.Generator;
 
 public static class DiagnosticDescriptors
 {

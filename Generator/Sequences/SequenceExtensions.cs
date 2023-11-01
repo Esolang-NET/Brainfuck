@@ -1,6 +1,6 @@
 ﻿using static Brainfuck.BrainfuckSequence;
 
-namespace Brainfuck.Analyzer.Sequences;
+namespace Brainfuck.Generator.Sequences;
 internal static class SequenceExtensions
 {
     /// <summary>

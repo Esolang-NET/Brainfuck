@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis.CSharp;
 using System.Text;
 
-namespace Brainfuck.Analyzer;
+namespace Brainfuck.Generator;
 
 /// <summary>Provides utility functions.</summary>
 public static class Utils

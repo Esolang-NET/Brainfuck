@@ -1,12 +1,12 @@
-﻿using Brainfuck.Analyzer.Sequences;
+﻿using Brainfuck.Generator.Sequences;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text;
 using static Brainfuck.BrainfuckSequence;
 
-namespace Brainfuck.Analyzer;
-public partial class BrainfuckMethodGenerator
+namespace Brainfuck.Generator;
+public partial class MethodGenerator
 {
     static void Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source)
     {

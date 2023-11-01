@@ -5,10 +5,12 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text;
 
-namespace Brainfuck.Analyzer.Tests;
+namespace Brainfuck.Generator.Tests;
 
 [TestClass]
-public class BrainfuckMethodGeneratorTests
+public class MethodGeneratorTests
+
+
 {
     public TestContext TestContext { get; set; } = default!;
     Compilation baseCompilation = default!;
@@ -83,7 +85,7 @@ public class BrainfuckMethodGeneratorTests
 
         GeneratorDriver driver;
         {
-            var generator = new BrainfuckMethodGenerator();
+            var generator = new MethodGenerator();
             var sourceGenerator = generator.AsSourceGenerator();
             driver = CSharpGeneratorDriver.Create(
                 generators: new ISourceGenerator[] { sourceGenerator },

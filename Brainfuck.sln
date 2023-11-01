@@ -18,11 +18,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Parser", "Parser\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Parser.Tests", "Parser.Tests\Brainfuck.Parser.Tests.csproj", "{66D9655E-1757-4774-A8E5-BE9D05BD090B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Analyzer", "Analyzer\Brainfuck.Analyzer.csproj", "{C3362C8F-0789-461E-A5C3-A0A7553CCB42}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Generator", "Generator\Brainfuck.Generator.csproj", "{C3362C8F-0789-461E-A5C3-A0A7553CCB42}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Analyzer.UseConsole", "Analyzer.UseConsole\Brainfuck.Analyzer.UseConsole.csproj", "{104FF51E-4705-4F44-B543-6693180E02C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Generator.UseConsole", "Generator.UseConsole\Brainfuck.Generator.UseConsole.csproj", "{104FF51E-4705-4F44-B543-6693180E02C5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Analyzer.Tests", "Analyzer.Tests\Brainfuck.Analyzer.Tests.csproj", "{440C12FA-F5FE-41BE-9605-372A35158604}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Generator.Tests", "Generator.Tests\Brainfuck.Generator.Tests.csproj", "{440C12FA-F5FE-41BE-9605-372A35158604}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Brainfuck.Runner", "Runner\Brainfuck.Runner.csproj", "{99A9246F-D0C0-4524-B444-D5E04FFAD131}"
 EndProject
