@@ -111,7 +111,8 @@ public class BrainfuckMethodGeneratorTests
         {
             var assembly = context.LoadFromStream(stream, pdbStream);
             return (context, assembly);
-        }catch(Exception)
+        }
+        catch (Exception)
         {
             if (isNew) context?.Dispose();
             throw;

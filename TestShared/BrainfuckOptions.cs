@@ -1,6 +1,6 @@
-﻿using System.Runtime.Serialization;
-
-namespace Brainfuck.TestShared;
+﻿using Brainfuck;
+using System.Runtime.Serialization;
+namespace TestShared;
 [Serializable]
 public readonly record struct BrainfuckOptions(
         string IncrementPointer = BrainfuckOptionsDefault.IncrementPointer,

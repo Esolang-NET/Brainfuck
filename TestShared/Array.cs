@@ -2,7 +2,7 @@
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace Brainfuck.TestShared;
+namespace TestShared;
 /// <summary>
 /// MSTest 向けの serialize な Array wrapper
 /// </summary>
@@ -69,13 +69,4 @@ public readonly struct Array<T> : ISerializable, IEquatable<T[]>, IEquatable<Arr
     public static bool operator ==(Array<T> left, Array<T> right) => left.Equals(right);
 
     public static bool operator !=(Array<T> left, Array<T> right) => !(left == right);
-}
-/// <summary>
-/// MSTest 向けの serialize な Array wrapper
-/// </summary>
-internal static class SerializableArrayWrapper
-{
-    public static Array<T> ToSerializable<T>(this T[] array) => new(array);
-    public static T[] AsArray<T>(this Array<T> array) => (T[])array;
-    public static Memory<T> AsMemory<T>(this Array<T> array) => (T[])array;
 }

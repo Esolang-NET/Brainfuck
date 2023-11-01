@@ -5,7 +5,7 @@ using System.Runtime.Loader;
 using System.Reflection;
 #endif
 
-namespace Brainfuck.TestShared;
+namespace TestShared;
 internal class AssemblyLoadContext
     :
 

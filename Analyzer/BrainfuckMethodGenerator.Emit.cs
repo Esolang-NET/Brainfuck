@@ -572,7 +572,8 @@ public partial class BrainfuckMethodGenerator
             {
                 UseListAsMemory = true,
             };
-            if (isAsync) {
+            if (isAsync)
+            {
                 options = options with
                 {
                     UseAwait = true,
@@ -605,7 +606,8 @@ public partial class BrainfuckMethodGenerator
             {
                 UseListAsMemory = true,
             };
-            if (isAsync) {
+            if (isAsync)
+            {
                 options = options with
                 {
                     UseAwait = true,
@@ -638,8 +640,8 @@ public partial class BrainfuckMethodGenerator
             x => x.AttributeClass?.ToDisplayString() == NameSpaceName + "." + ClassNameBrainfuckAttribution
         );
 
-        if (attributeData.ConstructorArguments is not { Length: >0 } 
-            || attributeData.ConstructorArguments[0] is not {IsNull: false, Value: string source }  
+        if (attributeData.ConstructorArguments is not { Length: > 0 }
+            || attributeData.ConstructorArguments[0] is not { IsNull: false, Value: string source }
             || string.IsNullOrEmpty(source))
         {
             context.ReportDiagnostic(

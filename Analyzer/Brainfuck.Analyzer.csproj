@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <!-- Generator dependencies -->
-    <ProjectReference Include="..\Abstructions\Brainfuck.Abstructions.csproj" />
+    <ProjectReference Include="..\Parser\Brainfuck.Parser.csproj" />
   </ItemGroup>
 
 
@@ -40,7 +40,7 @@
 
   <Target Name="GetDependencyTargetPaths">
     <ItemGroup>
-      <TargetPathWithTargetPlatformMoniker Include="$(ProjectDir)..\Abstructions\$(OutputPath)\*.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(ProjectDir)..\Parser\$(OutputPath)\*.dll" IncludeRuntimeDependency="false" />
     </ItemGroup>
   </Target>
 
