@@ -26,7 +26,7 @@ public sealed partial record BrainfuckSequenceEnumerable(ReadOnlyMemory<char> So
     /// </summary>
     /// <param name="source"></param>
     public BrainfuckSequenceEnumerable(string source) : this(source.AsMemory()) { }
-    
+
     /// <summary>
     /// brainfuck source to sequence parser.
     /// </summary>
@@ -134,7 +134,7 @@ public sealed partial record BrainfuckSequenceEnumerable(ReadOnlyMemory<char> So
     {
         builder.Append(nameof(Source) + ": ");
         if (!Source.IsEmpty)
-            builder.Append(string.Join("",Source));
+            builder.Append(string.Join("", Source));
         builder.Append(", " + nameof(Options) + ": ");
         builder.Append(Options.ToString());
         if (!Source.IsEmpty)

@@ -6,7 +6,6 @@
     <IsRoslynComponent>true</IsRoslynComponent>
     <AnalyzerLanguage>cs</AnalyzerLanguage>
     <IsPublishable>false</IsPublishable>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
@@ -45,9 +44,5 @@
   </Target>
 
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
-
-  <PropertyGroup>
-    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
-  </PropertyGroup>
 
 </Project>
