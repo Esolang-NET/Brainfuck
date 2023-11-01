@@ -1,0 +1,38 @@
+name: .NET
+
+on:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:    
+      - uses: actions/checkout@v2
+    
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 'preview'
+	
+      - name: Install dependencies
+        run: |
+          dotnet restore
+      
+      - name: Build
+        run: |
+          dotnet build --configuration Release --no-restore
+      
+      - name: Pack
+        run: |
+          dotnet pack MyGreatLib.csproj -o artifacts/
+
+      - uses: actions/upload-artifact@v1
+        with:
+          name: artifacts
+          path: artifacts
+      - name: Publish to GitHub Packages
+        run: |
+          dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/juner/index.json"
+          dotnet nuget push "*.*"  --api-key ${{ secrets.GITHUB_TOKEN }} --source "github" --skip-duplicate
+          dotnet nuget push "*.*" --api-key ${{secrets.NUGET_ORG_API_KEY}} --skip-duplicate
