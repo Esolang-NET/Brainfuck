@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Text;
 
 namespace Brainfuck.Analyzer.Tests;
 
@@ -58,7 +59,7 @@ public class BrainfuckMethodGeneratorTests
         baseCompilation = compilation;
     }
 
-    GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics)
+    GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics, CancellationToken cancellationToken = default)
     {
         var preprocessorSymbols = new string[] {
 #if NETCOREAPP3_0_OR_GREATER
@@ -89,10 +90,10 @@ public class BrainfuckMethodGeneratorTests
                 driverOptions: new(default, trackIncrementalGeneratorSteps: true)
             ).WithUpdatedParseOptions(parseOptions);
         }
-        var compilation = baseCompilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(source, parseOptions));
+        var compilation = baseCompilation.AddSyntaxTrees(CSharpSyntaxTree.ParseText(source, parseOptions, path: "direct.cs", encoding: Encoding.UTF8, cancellationToken));
 
         // Run the generator
-        return driver.RunGeneratorsAndUpdateCompilation(compilation, out outputCompilation, out diagnostics);
+        return driver.RunGeneratorsAndUpdateCompilation(compilation, out outputCompilation, out diagnostics, cancellationToken);
     }
     (TestShared.AssemblyLoadContext Context, Assembly Assembly) Emit(Compilation compilation, TestShared.AssemblyLoadContext? context = null, CancellationToken cancellationToken = default)
     {
@@ -165,7 +166,7 @@ public class BrainfuckMethodGeneratorTests
             public static partial string? SampleMethod();
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
@@ -286,12 +287,10 @@ public class BrainfuckMethodGeneratorTests
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
-        var (context, _) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
-        using var context_ = context;
     }
     static IEnumerable<object?[]> DiagnoticsTestData
     {
@@ -363,7 +362,7 @@ public class BrainfuckMethodGeneratorTests
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
         Assert.IsFalse(diagnostics.IsEmpty);
         CollectionAssert.AreEqual(new[] { expected }, diagnostics.Select(v => v.Id).ToArray());
         Assert.AreEqual(2, outputCompilation.SyntaxTrees.Count());
@@ -385,8 +384,41 @@ public class BrainfuckMethodGeneratorTests
         CollectionAssert.AreEqual(new[] { "BF0001" }, diagnostics.Select(v => v.Id).ToArray());
         Assert.AreEqual(2, outputCompilation.SyntaxTrees.Count());
     }
+    static IEnumerable<object?[]> ModuleSignatureTestData
+    {
+        get
+        {
+            yield return ModuleSignatureTest("abstract partial class TestAbstractPartialClass");
+            yield return ModuleSignatureTest("sealed partial class TestSealedPartialClass");
+            yield return ModuleSignatureTest("partial struct TestPartialStruct");
+            yield return ModuleSignatureTest("ref partial struct TestRefPartialStruct");
+            yield return ModuleSignatureTest("partial class TestClass: System.Collections.Generic.List<(string Value1, int Value2)>");
+
+            static object?[] ModuleSignatureTest(string signature)
+                => new object?[] { signature };
+        }
+    }
     [TestMethod]
-    public void DiagnoticsTest_AttributeSubParameter()
+    [DynamicData(nameof(ModuleSignatureTestData))]
+    public void ModuleSignatureTest(string signature)
+    {
+        var source = $$"""
+        using Brainfuck;
+        namespace TestProject;
+        {{signature}}
+        {
+            [GenerateBrainfuckMethod("0")]
+            public static partial void SampleMethod();
+        }
+        """;
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        AssertDiagnostics(diagnostics, outputCompilation);
+        Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
+        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+    }
+
+    [TestMethod]
+    public void AttributeSubParameterTest()
     {
         var source = $$"""
         using Brainfuck;
@@ -397,11 +429,9 @@ public class BrainfuckMethodGeneratorTests
             public static partial string SampleMethod(string input);
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
-        var (context, _) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
-        using var context_ = context;
     }
 }

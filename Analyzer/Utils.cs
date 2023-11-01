@@ -13,8 +13,6 @@ public static class Utils
             .Replace("<", "_")
             .Replace(">", "_");
 
-    public static string ToLiteralPresentation(bool value) => value ? "true" : "false";
-
     /// <summary>Gets a type declaration string such as <c>"static partial class&lt;T&gt;"</c>.</summary>
     public static string ToTypeDeclarationBeforeOpeningBrace(INamedTypeSymbol namedTypeSymbol, bool isPartial)
     {
