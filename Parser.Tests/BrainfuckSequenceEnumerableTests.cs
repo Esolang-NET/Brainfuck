@@ -96,6 +96,14 @@ public class BrainfuckSequenceEnumerableTests
         Assert.AreEqual(e2.RequiredOutput, true);
     }
     [TestMethod]
+    public void ToStringTest()
+    {
+        var e1 = new BrainfuckSequenceEnumerable(ReadOnlyMemory<char>.Empty);
+        Assert.IsNotNull(e1.ToString());
+        var e2 = new BrainfuckSequenceEnumerable("]");
+        Assert.IsNotNull(e2.ToString());
+    }
+    [TestMethod]
     public void EnumeratorTest()
     {
         var enumerator = ((System.Collections.IEnumerable)new BrainfuckSequenceEnumerable("[")).GetEnumerator();

@@ -1,5 +1,8 @@
 ﻿namespace Brainfuck;
 
+/// <summary>
+/// brainfuck sequence types
+/// </summary>
 public enum BrainfuckSequence : byte
 {
     /// <summary>others. no operation.</summary>

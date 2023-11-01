@@ -7,7 +7,7 @@ using System.Text;
 namespace Brainfuck.Runner;
 
 /// <summary>
-/// 
+/// brainfuck runner context
 /// </summary>
 /// <param name="Sequences"></param>
 /// <param name="Stack"></param>

@@ -1,3 +1,3 @@
-# Brainfuck.Core
+# Brainfuck.Runner
 
 brainfuck runner.

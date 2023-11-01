@@ -1,5 +1,8 @@
 ﻿namespace Brainfuck;
 
+/// <summary>
+/// brainfuck options default values.
+/// </summary>
 public static class BrainfuckOptionsDefault
 {
     /// <summary>Increment the data pointer by one (to point to the next cell to the right).</summary>

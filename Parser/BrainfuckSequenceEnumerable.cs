@@ -1,23 +1,58 @@
 ﻿using System.Collections;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Brainfuck;
 
-public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)>
+/// <summary>
+/// brainfuck source to sequence parser.
+/// </summary>
+/// <param name="Source">brainfuck source code</param>
+/// <param name="Options">brainfuck parse options</param>
+public sealed partial record BrainfuckSequenceEnumerable(ReadOnlyMemory<char> Source, BrainfuckOptions Options) : IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)>
 {
-    readonly BrainfuckOptions options;
-    readonly ReadOnlyMemory<char> source;
+    /// <summary>
+    /// brainfuck source code
+    /// </summary>
+    public readonly ReadOnlyMemory<char> Source = Source;
+
+    /// <summary>
+    /// brainfuck parse options
+    /// </summary>
+    public readonly BrainfuckOptions Options = Options;
+
+    /// <summary>
+    /// brainfuck source to sequence parser.
+    /// </summary>
+    /// <param name="source"></param>
     public BrainfuckSequenceEnumerable(string source) : this(source.AsMemory()) { }
+    
+    /// <summary>
+    /// brainfuck source to sequence parser.
+    /// </summary>
+    /// <param name="source"></param>
     public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source) : this(source, null) { }
 
+    /// <summary>
+    /// brainfuck source to sequence parser.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="options"></param>
     public BrainfuckSequenceEnumerable(string source, BrainfuckOptions? options) : this(source.AsMemory(), options) { }
-    public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source, BrainfuckOptions? options)
-    {
-        this.source = source;
-        this.options = options ?? new();
-    }
+
+    /// <summary>
+    /// brainfuck source to sequence parser.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="options"></param>
     public BrainfuckSequenceEnumerable(string source, IBrainfuckOptions? options) : this(source.AsMemory(), options) { }
-    public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source, IBrainfuckOptions? options)
+
+    /// <summary>
+    /// brainfuck source to sequence parser.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="options"></param>
+    public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source, IBrainfuckOptions? options = null)
         : this(source, options switch
         {
             BrainfuckOptions bo => bo,
@@ -25,6 +60,7 @@ public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequenc
             _ => new(),
         })
     { }
+
     [MemberNotNull(nameof(_needInput), nameof(_needOutput))]
     void InitializeRequired()
     {
@@ -40,6 +76,10 @@ public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequenc
         _needOutput ??= false;
     }
     bool? _needInput;
+
+    /// <summary>
+    /// <see cref="Source"/> is in required input.
+    /// </summary>
     public bool RequiredInput
     {
         get
@@ -50,6 +90,10 @@ public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequenc
     }
 
     bool? _needOutput;
+
+    /// <summary>
+    /// <see cref="Source"/> is in required output.
+    /// </summary>
     public bool RequiredOutput
     {
         get
@@ -59,29 +103,58 @@ public partial class BrainfuckSequenceEnumerable : IEnumerable<(BrainfuckSequenc
         }
     }
 
-    public Enumerator GetEnumerator() => new(source, OptionSyntaxes.OrderByDescending(v => v.Syntax.Length).ToArray());
+    /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
+    public Enumerator GetEnumerator() => new(Source, OptionSyntaxes.OrderByDescending(v => v.Syntax.Length).ToArray());
     IEnumerator<(BrainfuckSequence, ReadOnlyMemory<char>)> IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)>.GetEnumerator() => GetEnumerator();
     IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)> OptionSyntaxes
     {
         get
         {
-            if (!string.IsNullOrEmpty(options.IncrementPointer))
-                yield return (BrainfuckSequence.IncrementPointer, options.IncrementPointer.AsMemory());
-            if (!string.IsNullOrEmpty(options.DecrementPointer))
-                yield return (BrainfuckSequence.DecrementPointer, options.DecrementPointer.AsMemory());
-            if (!string.IsNullOrEmpty(options.IncrementCurrent))
-                yield return (BrainfuckSequence.IncrementCurrent, options.IncrementCurrent.AsMemory());
-            if (!string.IsNullOrEmpty(options.DecrementCurrent))
-                yield return (BrainfuckSequence.DecrementCurrent, options.DecrementCurrent.AsMemory());
-            if (!string.IsNullOrEmpty(options.Input))
-                yield return (BrainfuckSequence.Input, options.Input.AsMemory());
-            if (!string.IsNullOrEmpty(options.Output))
-                yield return (BrainfuckSequence.Output, options.Output.AsMemory());
-            if (!string.IsNullOrEmpty(options.Begin))
-                yield return (BrainfuckSequence.Begin, options.Begin.AsMemory());
-            if (!string.IsNullOrEmpty(options.End))
-                yield return (BrainfuckSequence.End, options.End.AsMemory());
+            if (!string.IsNullOrEmpty(Options.IncrementPointer))
+                yield return (BrainfuckSequence.IncrementPointer, Options.IncrementPointer.AsMemory());
+            if (!string.IsNullOrEmpty(Options.DecrementPointer))
+                yield return (BrainfuckSequence.DecrementPointer, Options.DecrementPointer.AsMemory());
+            if (!string.IsNullOrEmpty(Options.IncrementCurrent))
+                yield return (BrainfuckSequence.IncrementCurrent, Options.IncrementCurrent.AsMemory());
+            if (!string.IsNullOrEmpty(Options.DecrementCurrent))
+                yield return (BrainfuckSequence.DecrementCurrent, Options.DecrementCurrent.AsMemory());
+            if (!string.IsNullOrEmpty(Options.Input))
+                yield return (BrainfuckSequence.Input, Options.Input.AsMemory());
+            if (!string.IsNullOrEmpty(Options.Output))
+                yield return (BrainfuckSequence.Output, Options.Output.AsMemory());
+            if (!string.IsNullOrEmpty(Options.Begin))
+                yield return (BrainfuckSequence.Begin, Options.Begin.AsMemory());
+            if (!string.IsNullOrEmpty(Options.End))
+                yield return (BrainfuckSequence.End, Options.End.AsMemory());
         }
     }
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+    bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append(nameof(Source) + ": ");
+        if (!Source.IsEmpty)
+            builder.Append(string.Join("",Source));
+        builder.Append(", " + nameof(Options) + ": ");
+        builder.Append(Options.ToString());
+        if (!Source.IsEmpty)
+        {
+            builder.Append(", " + nameof(RequiredInput) + ": ");
+            builder.Append(RequiredInput);
+            builder.Append(", " + nameof(RequiredOutput) + ": ");
+            builder.Append(RequiredOutput);
+        }
+        return true;
+    }
+
+    /// <inheritdoc cref="object.ToString"/>
+    public override string ToString()
+    {
+        var builder = new StringBuilder();
+        builder.Append(nameof(BrainfuckSequenceEnumerable) + "{ ");
+        if (PrintMembers(builder))
+            builder.Append(' ');
+        builder.Append('}');
+        return builder.ToString();
+    }
 }

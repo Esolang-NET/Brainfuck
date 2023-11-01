@@ -2,8 +2,12 @@
 
 namespace Brainfuck;
 
-public partial class BrainfuckSequenceEnumerable
+public sealed partial record BrainfuckSequenceEnumerable
 {
+
+    /// <summary>
+    /// brainfuck source to enumerator.
+    /// </summary>
     public struct Enumerator : IEnumerator<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Text)>
     {
         readonly ReadOnlyMemory<char> original;
@@ -11,6 +15,8 @@ public partial class BrainfuckSequenceEnumerable
         ReadOnlyMemory<char> memory;
 
         readonly (BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)[] optionSyntaxes;
+
+        /// <inheritdoc cref="IEnumerator{T}.Current"/>
         public readonly (BrainfuckSequence, ReadOnlyMemory<char>) Current => current;
 
         readonly object IEnumerator.Current => current;
@@ -20,6 +26,8 @@ public partial class BrainfuckSequenceEnumerable
             this.memory = memory;
             this.optionSyntaxes = optionSyntaxes;
         }
+
+        /// <inheritdoc cref="IEnumerator.MoveNext"/>
         public bool MoveNext()
         {
             if (memory.Length <= 0) return false;
@@ -48,11 +56,15 @@ public partial class BrainfuckSequenceEnumerable
                 return (memory, (default, text));
             }
         }
+
+        /// <inheritdoc cref="IDisposable.Dispose"/>
         public void Dispose()
         {
             current = default;
             memory = default;
         }
+
+        /// <inheritdoc cref="IEnumerator.Reset"/>
         public void Reset()
         {
             memory = original;
