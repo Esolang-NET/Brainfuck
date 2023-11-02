@@ -22,6 +22,7 @@ public class MethodGeneratorTests
             .Where(x =>
             {
                 var fileName = Path.GetFileName(x);
+                if (!fileName.EndsWith(".dll")) return false;
                 if (fileName.EndsWith("Native.dll")) return false;
                 return fileName.StartsWith("System") || (fileName is "mscorlib.dll" or "netstandard.dll");
             });
