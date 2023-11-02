@@ -37,10 +37,12 @@ jobs:
       run: dotnet test --no-restore --verbosity normal
     
     - name: Pack
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         dotnet pack -o artifacts/
       
     - uses: actions/upload-artifact@v1
+      if: ${{ matrix.os == 'ubuntu-latest' }}
       with:
         name: artifacts
         path: artifacts
