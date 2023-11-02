@@ -4,7 +4,7 @@ using System.IO.Pipelines;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Brainfuck.Runner;
+namespace Esolang.Brainfuck.Runner;
 
 /// <summary>
 /// brainfuck runner context

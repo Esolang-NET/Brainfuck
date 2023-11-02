@@ -1,11 +1,11 @@
-﻿using Brainfuck;
+﻿using Esolang.Brainfuck;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
-using OriginalBrainfuckContext = Brainfuck.Runner.BrainfuckContext;
+using OriginalBrainfuckContext = Esolang.Brainfuck.Runner.BrainfuckContext;
 
 namespace TestShared;
 [Serializable]

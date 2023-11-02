@@ -6,7 +6,7 @@ brainfuck parser.
 
 ```cs
 using System;
-using Brainfuck;
+using Esolang.Brainfuck;
 
 var source = "[,+++++.]";
 var sequences = new BrainfuckSequenceEnumerable(source);

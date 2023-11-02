@@ -1,4 +1,4 @@
-﻿using Brainfuck.Runner;
+﻿using Esolang.Brainfuck.Runner;
 using System.Buffers;
 using System.CommandLine;
 using System.CommandLine.Binding;
@@ -9,7 +9,7 @@ using System.IO.Pipelines;
 using System.Text;
 
 
-namespace Brainfuck.Console;
+namespace Esolang.Brainfuck.Console;
 
 public static class BrainfuckConsoleExtensions
 {

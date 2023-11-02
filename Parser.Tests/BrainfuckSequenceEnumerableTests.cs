@@ -1,7 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TestShared;
-using static Brainfuck.BrainfuckSequence;
-namespace Brainfuck.Tests;
+using static Esolang.Brainfuck.BrainfuckSequence;
+namespace Esolang.Brainfuck.Tests;
 
 [TestClass]
 public class BrainfuckSequenceEnumerableTests

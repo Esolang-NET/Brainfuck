@@ -9,7 +9,7 @@ use `Brainfuck.GenerateBrainfuckMethodAttribute` attribute.
 first argument is brainfuck source code.
 
 ```cs
-using Brainfuck;
+using Esolang.Brainfuck;
 
 Console.WriteLine(BrainfuckSample.SampleMethod1());
 

@@ -2,7 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace Brainfuck;
+namespace Esolang.Brainfuck;
 
 /// <summary>
 /// brainfuck source to sequence parser.

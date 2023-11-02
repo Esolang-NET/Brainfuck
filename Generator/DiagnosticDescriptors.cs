@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 
-namespace Brainfuck.Generator;
+namespace Esolang.Brainfuck.Generator;
 
 public static class DiagnosticDescriptors
 {

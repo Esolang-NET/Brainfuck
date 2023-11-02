@@ -1,11 +1,11 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
-using static Brainfuck.BrainfuckSequence;
+using static Esolang.Brainfuck.BrainfuckSequence;
 using static TestShared.ArrayExtensions;
-using Command = Brainfuck.Runner.SequenceCommands.InputCommand;
+using Command = Esolang.Brainfuck.Runner.SequenceCommands.InputCommand;
 
-namespace Brainfuck.Runner.SequenceCommands.Tests;
+namespace Esolang.Brainfuck.Runner.SequenceCommands.Tests;
 
 [TestClass()]
 public class InputCommandTests

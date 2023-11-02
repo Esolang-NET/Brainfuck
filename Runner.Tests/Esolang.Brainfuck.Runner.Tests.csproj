@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>net6.0;net8.0;net48</TargetFrameworks>
@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <IsPublishable>false</IsPublishable>
+    <AssemblyName>Brainfuck.Runner.Tests</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,11 +18,10 @@
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="System.IO.Pipelines" />
     <PackageReference Include="System.Memory" />
-    <PackageReference Include="Basic.Reference.Assemblies" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Generator\Brainfuck.Generator.csproj" />
+    <ProjectReference Include="..\Runner\Esolang.Brainfuck.Runner.csproj" />
   </ItemGroup>
 
   <Import Project="..\TestShared\TestShared.projitems" Label="Shared" />

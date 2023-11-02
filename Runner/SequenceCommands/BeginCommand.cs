@@ -1,5 +1,5 @@
-﻿using static Brainfuck.BrainfuckSequence;
-namespace Brainfuck.Runner.SequenceCommands;
+﻿using static Esolang.Brainfuck.BrainfuckSequence;
+namespace Esolang.Brainfuck.Runner.SequenceCommands;
 
 public sealed record BeginCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {

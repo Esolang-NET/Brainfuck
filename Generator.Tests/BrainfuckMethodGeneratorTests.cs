@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text;
 
-namespace Brainfuck.Generator.Tests;
+namespace Esolang.Brainfuck.Generator.Tests;
 
 [TestClass]
 public class MethodGeneratorTests
@@ -163,7 +163,7 @@ public class MethodGeneratorTests
         TestContext.CancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30));
         var cancellationToken = TestContext.CancellationTokenSource.Token;
         source = $$"""
-        using Brainfuck;
+        using Esolang.Brainfuck;
         namespace TestProject;
         #nullable enable
         partial class TestClass
@@ -284,7 +284,7 @@ public class MethodGeneratorTests
     public void ReturnTypeAndParameterPatternsTest(string source, string returnType, string parameters, string options)
     {
         source = $$"""
-        using Brainfuck;
+        using Esolang.Brainfuck;
         namespace TestProject;
         {{options}}
         partial class TestClass
@@ -359,7 +359,7 @@ public class MethodGeneratorTests
     public void DiagnoticsTest(string expected, string source, string returnType, string parameters, string options)
     {
         source = $$"""
-        using Brainfuck;
+        using Esolang.Brainfuck;
         namespace TestProject;
         {{options}}
         partial class TestClass
@@ -386,7 +386,7 @@ public class MethodGeneratorTests
     public void DiagnoticsTest_NoArgumentConstructor()
     {
         var source = $$"""
-        using Brainfuck;
+        using Esolang.Brainfuck;
         namespace TestProject;
         partial class TestClass
         {
@@ -427,7 +427,7 @@ public class MethodGeneratorTests
     public void ModuleSignatureTest(string signature)
     {
         var source = $$"""
-        using Brainfuck;
+        using Esolang.Brainfuck;
         namespace TestProject;
         {{signature}}
         {
@@ -445,7 +445,7 @@ public class MethodGeneratorTests
     public void AttributeSubParameterTest()
     {
         var source = $$"""
-        using Brainfuck;
+        using Esolang.Brainfuck;
         namespace TestProject;
         partial class TestClass
         {

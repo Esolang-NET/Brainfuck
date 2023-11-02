@@ -1,7 +1,7 @@
-﻿using Brainfuck.Runner.SequenceCommands;
+﻿using Esolang.Brainfuck.Runner.SequenceCommands;
 using System.Text;
 
-namespace Brainfuck.Runner;
+namespace Esolang.Brainfuck.Runner;
 
 public sealed partial class BrainfuckRunner
 {

@@ -2,11 +2,11 @@
 using System.Buffers;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
-using static Brainfuck.BrainfuckSequence;
+using static Esolang.Brainfuck.BrainfuckSequence;
 using static TestShared.ArrayExtensions;
-using Command = Brainfuck.Runner.SequenceCommands.OutputCommand;
+using Command = Esolang.Brainfuck.Runner.SequenceCommands.OutputCommand;
 
-namespace Brainfuck.Runner.SequenceCommands.Tests;
+namespace Esolang.Brainfuck.Runner.SequenceCommands.Tests;
 
 [TestClass()]
 public class OutputCommandTests

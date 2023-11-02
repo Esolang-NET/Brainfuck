@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <!-- Generator dependencies -->
-    <ProjectReference Include="..\Parser\Brainfuck.Parser.csproj" />
+    <ProjectReference Include="..\Parser\Esolang.Brainfuck.Parser.csproj" />
   </ItemGroup>
 
 
@@ -36,6 +36,7 @@
   and https://github.com/dotnet/roslyn/discussions/47517#discussioncomment-64145 -->
   <PropertyGroup>
     <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+    <AssemblyName>Brainfuck.Generator</AssemblyName>
   </PropertyGroup>
 
   <Target Name="GetDependencyTargetPaths">

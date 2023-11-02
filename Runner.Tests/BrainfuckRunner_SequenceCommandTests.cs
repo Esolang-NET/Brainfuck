@@ -1,9 +1,9 @@
-﻿using Brainfuck.Runner.SequenceCommands;
+﻿using Esolang.Brainfuck.Runner.SequenceCommands;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Immutable;
-using Command = Brainfuck.Runner.BrainfuckRunner.SequenceCommand;
+using Command = Esolang.Brainfuck.Runner.BrainfuckRunner.SequenceCommand;
 
-namespace Brainfuck.Runner.Tests;
+namespace Esolang.Brainfuck.Runner.Tests;
 
 [TestClass]
 public class BrainfuckRunner_SequenceCommandTests

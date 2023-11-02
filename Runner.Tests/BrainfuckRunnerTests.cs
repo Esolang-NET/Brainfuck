@@ -2,7 +2,7 @@
 using System.IO.Pipelines;
 using System.Text;
 
-namespace Brainfuck.Runner.Tests;
+namespace Esolang.Brainfuck.Runner.Tests;
 
 [TestClass]
 public class BrainfuckRunnerTests
