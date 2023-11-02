@@ -344,7 +344,7 @@ public partial class MethodGenerator
         var pipeReader = options.VariablePipeReader;
         var isAsync = options.ReturnType.IsAsync();
         builder.AppendLine($$"""
-            {{space}}var {{options.VariableStack}} = new System.Collections.Generic.List<byte>(){ 0 };
+            {{space}}var {{options.VariableStack}} = new global::System.Collections.Generic.List<byte>(){ 0 };
             {{space}}var {{options.VariableStackIndex}} = 0;
             """);
         if (sequences.RequiredOutput)
@@ -360,7 +360,7 @@ public partial class MethodGenerator
                 };
 
                 builder.AppendLine($"""
-                    {space}var outputPipe = new System.IO.Pipelines.Pipe();
+                    {space}var outputPipe = new global::System.IO.Pipelines.Pipe();
                     {space}var {pipeWriter} = outputPipe.Writer;
                     """);
             }
@@ -375,10 +375,10 @@ public partial class MethodGenerator
                     VariablePipeReader = pipeReader,
                 };
                 builder.AppendLine($$"""
-                    {{space}}System.IO.Pipelines.PipeReader {{pipeReader}};
+                    {{space}}global::System.IO.Pipelines.PipeReader {{pipeReader}};
                     {{space}}{
-                    {{space}}{{SPACE}}var inputPipe = new System.IO.Pipelines.Pipe();
-                    {{space}}{{SPACE}}var bytes = string.IsNullOrEmpty({{options.VariableInputString}}) ? System.Array.Empty<byte>() : System.Text.Encoding.UTF8.GetBytes({{options.VariableInputString}});
+                    {{space}}{{SPACE}}var inputPipe = new global::System.IO.Pipelines.Pipe();
+                    {{space}}{{SPACE}}var bytes = string.IsNullOrEmpty({{options.VariableInputString}}) ? global::System.Array.Empty<byte>() : global::System.Text.Encoding.UTF8.GetBytes({{options.VariableInputString}});
                     {{space}}{{SPACE}}if (bytes.Length > 0)
                     """);
                 if (isAsync)
@@ -396,7 +396,7 @@ public partial class MethodGenerator
                 else
                 {
                     builder.AppendLine($$"""
-                        {{space}}{{SPACE}}{{SPACE}}System.MemoryExtensions.AsSpan(bytes).CopyTo(inputPipe.Writer.GetSpan(bytes.Length));
+                        {{space}}{{SPACE}}{{SPACE}}global::System.MemoryExtensions.AsSpan(bytes).CopyTo(inputPipe.Writer.GetSpan(bytes.Length));
                         {{space}}{{SPACE}}inputPipe.Writer.Advance(bytes.Length);
                         {{space}}{{SPACE}}inputPipe.Writer.Complete();
                         """);
@@ -423,13 +423,13 @@ public partial class MethodGenerator
                         {{space}}{
                         {{space}}{{SPACE}}await {{pipeWriter}}.CompleteAsync();
                         #if NETCOREAPP3_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
-                        {{space}}{{SPACE}}await using var stream = new System.IO.MemoryStream();
+                        {{space}}{{SPACE}}await using var stream = new global::System.IO.MemoryStream();
                         #else
-                        {{space}}{{SPACE}}using var stream = new System.IO.MemoryStream();
+                        {{space}}{{SPACE}}using var stream = new global::System.IO.MemoryStream();
                         #endif
-                        {{space}}{{SPACE}}using var reader = new System.IO.StreamReader(stream, System.Text.Encoding.UTF8, false, 1024, true);
+                        {{space}}{{SPACE}}using var reader = new global::System.IO.StreamReader(stream, System.Text.Encoding.UTF8, false, 1024, true);
                         {{space}}{{SPACE}}await outputPipe.Reader.CopyToAsync(stream{{withCancellation}});
-                        {{space}}{{SPACE}}stream.Seek(0, System.IO.SeekOrigin.Begin);
+                        {{space}}{{SPACE}}stream.Seek(0, global::System.IO.SeekOrigin.Begin);
                         {{space}}{{SPACE}}if (stream.Length == 0) return null!;
                         {{space}}{{SPACE}}var returnString = (await reader.ReadToEndAsync()).TrimEnd('\0');
                         {{space}}{{SPACE}}if (returnString.Length == 0) return null!;
@@ -448,10 +448,10 @@ public partial class MethodGenerator
                         {{space}}{{SPACE}}{{pipeWriter}}.Complete();
                         {{space}}{{SPACE}}if (!outputPipe.Reader.TryRead(out var outputResult))
                         {{space}}{{SPACE}}{{SPACE}}return null!;
-                        {{space}}{{SPACE}}var resultArray = System.Buffers.BuffersExtensions.ToArray(outputResult.Buffer);
+                        {{space}}{{SPACE}}var resultArray = global::System.Buffers.BuffersExtensions.ToArray(outputResult.Buffer);
                         {{space}}{{SPACE}}outputPipe.Reader.AdvanceTo(outputResult.Buffer.End);
                         {{space}}{{SPACE}}if (resultArray.Length == 0) return null!;
-                        {{space}}{{SPACE}}var returnString = System.Text.Encoding.UTF8.GetString(resultArray).TrimEnd('\0');
+                        {{space}}{{SPACE}}var returnString = global::System.Text.Encoding.UTF8.GetString(resultArray).TrimEnd('\0');
                         {{space}}{{SPACE}}if (returnString.Length == 0) return null!;
                         {{space}}{{SPACE}}return returnString;
                         {{space}}}
@@ -462,9 +462,9 @@ public partial class MethodGenerator
         if (options.UseListAsMemory)
         {
             builder.AppendLine($$"""
-                {{space}}static System.Memory<T> AsMemory<T>(System.Collections.Generic.List<T> self)
+                {{space}}static global::System.Memory<T> AsMemory<T>(global::System.Collections.Generic.List<T> self)
                 {{space}}{
-                {{space}}{{SPACE}} return new System.Memory<T>(System.Runtime.CompilerServices.Unsafe.As<ListDummy<T>>(self).Items).Slice(0, self.Count);
+                {{space}}{{SPACE}} return new global::System.Memory<T>(global::System.Runtime.CompilerServices.Unsafe.As<ListDummy<T>>(self).Items).Slice(0, self.Count);
                 {{space}}}
                 """);
         }
@@ -472,7 +472,7 @@ public partial class MethodGenerator
         {
             if (options.ReturnType is (ReturnType.Void | ReturnType.Task))
                 builder.AppendLine($$"""
-                    {{space}}return System.Threading.Tasks.Task.CompletedTask;
+                    {{space}}return global::System.Threading.Tasks.Task.CompletedTask;
                     """);
             else if (options.ReturnType is (ReturnType.Void | ReturnType.ValueTask))
                 builder.AppendLine($$"""
@@ -485,7 +485,7 @@ public partial class MethodGenerator
                     UseAwait = true,
                 };
                 builder.AppendLine($$"""
-                    {{space}}await System.Threading.Tasks.Task.CompletedTask;
+                    {{space}}await global::System.Threading.Tasks.Task.CompletedTask;
                     """);
             }
         }
@@ -583,7 +583,7 @@ public partial class MethodGenerator
                     {{space}}{{SPACE}}if (await {{pipeReader}}.ReadAtLeastAsync(1{{withCancel}}) is { } result && result.Buffer.Length >= 0)
                     {{space}}{{SPACE}}{
                     {{space}}{{SPACE}}{{SPACE}}var readableSeq = result.Buffer.Slice(result.Buffer.Start, 1);
-                    {{space}}{{SPACE}}{{SPACE}}System.Buffers.BuffersExtensions.CopyTo(readableSeq, AsMemory({{stack}}).Slice({{stackIndex}}, 1).Span);
+                    {{space}}{{SPACE}}{{SPACE}}global::System.Buffers.BuffersExtensions.CopyTo(readableSeq, AsMemory({{stack}}).Slice({{stackIndex}}, 1).Span);
                     {{space}}{{SPACE}}{{SPACE}}{{pipeReader}}.AdvanceTo(readableSeq.End);
                     {{space}}{{SPACE}}}
                     {{space}}}
@@ -594,7 +594,7 @@ public partial class MethodGenerator
                 {{space}}{{SPACE}}if ({{pipeReader}}.TryRead(out var result) && result.Buffer.Length >= 0)
                 {{space}}{{SPACE}}{
                 {{space}}{{SPACE}}{{SPACE}}var readableSeq = result.Buffer.Slice(result.Buffer.Start, 1);
-                {{space}}{{SPACE}}{{SPACE}}System.Buffers.BuffersExtensions.CopyTo(readableSeq, AsMemory({{stack}}).Slice({{stackIndex}}, 1).Span);
+                {{space}}{{SPACE}}{{SPACE}}global::System.Buffers.BuffersExtensions.CopyTo(readableSeq, AsMemory({{stack}}).Slice({{stackIndex}}, 1).Span);
                 {{space}}{{SPACE}}{{SPACE}}{{pipeReader}}.AdvanceTo(readableSeq.End);
                 {{space}}{{SPACE}}}
                 {{space}}}

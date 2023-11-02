@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.Memory" />
   </ItemGroup>
 
   <ItemGroup>

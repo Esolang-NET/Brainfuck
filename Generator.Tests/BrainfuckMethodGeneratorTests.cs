@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Basic.Reference.Assemblies;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Immutable;
@@ -17,36 +18,39 @@ public class MethodGeneratorTests
     public void InitializeCompilation()
     {
         // running .NET Core system assemblies dir path
-        var baseAssemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
-        var systemAssemblies = Directory.GetFiles(baseAssemblyPath)
-            .Where(x =>
-            {
-                var fileName = Path.GetFileName(x);
-                if (fileName.EndsWith("Native.dll")) return false;
-                return fileName.StartsWith("System") || (fileName is "mscorlib.dll" or "netstandard.dll");
-            });
 
         PortableExecutableReference[] references;
         {
             // 依存DLLがある場合はそれも追加しておく
-            systemAssemblies = systemAssemblies.Append(typeof(System.IO.Pipelines.Pipe).Assembly.Location);
-            systemAssemblies = systemAssemblies.Append(typeof(Span<>).Assembly.Location);
-            systemAssemblies = systemAssemblies.Append(typeof(System.Runtime.CompilerServices.Unsafe).Assembly.Location);
-            systemAssemblies = systemAssemblies.Append(typeof(ValueTask<>).Assembly.Location);
-#if !NETCOREAPP1_0_OR_GREATER && !NET5_0_OR_GREATER
-            var exclude = new HashSet<string>(new string[] {
-                "System.tlb",
-                "System.Web.tlb",
-                "System.Drawing.tlb",
-                "System.Windows.Forms.tlb",
-                "System.EnterpriseServices.tlb",
-                "System.EnterpriseServices.Wrapper.dll",
-                "System.EnterpriseServices.Thunk.dll",
-            });
-            systemAssemblies = systemAssemblies.Where(path => !exclude.Any(exc => path.Contains(exc)));
-#endif
-            references = systemAssemblies
+            references =
+#if NET8_0
+                Directory.GetFiles(Path.GetDirectoryName(typeof(object).Assembly.Location)!)
+                .Where(x => Path.GetFileName(x) is string fileName && fileName.EndsWith(".dll") 
+                    && !fileName.EndsWith(".Native.dll") 
+                    && (fileName.StartsWith("System") || (fileName is "mscorlib.dll" or "netstandard.dll"))
+                )
                 .Select(x => MetadataReference.CreateFromFile(x))
+#elif NET6_0_OR_GREATER
+                ReferenceAssemblies.Net60
+#elif NET472_OR_GREATER
+                ReferenceAssemblies.Net472
+#else
+                ReferenceAssemblies.NetStandard20
+#endif
+                .Concat(
+                    Enumerable.Empty<string>()
+#if NET6_0_OR_GREATER
+                    .Append(typeof(System.IO.Pipelines.Pipe).Assembly.Location)
+#elif NET472_OR_GREATER
+                    .Append(typeof(System.IO.Pipelines.Pipe).Assembly.Location)
+                    .Append(typeof(Span<>).Assembly.Location)
+                    .Append(typeof(System.Runtime.CompilerServices.Unsafe).Assembly.Location)
+                    .Append(typeof(ValueTask<>).Assembly.Location)
+#else
+                    .Append(throw new InvalidOperationException())
+#endif
+                    .Select(x => MetadataReference.CreateFromFile(x))
+                )
                 .ToArray();
         }
         var compilation = CSharpCompilation.Create("generatortest",
@@ -54,8 +58,10 @@ public class MethodGeneratorTests
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
                 .WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>{
                     { "CS1701", ReportDiagnostic.Suppress },
+#if NET8_0
+                    { "CS1705", ReportDiagnostic.Hidden },
+#endif
                 }));
-
         baseCompilation = compilation;
     }
 
@@ -364,7 +370,15 @@ public class MethodGeneratorTests
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
         Assert.IsFalse(diagnostics.IsEmpty);
-        CollectionAssert.AreEqual(new[] { expected }, diagnostics.Select(v => v.Id).ToArray());
+        try
+        {
+            CollectionAssert.AreEqual(new[] { expected }, diagnostics.Select(v => v.Id).ToArray());
+        }catch(AssertFailedException)
+        {
+            foreach (var diagnostic in diagnostics)
+                TestContext.WriteLine($"{diagnostic}");
+            throw;
+        }
         Assert.AreEqual(2, outputCompilation.SyntaxTrees.Count());
     }
     [TestMethod]
@@ -381,7 +395,15 @@ public class MethodGeneratorTests
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
         Assert.IsFalse(diagnostics.IsEmpty);
-        CollectionAssert.AreEqual(new[] { "BF0001" }, diagnostics.Select(v => v.Id).ToArray());
+        try
+        {
+            CollectionAssert.AreEqual(new[] { "BF0001" }, diagnostics.Select(v => v.Id).ToArray());
+        }catch(AssertFailedException)
+        {
+            foreach (var diagnostic in diagnostics)
+                TestContext.WriteLine($"{diagnostic}");
+            throw;
+        }
         Assert.AreEqual(2, outputCompilation.SyntaxTrees.Count());
     }
     static IEnumerable<object?[]> ModuleSignatureTestData

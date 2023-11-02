@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IndexRange" />
+    <PackageReference Include="IndexRange"  />
     <PackageReference Include="System.Memory" />
   </ItemGroup>
 
