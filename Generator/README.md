@@ -4,7 +4,7 @@ brainfuck method generator.
 
 ## usage
 
-use `Brainfuck.GenerateBrainfuckMethodAttribute` attribute.
+use `Esolang.Brainfuck.GenerateBrainfuckMethodAttribute` attribute.
 
 first argument is brainfuck source code.
 
