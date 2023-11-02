@@ -1,4 +1,4 @@
-﻿namespace Brainfuck.Runner.SequenceCommands;
+﻿namespace Esolang.Brainfuck.Runner.SequenceCommands;
 
 public sealed record OutputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {

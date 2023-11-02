@@ -7,6 +7,7 @@
     <IsPackable>false</IsPackable>
     <IsPublishable>false</IsPublishable>
     <IsTestProject>false</IsTestProject>
+    <AssemblyName>Brainfuck.Generator.UseConsole</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Generator\Brainfuck.Generator.csproj">
+    <ProjectReference Include="..\Generator\Esolang.Brainfuck.Generator.csproj">
       <OutputItemType>Analyzer</OutputItemType>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>

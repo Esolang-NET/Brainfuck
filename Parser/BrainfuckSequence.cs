@@ -1,4 +1,4 @@
-﻿namespace Brainfuck;
+﻿namespace Esolang.Brainfuck;
 
 /// <summary>
 /// brainfuck sequence types

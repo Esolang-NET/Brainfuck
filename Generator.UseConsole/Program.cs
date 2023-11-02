@@ -1,5 +1,5 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using Brainfuck;
+using Esolang.Brainfuck;
 
 Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod1)}: {await BrainfuckSample.SampleMethod1()}");
 Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod2)}: {await BrainfuckSample.SampleMethod2()}");

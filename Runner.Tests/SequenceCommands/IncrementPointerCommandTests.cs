@@ -1,9 +1,9 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Immutable;
-using static Brainfuck.BrainfuckSequence;
-using Command = Brainfuck.Runner.SequenceCommands.IncrementPointerCommand;
+using static Esolang.Brainfuck.BrainfuckSequence;
+using Command = Esolang.Brainfuck.Runner.SequenceCommands.IncrementPointerCommand;
 
-namespace Brainfuck.Runner.SequenceCommands.Tests;
+namespace Esolang.Brainfuck.Runner.SequenceCommands.Tests;
 
 [TestClass]
 public class IncrementPointerCommandTests

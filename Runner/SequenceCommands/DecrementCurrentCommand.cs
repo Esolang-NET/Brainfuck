@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace Brainfuck.Runner.SequenceCommands;
+namespace Esolang.Brainfuck.Runner.SequenceCommands;
 
 public sealed record DecrementCurrentCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {

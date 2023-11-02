@@ -1,10 +1,10 @@
-﻿using Brainfuck.Runner.SequenceCommands;
+﻿using Esolang.Brainfuck.Runner.SequenceCommands;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
 using System.Text;
 
-namespace Brainfuck.Runner;
+namespace Esolang.Brainfuck.Runner;
 
 /// <summary>
 /// 

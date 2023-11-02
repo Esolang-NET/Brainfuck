@@ -1,3 +1,3 @@
-﻿namespace Brainfuck.Generator.Sequences;
+﻿namespace Esolang.Brainfuck.Generator.Sequences;
 
 public interface INestableSequence { }

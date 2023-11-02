@@ -1,6 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MockBrainfuckOptions = TestShared.BrainfuckOptions;
-namespace Brainfuck.Tests;
+namespace Esolang.Brainfuck.Tests;
 
 [TestClass]
 public class BrainfuckOptionsTests

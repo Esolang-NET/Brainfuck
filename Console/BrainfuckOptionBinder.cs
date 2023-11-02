@@ -1,6 +1,6 @@
 ﻿using System.CommandLine;
 using System.CommandLine.Binding;
-namespace Brainfuck.Console;
+namespace Esolang.Brainfuck.Console;
 
 /// <summary>
 /// brainfuck global options

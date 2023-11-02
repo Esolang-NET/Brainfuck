@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 
-namespace Brainfuck.Runner.SequenceCommands;
+namespace Esolang.Brainfuck.Runner.SequenceCommands;
 
 public abstract record class BrainfuckSequenceCommand(BrainfuckContext Context)
 {

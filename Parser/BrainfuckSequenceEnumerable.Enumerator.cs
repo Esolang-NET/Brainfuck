@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace Brainfuck;
+namespace Esolang.Brainfuck;
 
 public sealed partial record BrainfuckSequenceEnumerable
 {

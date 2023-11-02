@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0;net48</TargetFrameworks>
+    <TargetFrameworks>net48;net6.0;net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <IsPublishable>false</IsPublishable>
+    <AssemblyName>Brainfuck.Parser.Tests</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,12 +16,11 @@
     <PackageReference Include="MSTest.TestAdapter" />
     <PackageReference Include="MSTest.TestFramework" />
     <PackageReference Include="coverlet.collector" />
-    <PackageReference Include="System.IO.Pipelines" />
     <PackageReference Include="System.Memory" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Runner\Brainfuck.Runner.csproj" />
+    <ProjectReference Include="..\Parser\Esolang.Brainfuck.Parser.csproj" />
   </ItemGroup>
 
   <Import Project="..\TestShared\TestShared.projitems" Label="Shared" />

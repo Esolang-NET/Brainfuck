@@ -2,7 +2,7 @@
 using System.Collections.Immutable;
 using System.IO.Pipelines;
 
-namespace Brainfuck.Runner.SequenceCommands;
+namespace Esolang.Brainfuck.Runner.SequenceCommands;
 
 public sealed record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {

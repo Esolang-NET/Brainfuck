@@ -1,4 +1,4 @@
-﻿using Brainfuck.Console;
+﻿using Esolang.Brainfuck.Console;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Parsing;

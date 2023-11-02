@@ -1,11 +1,11 @@
-﻿using Brainfuck.Generator.Sequences;
+﻿using Esolang.Brainfuck.Generator.Sequences;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text;
-using static Brainfuck.BrainfuckSequence;
+using static Esolang.Brainfuck.BrainfuckSequence;
 
-namespace Brainfuck.Generator;
+namespace Esolang.Brainfuck.Generator;
 public partial class MethodGenerator
 {
     static void Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source)

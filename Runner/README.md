@@ -6,7 +6,7 @@ brainfuck runner.
 
 ```cs
 using System;
-using Brainfuck.Runner;
+using Esolang.Brainfuck.Runner;
 
 var source = "+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.";
 var runner = new BrainfuckRunner(source);

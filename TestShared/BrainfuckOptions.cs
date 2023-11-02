@@ -1,4 +1,4 @@
-﻿using Brainfuck;
+﻿using Esolang.Brainfuck;
 using System.Runtime.Serialization;
 namespace TestShared;
 [Serializable]
