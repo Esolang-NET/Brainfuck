@@ -373,7 +373,8 @@ public class MethodGeneratorTests
         try
         {
             CollectionAssert.AreEqual(new[] { expected }, diagnostics.Select(v => v.Id).ToArray());
-        }catch(AssertFailedException)
+        }
+        catch (AssertFailedException)
         {
             foreach (var diagnostic in diagnostics)
                 TestContext.WriteLine($"{diagnostic}");
@@ -398,7 +399,8 @@ public class MethodGeneratorTests
         try
         {
             CollectionAssert.AreEqual(new[] { "BF0001" }, diagnostics.Select(v => v.Id).ToArray());
-        }catch(AssertFailedException)
+        }
+        catch (AssertFailedException)
         {
             foreach (var diagnostic in diagnostics)
                 TestContext.WriteLine($"{diagnostic}");
