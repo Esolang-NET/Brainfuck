@@ -21,8 +21,14 @@
     <EnableAotAnalyzer>true</EnableAotAnalyzer>
   </PropertyGroup>
 
-  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">
-    <IsAotCompatible>true</IsAotCompatible>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
+    <PublishAot>true</PublishAot>
+    <StripSymbols>true</StripSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
+    <PublishAot>true</PublishAot>
+    <StripSymbols>false</StripSymbols>
   </PropertyGroup>
 
   <ItemGroup>
