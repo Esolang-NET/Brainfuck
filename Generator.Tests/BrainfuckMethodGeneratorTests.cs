@@ -25,8 +25,8 @@ public class MethodGeneratorTests
             references =
 #if NET8_0
                 Directory.GetFiles(Path.GetDirectoryName(typeof(object).Assembly.Location)!)
-                .Where(x => Path.GetFileName(x) is string fileName && fileName.EndsWith(".dll") 
-                    && !fileName.EndsWith(".Native.dll") 
+                .Where(x => Path.GetFileName(x) is string fileName && fileName.EndsWith(".dll")
+                    && !fileName.EndsWith(".Native.dll")
                     && (fileName.StartsWith("System") || (fileName is "mscorlib.dll" or "netstandard.dll"))
                 )
                 .Select(x => MetadataReference.CreateFromFile(x))
