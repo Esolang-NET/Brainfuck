@@ -4,9 +4,8 @@
     <TargetFrameworks>net6.0;net8.0;netstandard2.1;netstandard2.0</TargetFrameworks>
     <IsPublishable>false</IsPublishable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">
     <IsTrimmable>true</IsTrimmable>
     <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
@@ -28,8 +27,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="IndexRange" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.IO.Pipelines" />
     <PackageReference Include="System.Memory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Parser\Esolang.Brainfuck.Parser.csproj" />
   </ItemGroup>
 
   <ItemGroup>
