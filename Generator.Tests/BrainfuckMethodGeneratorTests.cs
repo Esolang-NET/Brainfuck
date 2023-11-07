@@ -458,4 +458,24 @@ public class MethodGeneratorTests
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
     }
+
+    [TestMethod]
+    public void RawStringTest()
+    {
+        var source = $$""""
+        using Esolang.Brainfuck;
+        namespace TestProject;
+        partial class TestClass
+        {
+            [GenerateBrainfuckMethod("""
+                0+[.,]
+                """)]
+            public static partial string SampleMethod(string input);
+        }
+        """";
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        AssertDiagnostics(diagnostics, outputCompilation);
+        Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
+        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+    }
 }
