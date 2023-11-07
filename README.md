@@ -1,6 +1,6 @@
 # Brainfuck .NET library
 
-## [Brainfuck.Console](./Console/README.md)
+## [Brainfuck.Interpreter](./Interpreter/README.md)
 
 brainfuck command line utility dotnet-brainfuck command.
 
@@ -12,6 +12,6 @@ brainfuck method generator.
 
 brainfuck source parser.
 
-## [Brainfuck.Runner](./Runner/README.md)
+## [Brainfuck.Processor](./Processor/README.md)
 
-brainfuck runner.
+brainfuck processor.

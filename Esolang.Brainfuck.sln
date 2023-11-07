@@ -24,11 +24,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Esolang.Brainfuck.Generator
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Esolang.Brainfuck.Generator.Tests", "Generator.Tests\Esolang.Brainfuck.Generator.Tests.csproj", "{440C12FA-F5FE-41BE-9605-372A35158604}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Esolang.Brainfuck.Runner", "Runner\Esolang.Brainfuck.Runner.csproj", "{99A9246F-D0C0-4524-B444-D5E04FFAD131}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Esolang.Brainfuck.Processor", "Processor\Esolang.Brainfuck.Processor.csproj", "{99A9246F-D0C0-4524-B444-D5E04FFAD131}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Esolang.Brainfuck.Runner.Tests", "Runner.Tests\Esolang.Brainfuck.Runner.Tests.csproj", "{E83D67D2-9F99-4E8E-885F-866823E1790F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Esolang.Brainfuck.Processor.Tests", "Processor.Tests\Esolang.Brainfuck.Processor.Tests.csproj", "{E83D67D2-9F99-4E8E-885F-866823E1790F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Esolang.Brainfuck.Console", "Console\Esolang.Brainfuck.Console.csproj", "{3F060504-576B-4285-A571-A6F2A466C3C3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Esolang.Brainfuck.Interpreter", "Interpreter\Esolang.Brainfuck.Interpreter.csproj", "{3F060504-576B-4285-A571-A6F2A466C3C3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
