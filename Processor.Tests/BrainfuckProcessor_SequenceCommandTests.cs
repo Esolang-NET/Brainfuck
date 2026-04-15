@@ -19,7 +19,7 @@ public class BrainfuckProcessor_SequenceCommandTests
     }
     [TestMethod]
     public void SequenceCommand_ThrowIfArgumentNullTest()
-        => Assert.ThrowsException<ArgumentNullException>(() => new Command(default!));
+        => Assert.Throws<ArgumentNullException>(() => new Command(default!));
     [TestMethod]
     public void SequenceCommand_IfAgumentIsSequenceCommandTest()
     {

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0;net48</TargetFrameworks>
+    <TargetFrameworks>net48;net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -18,7 +18,12 @@
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="System.IO.Pipelines" />
     <PackageReference Include="System.Memory" />
-    <PackageReference Include="Basic.Reference.Assemblies" />
+    <PackageReference Include="Basic.Reference.Assemblies.Net100" />
+    <PackageReference Include="Basic.Reference.Assemblies.Net472" />
+    <PackageReference Include="Basic.Reference.Assemblies.Net60" />
+    <PackageReference Include="Basic.Reference.Assemblies.Net70" />
+    <PackageReference Include="Basic.Reference.Assemblies.Net80" />
+    <PackageReference Include="Basic.Reference.Assemblies.Net90" />
   </ItemGroup>
 
   <ItemGroup>
