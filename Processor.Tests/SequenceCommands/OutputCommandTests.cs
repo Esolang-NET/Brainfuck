@@ -85,13 +85,13 @@ public class OutputCommandTests
     {
         var token = TestContext.CancellationTokenSource.Token;
         var command = new Command(new BrainfuckContext(Sequences: new[] { Output }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
-        Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await command.ExecuteAsync(token)); ;
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteAsync(token)); ;
     }
     [TestMethod]
     public void Execute_ThrowTest()
     {
         var command = new Command(new BrainfuckContext(Sequences: new[] { Output }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
-        Assert.ThrowsException<InvalidOperationException>(() => command.Execute());
+        Assert.Throws<InvalidOperationException>(() => command.Execute());
     }
 
     [TestMethod]

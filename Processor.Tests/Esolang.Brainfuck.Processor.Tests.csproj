@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0;net48</TargetFrameworks>
+    <TargetFrameworks>net48;net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -24,6 +24,10 @@
     <ProjectReference Include="..\Processor\Esolang.Brainfuck.Processor.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(TargetFramework)' != 'net48'">
+    <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage" />
+  </ItemGroup>
+  
   <Import Project="..\TestShared\TestShared.projitems" Label="Shared" />
 
 </Project>

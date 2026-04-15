@@ -83,17 +83,17 @@ public class BrainfuckSequenceEnumerableTests
     public void RequiredInputTest()
     {
         var e1 = new BrainfuckSequenceEnumerable("[");
-        Assert.AreEqual(e1.RequiredInput, false);
+        Assert.AreEqual(false, e1.RequiredInput);
         var e2 = new BrainfuckSequenceEnumerable(",");
-        Assert.AreEqual(e2.RequiredInput, true);
+        Assert.AreEqual(true, e2.RequiredInput);
     }
     [TestMethod]
     public void RequiredOutputTest()
     {
         var e1 = new BrainfuckSequenceEnumerable("]");
-        Assert.AreEqual(e1.RequiredOutput, false);
+        Assert.AreEqual(false, e1.RequiredOutput);
         var e2 = new BrainfuckSequenceEnumerable(".");
-        Assert.AreEqual(e2.RequiredOutput, true);
+        Assert.AreEqual(true, e2.RequiredOutput);
     }
     [TestMethod]
     public void ToStringTest()

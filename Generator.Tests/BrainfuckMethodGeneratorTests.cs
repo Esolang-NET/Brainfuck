@@ -1,7 +1,6 @@
 ﻿using Basic.Reference.Assemblies;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Text;
@@ -19,27 +18,25 @@ public class MethodGeneratorTests
     {
         // running .NET Core system assemblies dir path
 
-        PortableExecutableReference[] references;
+        IEnumerable<PortableExecutableReference> references;
         {
             // 依存DLLがある場合はそれも追加しておく
             references =
-#if NET8_0
-                Directory.GetFiles(Path.GetDirectoryName(typeof(object).Assembly.Location)!)
-                .Where(x => Path.GetFileName(x) is string fileName && fileName.EndsWith(".dll")
-                    && !fileName.EndsWith(".Native.dll")
-                    && (fileName.StartsWith("System") || (fileName is "mscorlib.dll" or "netstandard.dll"))
-                )
-                .Select(x => MetadataReference.CreateFromFile(x))
+#if NET10_0_OR_GREATER
+            Net100.References.All
+#elif NET9_0_OR_GREATER
+            Net90.References.All
+#elif NET8_0_OR_GREATER
+            Net80.References.All
 #elif NET6_0_OR_GREATER
-                ReferenceAssemblies.Net60
+            Net60.References.All
 #elif NET472_OR_GREATER
-                ReferenceAssemblies.Net472
-#else
-                ReferenceAssemblies.NetStandard20
+            Net472.References.All
 #endif
+#if NET47_OR_GREATER || NET5_0 || NET6_0 || NET7_0 || NET8_0 
                 .Concat(
                     Enumerable.Empty<string>()
-#if NET6_0_OR_GREATER
+#if NET5_0 || NET6_0 || NET7_0 || NET8_0 
                     .Append(typeof(System.IO.Pipelines.Pipe).Assembly.Location)
 #elif NET472_OR_GREATER
                     .Append(typeof(System.IO.Pipelines.Pipe).Assembly.Location)
@@ -50,24 +47,19 @@ public class MethodGeneratorTests
                     .Append(throw new InvalidOperationException())
 #endif
                     .Select(x => MetadataReference.CreateFromFile(x))
-                )
-                .ToArray();
+                )    
+#endif             
+            ;
         }
         var compilation = CSharpCompilation.Create("generatortest",
             references: references,
-            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-                .WithSpecificDiagnosticOptions(new Dictionary<string, ReportDiagnostic>{
-                    { "CS1701", ReportDiagnostic.Suppress },
-#if NET8_0
-                    { "CS1705", ReportDiagnostic.Hidden },
-#endif
-                }));
+            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         baseCompilation = compilation;
     }
 
     GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics, CancellationToken cancellationToken = default)
     {
-        var preprocessorSymbols = new string[] {
+        string[] preprocessorSymbols = [
 #if NETCOREAPP3_0_OR_GREATER
             "NETCOREAPP3_0_OR_GREATER",
 #endif
@@ -81,9 +73,18 @@ public class MethodGeneratorTests
             "NET5_0_OR_GREATER",
 #endif
 #if NET7_0_OR_GREATER
-            "NET7_0_OR_GREATER" 
+            "NET7_0_OR_GREATER"
 #endif
-        };
+#if NET8_0_OR_GRATER
+            "NET8_0_OR_GREATER"
+#endif
+#if NET9_0_OR_GRATER
+            "NET9_0_OR_GREATER"
+#endif
+#if NET10_0_OR_GRATER
+            "NET10_0_OR_GREATER"
+#endif
+        ];
 
         var parseOptions = new CSharpParseOptions(LanguageVersion.CSharp11, preprocessorSymbols: preprocessorSymbols);
 
@@ -92,7 +93,7 @@ public class MethodGeneratorTests
             var generator = new MethodGenerator();
             var sourceGenerator = generator.AsSourceGenerator();
             driver = CSharpGeneratorDriver.Create(
-                generators: new ISourceGenerator[] { sourceGenerator },
+                generators: [sourceGenerator],
                 driverOptions: new(default, trackIncrementalGeneratorSteps: true)
             ).WithUpdatedParseOptions(parseOptions);
         }
@@ -153,7 +154,7 @@ public class MethodGeneratorTests
             yield return SourceGeneratorTest1("0.", null);
             yield return SourceGeneratorTest1("1+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.", "Hello, world!");
             static object?[] SourceGeneratorTest1(string source, string? expected)
-                => new object?[] { source, expected };
+                => [source, expected];
         }
     }
     [TestMethod]
@@ -162,19 +163,20 @@ public class MethodGeneratorTests
     {
         TestContext.CancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30));
         var cancellationToken = TestContext.CancellationTokenSource.Token;
-        source = $$"""
-        using Esolang.Brainfuck;
-        namespace TestProject;
-        #nullable enable
-        partial class TestClass
-        {
-            [GenerateBrainfuckMethod("{{source}}")]
-            public static partial string? SampleMethod();
-        }
-        """;
+        source = 
+$$"""
+using Esolang.Brainfuck;
+namespace TestProject;
+#nullable enable
+partial class TestClass
+{
+    [GenerateBrainfuckMethod("{{source}}")]
+    public static partial string? SampleMethod();
+}
+""";
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
-        Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
+        Assert.HasCount(3, outputCompilation.SyntaxTrees);
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
         var (context, assembly) = Emit(outputCompilation, cancellationToken: cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
@@ -351,7 +353,7 @@ public class MethodGeneratorTests
             // BF0008: no input
             yield return DiagnoticsTest("BF0008", "8_1,", "void");
             static object?[] DiagnoticsTest(string expected, string source, string returnType, string parameters = "", string options = "")
-                => new object?[] { expected, source, returnType, parameters, options };
+                => [expected, source, returnType, parameters, options];
         }
     }
     [TestMethod]
@@ -380,7 +382,7 @@ public class MethodGeneratorTests
                 TestContext.WriteLine($"{diagnostic}");
             throw;
         }
-        Assert.AreEqual(2, outputCompilation.SyntaxTrees.Count());
+        Assert.HasCount(2, outputCompilation.SyntaxTrees);
     }
     [TestMethod]
     public void DiagnoticsTest_NoArgumentConstructor()
@@ -406,7 +408,7 @@ public class MethodGeneratorTests
                 TestContext.WriteLine($"{diagnostic}");
             throw;
         }
-        Assert.AreEqual(2, outputCompilation.SyntaxTrees.Count());
+        Assert.HasCount(2, outputCompilation.SyntaxTrees);
     }
     static IEnumerable<object?[]> ModuleSignatureTestData
     {
@@ -455,7 +457,7 @@ public class MethodGeneratorTests
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
-        Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
+        Assert.HasCount(3, outputCompilation.SyntaxTrees);
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
     }
 
@@ -475,7 +477,7 @@ public class MethodGeneratorTests
         """";
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
-        Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
+        Assert.HasCount(3, outputCompilation.SyntaxTrees);
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
     }
 }

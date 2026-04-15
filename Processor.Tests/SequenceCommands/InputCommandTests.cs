@@ -25,7 +25,7 @@ public class InputCommandTests
                 );
                 yield return ExecuteAsyncTest(
                     context,
-                    new byte[] { 1 },
+                    [1],
                     context with
                     {
                         Stack = ImmutableArray.Create<byte>(1),
@@ -51,7 +51,7 @@ public class InputCommandTests
                 );
             }
             static object?[] ExecuteAsyncTest(TestShared.BrainfuckContext context, byte[] input, TestShared.BrainfuckContext expected)
-                => new object?[] { context, input.ToSerializable(), expected };
+                => [context, input.ToSerializable(), expected];
         }
     }
     [TestMethod]
@@ -106,25 +106,25 @@ public class InputCommandTests
     {
         var token = TestContext.CancellationTokenSource.Token;
         var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
-        Assert.ThrowsExceptionAsync<InvalidOperationException>(async () => await command.ExecuteAsync(token)); ;
+        Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteAsync(token)); ;
     }
     [TestMethod]
     public void Execute_ThrowTest()
     {
         var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
-        Assert.ThrowsException<InvalidOperationException>(() => command.Execute());
+        Assert.Throws<InvalidOperationException>(() => command.Execute());
     }
 
     [TestMethod]
     public void RequiredInputTest()
     {
         var command = new Command(default);
-        Assert.AreEqual(true, command.RequiredInput);
+        Assert.IsTrue(command.RequiredInput);
     }
     [TestMethod]
     public void RequiredOutputTest()
     {
         var command = new Command(default);
-        Assert.AreEqual(false, command.RequiredOutput);
+        Assert.IsFalse(command.RequiredOutput);
     }
 }

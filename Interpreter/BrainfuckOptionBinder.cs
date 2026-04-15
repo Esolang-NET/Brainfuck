@@ -5,7 +5,7 @@ namespace Esolang.Brainfuck.Interpreter;
 /// <summary>
 /// brainfuck global options
 /// </summary>
-public class BrainfuckOptionBinder : BinderBase<IBrainfuckOptions>
+public class BrainfuckOptionBinder
 {
     /// <summary>
     /// brainfuck global options
@@ -101,31 +101,31 @@ public class BrainfuckOptionBinder : BinderBase<IBrainfuckOptions>
     /// If the byte at the data pointer is nonzero, then instead of moving the instruction pointer forward to the next command, jump it back to the command after the matching [ command.
     /// </summary>
     readonly Option<string?> End;
-    protected override IBrainfuckOptions GetBoundValue(BindingContext bindingContext)
+    public IBrainfuckOptions GetValue(ParseResult parseResult)
     {
-        var noUseDefaultValue = bindingContext.ParseResult.GetValueForOption(NoUseDefaultValue);
-        var incrementPointer = bindingContext.ParseResult.GetValueForOption(IncrementPointer);
+        var noUseDefaultValue = parseResult.GetValue(NoUseDefaultValue);
+        var incrementPointer = parseResult.GetValue(IncrementPointer);
         if (!noUseDefaultValue && string.IsNullOrEmpty(incrementPointer))
             incrementPointer = BrainfuckOptionsDefault.IncrementPointer;
-        var decrementPointer = bindingContext.ParseResult.GetValueForOption(DecrementPointer);
+        var decrementPointer = parseResult.GetValue(DecrementPointer);
         if (!noUseDefaultValue && string.IsNullOrEmpty(decrementPointer))
             decrementPointer = BrainfuckOptionsDefault.DecrementPointer;
-        var incrementCurrent = bindingContext.ParseResult.GetValueForOption(IncrementCurrent);
+        var incrementCurrent = parseResult.GetValue(IncrementCurrent);
         if (!noUseDefaultValue && string.IsNullOrEmpty(incrementCurrent))
             incrementCurrent = BrainfuckOptionsDefault.IncrementCurrent;
-        var decrementCurrent = bindingContext.ParseResult.GetValueForOption(DecrementCurrent);
+        var decrementCurrent = parseResult.GetValue(DecrementCurrent);
         if (!noUseDefaultValue && string.IsNullOrEmpty(decrementCurrent))
             decrementCurrent = BrainfuckOptionsDefault.DecrementCurrent;
-        var output = bindingContext.ParseResult.GetValueForOption(Output);
+        var output = parseResult.GetValue(Output);
         if (!noUseDefaultValue && string.IsNullOrEmpty(output))
             output = BrainfuckOptionsDefault.Output;
-        var input = bindingContext.ParseResult.GetValueForOption(Input);
+        var input = parseResult.GetValue(Input);
         if (!noUseDefaultValue && string.IsNullOrEmpty(input))
             input = BrainfuckOptionsDefault.Input;
-        var begin = bindingContext.ParseResult.GetValueForOption(Begin);
+        var begin = parseResult.GetValue(Begin);
         if (!noUseDefaultValue && string.IsNullOrEmpty(begin))
             begin = BrainfuckOptionsDefault.Begin;
-        var end = bindingContext.ParseResult.GetValueForOption(End);
+        var end = parseResult.GetValue(End);
         if (!noUseDefaultValue && string.IsNullOrEmpty(end))
             end = BrainfuckOptionsDefault.End;
         return new BrainfuckOptions(
