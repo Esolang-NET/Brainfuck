@@ -3,6 +3,7 @@
     <File Path=".editorconfig" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Build.targets" />
+    <File Path="global.json" />
   </Folder>
   <Project Path="Generator.Tests/Esolang.Brainfuck.Generator.Tests.csproj" />
   <Project Path="Generator.UseConsole/Esolang.Brainfuck.Generator.UseConsole.csproj" />
