@@ -1,10 +1,4 @@
-﻿#!/usr/bin/env dotnet run 
-#:sdk Microsoft.NET.Sdk 
-#:property IsPackable=false 
-#:property OutputType=Exe 
-#:property IsPublishable=false 
-#:property IsTestProject=false
-
+﻿
 using Esolang.Brainfuck;
 
 Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod1)}: {await BrainfuckSample.SampleMethod1()}");
