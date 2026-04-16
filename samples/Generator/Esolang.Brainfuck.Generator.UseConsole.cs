@@ -1,4 +1,12 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿#!/usr/bin/env dotnet run 
+#:sdk Microsoft.NET.Sdk 
+#:property TargetFramework=net10.0 
+#:property TargetFrameworks=net8.0;net9.0;net10.0 
+#:property IsPackable=false 
+#:property OutputType=Exe 
+#:property IsPublishable=false 
+#:property IsTestProject=false
+
 using Esolang.Brainfuck;
 
 Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod1)}: {await BrainfuckSample.SampleMethod1()}");
