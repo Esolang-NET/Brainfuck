@@ -9,8 +9,8 @@ using System;
 using Esolang.Brainfuck.Processor;
 
 var source = "+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.";
-var runner = new BrainfuckRunner(source);
-var result = await runner.RunAndOutputStringAsync();
+var processor = new BrainfuckProcessor(source);
+var result = await processor.RunAndOutputStringAsync();
 
 Console.WriteLine(result);
 // output:
