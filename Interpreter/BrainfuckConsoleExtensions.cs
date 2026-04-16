@@ -7,8 +7,16 @@ using System.Text;
 
 namespace Esolang.Brainfuck.Interpreter;
 
+/// <summary>
+/// Extension methods that compose Brainfuck CLI commands.
+/// </summary>
 public static class BrainfuckInterpreterExtensions
 {
+    /// <summary>
+    /// Adds global options that represent Brainfuck syntax configuration.
+    /// </summary>
+    /// <param name="rootCommand">The target root command.</param>
+    /// <returns>A binder that groups the added options.</returns>
     public static BrainfuckOptionBinder AddDefaultGlobalOptions(this RootCommand rootCommand)
     {
         var noUseDefaultValue = new Option<bool>("--syntax-no-use-default-value", "-snd")
@@ -68,6 +76,12 @@ public static class BrainfuckInterpreterExtensions
             end: end
         );
     }
+    /// <summary>
+    /// Configures the default execution command.
+    /// </summary>
+    /// <param name="rootCommand">The target root command.</param>
+    /// <param name="option">The syntax option binder.</param>
+    /// <returns>The configured root command.</returns>
     public static RootCommand AddDefaultCommand(this RootCommand rootCommand, BrainfuckOptionBinder option)
     {
         rootCommand.Description = "run brainfuck from source code";
@@ -128,6 +142,12 @@ public static class BrainfuckInterpreterExtensions
         });
         return rootCommand;
     }
+    /// <summary>
+    /// Adds a subcommand that prints parse results.
+    /// </summary>
+    /// <param name="rootCommand">The target root command.</param>
+    /// <param name="option">The syntax option binder.</param>
+    /// <returns>The configured root command.</returns>
     public static RootCommand AddParseCommand(this RootCommand rootCommand, BrainfuckOptionBinder option)
     {
         var parseCommand = new Command("parse", "parse brainfuck source code.");

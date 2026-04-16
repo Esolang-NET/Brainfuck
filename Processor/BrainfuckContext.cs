@@ -18,6 +18,9 @@ namespace Esolang.Brainfuck.Processor;
 [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
 public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence> Sequences, ImmutableArray<byte> Stack, int SequencesIndex = default, int StackIndex = default, PipeReader? Input = default, PipeWriter? Output = default) : IEquatable<BrainfuckContext>
 {
+    /// <summary>
+    /// Gets whether this context is close to its default, uninitialized state.
+    /// </summary>
     public readonly bool IsEmpty
         => ReadOnlyMemory<BrainfuckSequence>.Empty.Equals(Sequences)
         && SequencesIndex == 0
@@ -55,6 +58,12 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
     }
 
     private string DebuggerDisplay => ToString();
+
+    /// <summary>
+    /// Determines whether this context is equal to the specified context.
+    /// </summary>
+    /// <param name="other">The context to compare with.</param>
+    /// <returns><see langword="true"/> if both contexts are equal; otherwise, <see langword="false"/>.</returns>
     public bool Equals(BrainfuckContext other)
     {
         {
@@ -76,6 +85,10 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
             && Equals(Output, other.Output);
     }
 
+    /// <summary>
+    /// Returns a hash code for this instance.
+    /// </summary>
+    /// <returns>A hash code for this instance.</returns>
     public override int GetHashCode()
     {
         var hash = new HashCode();

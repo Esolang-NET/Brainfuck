@@ -1,7 +1,12 @@
 ﻿namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
+/// <summary>
+/// Executes the <see cref="BrainfuckSequence.End"/> instruction.
+/// </summary>
+/// <param name="Context">The context to execute against.</param>
 public sealed record EndCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    /// <inheritdoc />
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         if (!TryGetNextSequencesIndex(out var sequencesIndex))
@@ -12,6 +17,7 @@ public sealed record EndCommand(BrainfuckContext Context) : BrainfuckSequenceCom
         };
     }
 
+    /// <inheritdoc />
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

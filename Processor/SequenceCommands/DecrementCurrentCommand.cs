@@ -2,8 +2,13 @@
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
+/// <summary>
+/// Executes the <see cref="BrainfuckSequence.DecrementCurrent"/> instruction.
+/// </summary>
+/// <param name="Context">The context to execute against.</param>
 public sealed record DecrementCurrentCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    /// <inheritdoc />
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         DecrementCurrent(out var sequencesIndex, out var stack);
@@ -14,6 +19,7 @@ public sealed record DecrementCurrentCommand(BrainfuckContext Context) : Brainfu
         };
     }
 
+    /// <inheritdoc />
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

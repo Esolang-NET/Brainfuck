@@ -12,6 +12,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>dotnet-brainfuck</ToolCommandName>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">

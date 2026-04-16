@@ -7,6 +7,11 @@ namespace Esolang.Brainfuck.Generator;
 /// <summary>Provides utility functions.</summary>
 public static class Utils
 {
+    /// <summary>
+    /// Normalizes a string into a file-name-safe representation.
+    /// </summary>
+    /// <param name="str">The input string.</param>
+    /// <returns>A string that is safer to use as a file name.</returns>
     public static string SanitizeForFileName(string str) => str
             .Replace("global::", "")
             .Replace("?", "")

@@ -311,12 +311,12 @@ public partial class MethodGenerator
     const string STACK_NAME = "stack";
     const string STACK_INDEX = "stackIndex";
     /// <summary>
-    /// 
+    /// Generates the method body code for the specified Brainfuck sequence.
     /// </summary>
-    /// <param name="indent">インデント数(4個で1単位)</param>
-    /// <param name="sequences">コマンドシーケンス</param>
-    /// <param name="isAsync">非同期かどうか</param>
-    /// <returns></returns>
+    /// <param name="indent">Indent level (4 spaces per level).</param>
+    /// <param name="sequences">The command sequence.</param>
+    /// <param name="options">Internal generation options.</param>
+    /// <returns>The generated method body source code.</returns>
     static string GenerateMethodBodyCode(int indent, BrainfuckSequenceEnumerable sequences, ref InternalOptions options)
     {
         var builder = new StringBuilder();
@@ -694,33 +694,33 @@ internal enum ParameterType
 
 }
 /// <summary>
-/// 戻り値を表す 00_0_000 形式 で左から順に TaskType | isEnumerable | ReturnType となる
+/// Encodes return information in 00_0_000 form, ordered as TaskType | IsEnumerable | ReturnType from left to right.
 /// </summary>
 [Flags]
 internal enum ReturnType
 {
     /// <summary>
-    /// 戻り値は無い
+    /// No return value.
     /// </summary>
     Void = 0b_00_0_001,
     /// <summary>
-    /// 戻り値は文字列
+    /// Returns a string.
     /// </summary>
     String = 0b_00_0_010,
     /// <summary>
-    /// 戻り値はバイト
+    /// Returns a byte.
     /// </summary>
     Byte = 0b_00_0_100,
     /// <summary>
-    /// 列挙
+    /// Returns an enumerable sequence.
     /// </summary>
     Enumerable = 0b_00_1_000,
     /// <summary>
-    /// 戻り値は Task で wrap される
+    /// Return value is wrapped in <see cref="Task"/>.
     /// </summary>
     Task = 0b_01_0_000,
     /// <summary>
-    /// 戻り値は ValueTask で wrap される
+    /// Return value is wrapped in <see cref="ValueTask"/>.
     /// </summary>
     ValueTask = 0b_10_0_000,
 }

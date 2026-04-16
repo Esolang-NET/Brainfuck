@@ -7,7 +7,7 @@ using System.Text;
 namespace Esolang.Brainfuck.Processor;
 
 /// <summary>
-/// 
+/// Runner that executes Brainfuck instruction sequences.
 /// </summary>
 public sealed partial class BrainfuckProcessor
 {
@@ -15,24 +15,90 @@ public sealed partial class BrainfuckProcessor
     readonly PipeReader? Input;
     readonly PipeWriter? Output;
     BrainfuckContext Context => new(Sequences, SequencesIndex: 0, Stack: ImmutableArray.Create<byte>(0), StackIndex: 0, Input: Input, Output: Output);
+
+    /// <summary>
+    /// Initializes the processor from source code.
+    /// </summary>
+    /// <param name="source">The Brainfuck source.</param>
+    /// <param name="output">The output pipe.</param>
+    /// <param name="input">The input pipe.</param>
     public BrainfuckProcessor(string source, PipeWriter? output = default, PipeReader? input = default) : this(source, new(), output, input) { }
+
+    /// <summary>
+    /// Initializes the processor from source code and syntax options.
+    /// </summary>
+    /// <param name="source">The Brainfuck source.</param>
+    /// <param name="sourceOptions">The syntax options.</param>
+    /// <param name="output">The output pipe.</param>
+    /// <param name="input">The input pipe.</param>
     public BrainfuckProcessor(string source, IBrainfuckOptions? sourceOptions, PipeWriter? output = default, PipeReader? input = default)
         : this(SourceToSequences(source, sourceOptions), output: output, input: input) { }
+
+    /// <summary>
+    /// Initializes the processor from source code and syntax options.
+    /// </summary>
+    /// <param name="source">The Brainfuck source.</param>
+    /// <param name="sourceOptions">The syntax options.</param>
+    /// <param name="output">The output pipe.</param>
+    /// <param name="input">The input pipe.</param>
     public BrainfuckProcessor(string source, BrainfuckOptions sourceOptions, PipeWriter? output = default, PipeReader? input = default)
         : this(SourceToSequences(source, sourceOptions), output: output, input: input) { }
     static ReadOnlyMemory<BrainfuckSequence> SourceToSequences(string source, IBrainfuckOptions? sourceOptions)
         => new BrainfuckSequenceEnumerable(source, sourceOptions).Select(v => v.Sequence).ToArray().AsMemory();
     static ReadOnlyMemory<BrainfuckSequence> SourceToSequences(string source, BrainfuckOptions sourceOptions)
         => new BrainfuckSequenceEnumerable(source, sourceOptions).Select(v => v.Sequence).ToArray().AsMemory();
+    /// <summary>
+    /// Initializes the processor from instruction sequences.
+    /// </summary>
+    /// <param name="sequences">The instruction sequences to execute.</param>
+    /// <param name="output">The output pipe.</param>
+    /// <param name="input">The input pipe.</param>
     public BrainfuckProcessor(ReadOnlyMemory<BrainfuckSequence> sequences, PipeWriter? output = default, PipeReader? input = default)
         => (Sequences, Input, Output) = (sequences, input, output);
 
+    /// <summary>
+    /// Deconstructs and returns internal state.
+    /// </summary>
+    /// <param name="sequences">The instruction sequences.</param>
+    /// <param name="output">The output pipe.</param>
+    /// <param name="input">The input pipe.</param>
     public void Deconstruct(out ReadOnlyMemory<BrainfuckSequence> sequences, out PipeWriter? output, out PipeReader? input)
         => (sequences, input, output) = (Sequences, Input, Output);
+
+    /// <summary>
+    /// Runs synchronously from the default context.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The context after execution.</returns>
     public BrainfuckContext Run(CancellationToken cancellationToken = default) => Run(null, cancellationToken);
+
+    /// <summary>
+    /// Runs synchronously from the specified context.
+    /// </summary>
+    /// <param name="context">The starting context. If <see langword="null"/>, uses the default context.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The context after execution.</returns>
     public BrainfuckContext Run(BrainfuckContext? context = null, CancellationToken cancellationToken = default) => InternalRun(context ?? Context, cancellationToken);
+
+    /// <summary>
+    /// Runs asynchronously from the default context.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The context after execution.</returns>
     public ValueTask<BrainfuckContext> RunAsync(CancellationToken cancellationToken = default) => RunAsync(null, cancellationToken);
+
+    /// <summary>
+    /// Runs asynchronously from the specified context.
+    /// </summary>
+    /// <param name="context">The starting context. If <see langword="null"/>, uses the default context.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The context after execution.</returns>
     public ValueTask<BrainfuckContext> RunAsync(BrainfuckContext? context, CancellationToken cancellationToken = default) => InternalRunAsync(context ?? Context, cancellationToken);
+
+    /// <summary>
+    /// Enumerates executable commands from the current context.
+    /// </summary>
+    /// <returns>The sequence of executable commands.</returns>
     public IEnumerable<SequenceCommand> StepCommands() => InternalStepCommands(Context);
     static async ValueTask<BrainfuckContext> InternalRunAsync(BrainfuckContext context, CancellationToken cancellationToken = default)
     {
@@ -65,6 +131,11 @@ public sealed partial class BrainfuckProcessor
         }
     }
 
+    /// <summary>
+    /// Runs the processor and returns output as a UTF-8 string.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The output string, or <see langword="null"/> when output is empty.</returns>
     public async ValueTask<string?> RunAndOutputStringAsync(CancellationToken cancellationToken = default)
     {
         var pipe = new Pipe();
@@ -89,6 +160,10 @@ public sealed partial class BrainfuckProcessor
         if (returnString.Length == 0) return null;
         return returnString;
     }
+    /// <summary>
+    /// Runs the processor and returns output as a UTF-8 string.
+    /// </summary>
+    /// <returns>The output string, or <see langword="null"/> when output is empty.</returns>
     public string? RunAndOutputString()
     {
         var pipe = new Pipe();

@@ -1,7 +1,12 @@
 ﻿namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
+/// <summary>
+/// Executes the <see cref="BrainfuckSequence.DecrementPointer"/> instruction.
+/// </summary>
+/// <param name="Context">The context to execute against.</param>
 public sealed record DecrementPointerCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    /// <inheritdoc />
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         if (!TryDecrementPointer(out var sequencesIndex, out var stackIndex))
@@ -13,6 +18,7 @@ public sealed record DecrementPointerCommand(BrainfuckContext Context) : Brainfu
         };
     }
 
+    /// <inheritdoc />
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

@@ -2,8 +2,13 @@
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
+/// <summary>
+/// Executes the <see cref="BrainfuckSequence.IncrementPointer"/> instruction.
+/// </summary>
+/// <param name="Context">The context to execute against.</param>
 public sealed record IncrementPointerCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    /// <inheritdoc />
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         IncrementPointer(out var sequencesIndex, out var stack, out var stackIndex);
@@ -15,6 +20,7 @@ public sealed record IncrementPointerCommand(BrainfuckContext Context) : Brainfu
         };
     }
 
+    /// <inheritdoc />
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
