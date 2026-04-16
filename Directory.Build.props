@@ -20,17 +20,17 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'!='DEBUG'">
-    <!-- このオプションの指定で、タイムスタンプとかを決定論的なハッシュ値に置き換える -->
+    <!-- Replaces timestamps and related metadata with deterministic values. -->
     <Deterministic>true</Deterministic>
     
-    <!-- 「相対パス化」って機能は実はなくて、「このプロジェクトのパスを、この指定したパスに置き換える」みたいな処理を書くらしい -->
+    <!-- There is no direct "make path relative" switch; instead map repository paths to a fixed virtual root. -->
     <DeterministicSourceRoot>/_/</DeterministicSourceRoot>
     <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\'))</RepoRoot>
     
-    <!-- これが、「あるパスを別のあるパスに置き換える」をやるための設定 -->
+    <!-- Path remapping configuration used for deterministic source paths. -->
     <PathMap>$(RepoRoot)=$(DeterministicSourceRoot)</PathMap>
 
-    <!-- おまけ。PDB 中にソースコード埋め込み -->
+    <!-- Optional: embed source information for SourceLink/PDB. -->
     <EnableSourceLink>true</EnableSourceLink>
   </PropertyGroup>
   

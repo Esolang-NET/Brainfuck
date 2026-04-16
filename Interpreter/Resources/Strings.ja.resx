@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="RootCommandDescription" xml:space="preserve">
+    <value>Brainfuck ソースコードを実行します。</value>
+  </data>
+  <data name="SourceArgumentDescription" xml:space="preserve">
+    <value>Brainfuck ソースコード</value>
+  </data>
+  <data name="ParseCommandDescription" xml:space="preserve">
+    <value>Brainfuck ソースコードを解析します。</value>
+  </data>
+
+  <data name="SyntaxNoUseDefaultValueDescription" xml:space="preserve">
+    <value>Brainfuck の既定構文値を使用しません。</value>
+  </data>
+  <data name="SyntaxIncrementPointerDescription" xml:space="preserve">
+    <value>データポインターを 1 増加します（右隣のセルへ移動）。</value>
+  </data>
+  <data name="SyntaxDecrementPointerDescription" xml:space="preserve">
+    <value>データポインターを 1 減少します（左隣のセルへ移動）。</value>
+  </data>
+  <data name="SyntaxIncrementCurrentDescription" xml:space="preserve">
+    <value>現在セルの値を 1 増加します。</value>
+  </data>
+  <data name="SyntaxDecrementCurrentDescription" xml:space="preserve">
+    <value>現在セルの値を 1 減少します。</value>
+  </data>
+  <data name="SyntaxOutputDescription" xml:space="preserve">
+    <value>現在セルの値を出力します。</value>
+  </data>
+  <data name="SyntaxInputDescription" xml:space="preserve">
+    <value>1 バイト入力を受け取り、現在セルに格納します。</value>
+  </data>
+  <data name="SyntaxBeginDescription" xml:space="preserve">
+    <value>現在セルが 0 の場合、対応する ] の次の命令へジャンプします。</value>
+  </data>
+  <data name="SyntaxEndDescription" xml:space="preserve">
+    <value>現在セルが 0 以外の場合、対応する [ の次の命令へ戻ります。</value>
+  </data>
+</root>

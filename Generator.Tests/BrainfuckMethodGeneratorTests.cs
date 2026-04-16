@@ -21,7 +21,7 @@ public class MethodGeneratorTests
 
         IEnumerable<PortableExecutableReference> references;
         {
-            // 依存DLLがある場合はそれも追加しておく
+            // Add dependent DLL references when required.
             references =
 #if NET10_0_OR_GREATER
             Net100.References.All

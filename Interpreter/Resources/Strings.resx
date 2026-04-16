@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="RootCommandDescription" xml:space="preserve">
+    <value>run brainfuck from source code</value>
+  </data>
+  <data name="SourceArgumentDescription" xml:space="preserve">
+    <value>brainfuck source</value>
+  </data>
+  <data name="ParseCommandDescription" xml:space="preserve">
+    <value>parse brainfuck source code.</value>
+  </data>
+
+  <data name="SyntaxNoUseDefaultValueDescription" xml:space="preserve">
+    <value>do not use default brainfuck syntax values.</value>
+  </data>
+  <data name="SyntaxIncrementPointerDescription" xml:space="preserve">
+    <value>Increment the data pointer by one (to point to the next cell to the right).</value>
+  </data>
+  <data name="SyntaxDecrementPointerDescription" xml:space="preserve">
+    <value>Decrement the data pointer by one (to point to the next cell to the left).</value>
+  </data>
+  <data name="SyntaxIncrementCurrentDescription" xml:space="preserve">
+    <value>Increment the byte at the data pointer by one.</value>
+  </data>
+  <data name="SyntaxDecrementCurrentDescription" xml:space="preserve">
+    <value>Decrement the byte at the data pointer by one.</value>
+  </data>
+  <data name="SyntaxOutputDescription" xml:space="preserve">
+    <value>Output the byte at the data pointer.</value>
+  </data>
+  <data name="SyntaxInputDescription" xml:space="preserve">
+    <value>Accept one byte of input, storing its value in the byte at the data pointer.</value>
+  </data>
+  <data name="SyntaxBeginDescription" xml:space="preserve">
+    <value>If the byte at the data pointer is zero, then instead of moving the instruction pointer forward to the next command, jump it forward to the command after the matching ] command.</value>
+  </data>
+  <data name="SyntaxEndDescription" xml:space="preserve">
+    <value>If the byte at the data pointer is nonzero, then instead of moving the instruction pointer forward to the next command, jump it back to the command after the matching [ command.</value>
+  </data>
+</root>

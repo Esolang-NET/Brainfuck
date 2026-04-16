@@ -1,3 +1,3 @@
-# pack 対象ツール: 公開 API にはドキュメンテーションコメントを必須とする
+# Pack target tool: require XML documentation comments for public API.
 [*.cs]
 dotnet_diagnostic.CS1591.severity = warning
