@@ -80,7 +80,7 @@ jobs:
       run: |
         dotnet pack -o artifacts/
       
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ matrix.os == 'ubuntu-latest' }}
       with:
         name: artifacts
