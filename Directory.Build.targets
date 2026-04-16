@@ -1,6 +1,7 @@
 <Project>
   <!-- net48 is only supported on Windows; strip it on non-Windows (e.g. ubuntu CI) -->
-  <PropertyGroup Condition="'$(OS)' != 'Windows_NT' and $(TargetFrameworks.Contains('net48'))">
+  <!-- Only run in the outer build (TargetFramework == '') to avoid conflicts in inner per-TFM builds -->
+  <PropertyGroup Condition="'$(OS)' != 'Windows_NT' and '$(TargetFramework)' == '' and $(TargetFrameworks.Contains('net48'))">
     <TargetFrameworks>$([System.Text.RegularExpressions.Regex]::Replace('$(TargetFrameworks)', '(^|;)net48(;|$)', '$2').TrimStart(';'))</TargetFrameworks>
   </PropertyGroup>
 
