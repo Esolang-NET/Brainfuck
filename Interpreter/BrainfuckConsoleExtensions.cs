@@ -42,7 +42,7 @@ public static class BrainfuckInterpreterExtensions
             DefaultValueFactory = _ => null, 
             Description = "Increment the byte at the data pointer by one.",
         };
-        rootCommand.Options.Add(decrementPointer);
+        rootCommand.Options.Add(incrementCurrent);
         var decrementCurrent = new Option<string?>("--syntax-decrement-current", "-sdc") { 
             DefaultValueFactory = _ => null, 
             Description = "Decrement the byte at the data pointer by one.",

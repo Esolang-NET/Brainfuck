@@ -14,6 +14,7 @@
   <Project Path="Generator.Tests/Esolang.Brainfuck.Generator.Tests.csproj" />
   <Project Path="Generator/Esolang.Brainfuck.Generator.csproj" />
   <Project Path="Interpreter/Esolang.Brainfuck.Interpreter.csproj" />
+  <Project Path="Interpreter.Tests/Esolang.Brainfuck.Interpreter.Tests.csproj" />
   <Project Path="Parser.Tests/Esolang.Brainfuck.Parser.Tests.csproj" />
   <Project Path="Parser/Esolang.Brainfuck.Parser.csproj" />
   <Project Path="Processor.Tests/Esolang.Brainfuck.Processor.Tests.csproj" />
