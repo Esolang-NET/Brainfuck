@@ -2,6 +2,10 @@
 
 brainfuck parser.
 
+## changelog
+
+- [Repository changelog](./CHANGELOG.md)
+
 ## usage
 
 ```cs

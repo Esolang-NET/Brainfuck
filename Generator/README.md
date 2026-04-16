@@ -2,6 +2,10 @@
 
 brainfuck method generator.
 
+## changelog
+
+- [Repository changelog](./CHANGELOG.md)
+
 ## usage
 
 use `Esolang.Brainfuck.GenerateBrainfuckMethodAttribute` attribute.

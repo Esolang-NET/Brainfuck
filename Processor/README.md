@@ -2,6 +2,10 @@
 
 brainfuck processor.
 
+## changelog
+
+- [Repository changelog](./CHANGELOG.md)
+
 ## usage
 
 ```cs

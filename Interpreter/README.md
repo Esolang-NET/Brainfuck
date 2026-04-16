@@ -2,6 +2,10 @@
 
 brainfuck dotnet tool.
 
+## changelog
+
+- [Repository changelog](./CHANGELOG.md)
+
 ## install (pre-release)
 
 ```bash

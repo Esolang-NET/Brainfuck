@@ -1,5 +1,9 @@
 # Brainfuck .NET library
 
+## Changelog
+
+- [CHANGELOG](./CHANGELOG.md)
+
 ## [Brainfuck.Interpreter](./Interpreter/README.md)
 
 brainfuck command line utility dotnet-brainfuck command.
