@@ -4,10 +4,16 @@ using System.IO.Pipelines;
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
+/// <summary>
+/// Executes the <see cref="BrainfuckSequence.Input"/> instruction.
+/// </summary>
+/// <param name="Context">The context to execute against.</param>
 public sealed record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    /// <inheritdoc />
     public override bool RequiredInput => true;
 
+    /// <inheritdoc />
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         if (!TryInput(out var sequencesIndex, out var stack, cancellationToken))
@@ -19,6 +25,7 @@ public sealed record InputCommand(BrainfuckContext Context) : BrainfuckSequenceC
         };
     }
 
+    /// <inheritdoc />
     public override async ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

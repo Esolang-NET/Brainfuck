@@ -7,9 +7,11 @@ on:
     paths:
     - '**.cs'
     - '**.csproj'
+    - '**.slnx'
+    - '.github/workflows/**'
 
 env:
-  DOTNET_VERSION: '8.0.100-rc.2.23502.2' # The .NET SDK version to use
+  DOTNET_VERSION: '10.0.x' # The .NET SDK version to use
 
 jobs:
   build-and-test:
@@ -21,9 +23,9 @@ jobs:
         os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -35,13 +37,50 @@ jobs:
     
     - name: Test
       run: dotnet test --no-restore --verbosity normal
+
+    - name: Tool E2E (pack/install/run)
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        rm -rf .artifacts/tool-e2e
+        mkdir -p .artifacts/tool-e2e
+
+        dotnet pack Interpreter/Esolang.Brainfuck.Interpreter.csproj -o .artifacts/tool-e2e
+
+        nupkg_path=$(find .artifacts/tool-e2e -maxdepth 1 -type f -name 'dotnet-brainfuck.*.nupkg' | head -n 1)
+        if [ -z "$nupkg_path" ]; then
+          echo "Failed to find dotnet-brainfuck nupkg in .artifacts/tool-e2e"
+          exit 1
+        fi
+        nupkg_name=$(basename "$nupkg_path")
+        tool_version=${nupkg_name#dotnet-brainfuck.}
+        tool_version=${tool_version%.nupkg}
+        echo "Detected tool version: $tool_version"
+
+        dotnet tool install dotnet-brainfuck \
+          --tool-path .artifacts/tool-e2e/path \
+          --add-source .artifacts/tool-e2e \
+          --version "$tool_version"
+
+        ./.artifacts/tool-e2e/path/dotnet-brainfuck --help
+        output1=$(./.artifacts/tool-e2e/path/dotnet-brainfuck "++++++[>++++++++<-]++++++++++[>.+<-]")
+        echo "$output1"
+        test "$output1" = "0123456789"
+
+        output2=$(./.artifacts/tool-e2e/path/dotnet-brainfuck parse "++>--")
+        echo "$output2"
+        echo "$output2" | grep -q "IncrementCurrent"
+        echo "$output2" | grep -q "IncrementPointer"
+
+        dotnet tool uninstall dotnet-brainfuck --tool-path .artifacts/tool-e2e/path
     
     - name: Pack
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         dotnet pack -o artifacts/
       
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v7
       if: ${{ matrix.os == 'ubuntu-latest' }}
       with:
         name: artifacts

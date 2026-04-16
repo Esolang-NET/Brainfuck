@@ -1,38 +1,69 @@
 ﻿using Esolang.Brainfuck.Processor;
 using System.Buffers;
 using System.CommandLine;
-using System.CommandLine.Binding;
-using System.CommandLine.Invocation;
-using System.CommandLine.IO;
-using System.CommandLine.Parsing;
 using System.IO.Pipelines;
 using System.Text;
 
 
 namespace Esolang.Brainfuck.Interpreter;
 
+/// <summary>
+/// Extension methods that compose Brainfuck CLI commands.
+/// </summary>
 public static class BrainfuckInterpreterExtensions
 {
+    /// <summary>
+    /// Adds global options that represent Brainfuck syntax configuration.
+    /// </summary>
+    /// <param name="rootCommand">The target root command.</param>
+    /// <returns>A binder that groups the added options.</returns>
     public static BrainfuckOptionBinder AddDefaultGlobalOptions(this RootCommand rootCommand)
     {
-        var noUseDefaultValue = new Option<bool>(new[] { "--syntax-no-use-default-value", "-snd" }, () => false, "not use brainfuck option default value.");
-        rootCommand.AddGlobalOption(noUseDefaultValue);
-        var incrementPointer = new Option<string?>(new[] { "--syntax-increment-pointer", "-sip" }, () => null, "Increment the data pointer by one (to point to the next cell to the right).");
-        rootCommand.AddGlobalOption(incrementPointer);
-        var decrementPointer = new Option<string?>(new[] { "--syntax-dencrement-pointer", "-sdp" }, () => null, "Decrement the data pointer by one (to point to the next cell to the left).");
-        rootCommand.AddGlobalOption(decrementPointer);
-        var incrementCurrent = new Option<string?>(new[] { "--syntax-increment-current", "-sic" }, () => null, "Increment the byte at the data pointer by one.");
-        rootCommand.AddGlobalOption(decrementPointer);
-        var decrementCurrent = new Option<string?>(new[] { "--syntax-decrement-current", "-sdc" }, () => null, "Decrement the byte at the data pointer by one.");
-        rootCommand.AddGlobalOption(decrementCurrent);
-        var output = new Option<string?>(new[] { "--syntax-output", "-so" }, () => null, "Output the byte at the data pointer.");
-        rootCommand.AddGlobalOption(output);
-        var input = new Option<string?>(new[] { "--syntax-input", "-si" }, () => null, "Accept one byte of input, storing its value in the byte at the data pointer.");
-        rootCommand.AddGlobalOption(input);
-        var begin = new Option<string?>(new[] { "--syntax-begin", "-sb" }, () => null, "If the byte at the data pointer is zero, then instead of moving the instruction pointer forward to the next command, jump it forward to the command after the matching ] command.");
-        rootCommand.AddGlobalOption(begin);
-        var end = new Option<string?>(new[] { "--syntax-end", "-se" }, () => null, "If the byte at the data pointer is nonzero, then instead of moving the instruction pointer forward to the next command, jump it back to the command after the matching [ command.");
-        rootCommand.AddGlobalOption(end);
+        var noUseDefaultValue = new Option<bool>("--syntax-no-use-default-value", "-snd")
+        {
+            Description = "not use brainfuck option default value.",
+            DefaultValueFactory = _ => false,
+        };
+        rootCommand.Options.Add(noUseDefaultValue);
+        var incrementPointer = new Option<string?>("--syntax-increment-pointer", "-sip")
+        {
+            DefaultValueFactory = _ => null,
+            Description = "Increment the data pointer by one (to point to the next cell to the right).",
+        };
+        rootCommand.Options.Add(incrementPointer);
+        var decrementPointer = new Option<string?>("--syntax-dencrement-pointer", "-sdp")
+        {
+            DefaultValueFactory = _ => null,
+            Description = "Decrement the data pointer by one (to point to the next cell to the left).",
+        };
+        rootCommand.Options.Add(decrementPointer);
+        var incrementCurrent = new Option<string?>("--syntax-increment-current", "-sic") 
+        { 
+            DefaultValueFactory = _ => null, 
+            Description = "Increment the byte at the data pointer by one.",
+        };
+        rootCommand.Options.Add(incrementCurrent);
+        var decrementCurrent = new Option<string?>("--syntax-decrement-current", "-sdc") { 
+            DefaultValueFactory = _ => null, 
+            Description = "Decrement the byte at the data pointer by one.",
+        };
+        rootCommand.Options.Add(decrementCurrent);
+        var output = new Option<string?>("--syntax-output", "-so") 
+        {
+            DefaultValueFactory = _ => null,
+            Description = "Output the byte at the data pointer." ,
+        };
+        rootCommand.Options.Add(output);
+        var input = new Option<string?>("--syntax-input", "-si") 
+        { 
+            DefaultValueFactory = _ => null, 
+            Description = "Accept one byte of input, storing its value in the byte at the data pointer." 
+        };
+        rootCommand.Options.Add(input);
+        var begin = new Option<string?>("--syntax-begin", "-sb") { DefaultValueFactory = _ => null, Description = "If the byte at the data pointer is zero, then instead of moving the instruction pointer forward to the next command, jump it forward to the command after the matching ] command." };
+        rootCommand.Options.Add(begin);
+        var end = new Option<string?>("--syntax-end", "-se") { DefaultValueFactory = _ => null, Description = "If the byte at the data pointer is nonzero, then instead of moving the instruction pointer forward to the next command, jump it back to the command after the matching [ command." };
+        rootCommand.Options.Add(end);
         return new(
             noUseDefaultValue: noUseDefaultValue,
             incrementPointer: incrementPointer,
@@ -45,44 +76,29 @@ public static class BrainfuckInterpreterExtensions
             end: end
         );
     }
-    public static T? GetValueForHandlerParameter<T>(
-        this InvocationContext context,
-        IValueDescriptor<T> symbol
-    )
-    {
-        if (symbol is IValueSource valueSource &&
-            valueSource.TryGetValue(symbol, context.BindingContext, out var boundValue) &&
-            boundValue is T value)
-        {
-            return value;
-        }
-        else
-        {
-            return GetValueFor(context.ParseResult, symbol);
-        }
-        static T? GetValueFor(ParseResult result, IValueDescriptor<T> symbol) =>
-        symbol switch
-        {
-            Argument<T> argument => result.GetValueForArgument(argument),
-            Option<T> option => result.GetValueForOption(option),
-            _ => throw new ArgumentOutOfRangeException(nameof(symbol))
-        };
-    }
+    /// <summary>
+    /// Configures the default execution command.
+    /// </summary>
+    /// <param name="rootCommand">The target root command.</param>
+    /// <param name="option">The syntax option binder.</param>
+    /// <returns>The configured root command.</returns>
     public static RootCommand AddDefaultCommand(this RootCommand rootCommand, BrainfuckOptionBinder option)
     {
         rootCommand.Description = "run brainfuck from source code";
-        var sourceArgument = new Argument<string>("source", "brainfuck source");
-        rootCommand.AddArgument(sourceArgument);
-        rootCommand.SetHandler(async (InvocationContext context) =>
+        var sourceArgument = new Argument<string>("source")
         {
-            var source = context.ParseResult.GetValueForArgument(sourceArgument);
-            var console = context.Console;
-            var o = context.GetValueForHandlerParameter(option);
+            Description = "brainfuck source",
+        };
+        rootCommand.Arguments.Add(sourceArgument);
+        rootCommand.SetAction(async (result, cancellationToken) =>
+        {
+            var source = result.GetRequiredValue(sourceArgument);
+            var console = Console.In;
+            var o = option.GetValue(result);
             var sequence = new BrainfuckSequenceEnumerable(source, o).Select(v => v.Sequence).ToArray().AsMemory();
             var input = new Pipe();
             var output = new Pipe();
 
-            var cancellationToken = context.GetCancellationToken();
             var encoding = Encoding.UTF8;
             var runner = new BrainfuckProcessor(source: source, sourceOptions: o, output: output.Writer, input: input.Reader);
             foreach (var command in runner.StepCommands())
@@ -105,19 +121,18 @@ public static class BrainfuckInterpreterExtensions
                         var sequence2 = buffer.Slice(buffer.Start, buffer.End);
                         if (encoding.GetString(sequence2.FirstSpan) is string chars && !string.IsNullOrEmpty(chars))
                         {
-                            if (!console.IsOutputRedirected && chars == "\r") chars = Environment.NewLine;
-                            console.Write(chars);
+                            if (!Console.IsOutputRedirected && chars == "\r") chars = Environment.NewLine;
+                            result.InvocationConfiguration.Output.Write(chars);
                         }
 
                         output.Reader.AdvanceTo(buffer.End);
                     }
                 }
             }
-            context.ExitCode = 0;
-            return;
-            static async ValueTask<char> ConsoleReadAsync(IConsole console, CancellationToken cancellationToken)
+            return 0;
+            static async ValueTask<char> ConsoleReadAsync(TextReader console, CancellationToken cancellationToken)
             {
-                if (console.IsInputRedirected)
+                if (Console.IsInputRedirected)
                     return Convert.ToChar(System.Console.Read());
                 if (System.Console.KeyAvailable == false)
                     await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken);
@@ -127,26 +142,34 @@ public static class BrainfuckInterpreterExtensions
         });
         return rootCommand;
     }
+    /// <summary>
+    /// Adds a subcommand that prints parse results.
+    /// </summary>
+    /// <param name="rootCommand">The target root command.</param>
+    /// <param name="option">The syntax option binder.</param>
+    /// <returns>The configured root command.</returns>
     public static RootCommand AddParseCommand(this RootCommand rootCommand, BrainfuckOptionBinder option)
     {
         var parseCommand = new Command("parse", "parse brainfuck source code.");
 
-        var sourceArgument = new Argument<string>("source", "brainfuck source");
-        parseCommand.AddArgument(sourceArgument);
-        parseCommand.SetHandler((InvocationContext context) =>
+        var sourceArgument = new Argument<string>("source")
+        {
+            Description = "brainfuck source",
+        };
+        parseCommand.Arguments.Add(sourceArgument);
+        parseCommand.SetAction(parseResult =>
         {
 
-            var console = context.Console;
-            var o = context.GetValueForHandlerParameter(option);
-            var source = context.ParseResult.GetValueForArgument(sourceArgument);
+            var output = parseResult.InvocationConfiguration.Output;
+            var o = option.GetValue(parseResult);
+            var source = parseResult.GetRequiredValue(sourceArgument);
             foreach (var (sequence, syntaxes) in new BrainfuckSequenceEnumerable(source, o))
             {
-                console.Out.WriteLine($"{sequence}: {syntaxes}");
+                output.WriteLine($"{sequence}: {syntaxes}");
             }
-            context.ExitCode = 0;
-            return;
+            return 0;
         });
-        rootCommand.AddCommand(parseCommand);
+        rootCommand.Add(parseCommand);
         return rootCommand;
     }
 }

@@ -2,6 +2,10 @@
 
 brainfuck parser.
 
+## changelog
+
+- [Repository changelog](./CHANGELOG.md)
+
 ## usage
 
 ```cs
@@ -16,12 +20,12 @@ foreach(var (sequence, syntax) in sequences)
 }
 // output:
 // syntax:[ sequence:Begin
-// syntax:, sequnece:Input
-// syntax:+ sequnece:IncrementCurrent
-// syntax:+ sequnece:IncrementCurrent
-// syntax:+ sequnece:IncrementCurrent
-// syntax:+ sequnece:IncrementCurrent
-// syntax:+ sequnece:IncrementCurrent
+// syntax:, sequence:Input
+// syntax:+ sequence:IncrementCurrent
+// syntax:+ sequence:IncrementCurrent
+// syntax:+ sequence:IncrementCurrent
+// syntax:+ sequence:IncrementCurrent
+// syntax:+ sequence:IncrementCurrent
 // syntax:. sequence:Output
 // syntax:] sequence:End
 ```

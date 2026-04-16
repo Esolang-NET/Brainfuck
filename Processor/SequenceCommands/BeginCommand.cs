@@ -1,8 +1,13 @@
 ﻿using static Esolang.Brainfuck.BrainfuckSequence;
 namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
+/// <summary>
+/// Executes the <see cref="BrainfuckSequence.Begin"/> instruction.
+/// </summary>
+/// <param name="Context">The context to execute against.</param>
 public sealed record BeginCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    /// <inheritdoc />
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         if (!TryBegin(out var sequencesIndex))
@@ -12,6 +17,7 @@ public sealed record BeginCommand(BrainfuckContext Context) : BrainfuckSequenceC
             SequencesIndex = sequencesIndex,
         };
     }
+    /// <inheritdoc />
     public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

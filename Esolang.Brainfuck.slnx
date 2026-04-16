@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/samples/" />
+  <Folder Name="/samples/Esolang.Brainfuck.Generator/">
+    <File Path="samples/Generator/Directory.Build.targets" />
+  </Folder>
+  <Project Path="samples/Generator/Esolang.Brainfuck.Generator.UseConsole.csproj" />
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="global.json" />
+    <File Path="icon.png" />
+  </Folder>
+  <Project Path="Generator.Tests/Esolang.Brainfuck.Generator.Tests.csproj" />
+  <Project Path="Generator/Esolang.Brainfuck.Generator.csproj" />
+  <Project Path="Interpreter/Esolang.Brainfuck.Interpreter.csproj" />
+  <Project Path="Interpreter.Tests/Esolang.Brainfuck.Interpreter.Tests.csproj" />
+  <Project Path="Parser.Tests/Esolang.Brainfuck.Parser.Tests.csproj" />
+  <Project Path="Parser/Esolang.Brainfuck.Parser.csproj" />
+  <Project Path="Processor.Tests/Esolang.Brainfuck.Processor.Tests.csproj" />
+  <Project Path="Processor/Esolang.Brainfuck.Processor.csproj" />
+  <Project Path="Shared/Shared.shproj" />
+  <Project Path="TestShared/TestShared.shproj" />
+</Solution>

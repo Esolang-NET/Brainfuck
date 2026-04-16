@@ -2,6 +2,9 @@
 
 namespace Esolang.Brainfuck.Generator;
 
+/// <summary>
+/// Provides diagnostic definitions reported during source generation.
+/// </summary>
 public static class DiagnosticDescriptors
 {
     const string Category = "Brainfuck";
@@ -72,7 +75,7 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0007: required output interface in souce: required return 'string' or 'Task<string>' or 'ValueTask<string>' or parameter 'PipeWriter'
+    /// BF0007: required output interface in souce: required return <see cref="string"/> or <see cref="Task{TResult}"/> or <see cref="ValueTask{TResult}"/> or parameter <c>System.IO.Pipelines.PipeWriter</c>.
     /// </summary>
     public static readonly DiagnosticDescriptor RequiredOutputInterface = new(
         id: "BF0007",
@@ -83,7 +86,7 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0008: required input interface in souce: required parameter 'string' or 'PipeReader'
+    /// BF0008: required input interface in souce: required parameter <see cref="string"/> or <c>System.IO.Pipelines.PipeReader</c>.
     /// </summary>
     public static readonly DiagnosticDescriptor RequiredInputInterface = new(
         id: "BF0008",

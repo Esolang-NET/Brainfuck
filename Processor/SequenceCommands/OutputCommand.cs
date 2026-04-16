@@ -1,9 +1,15 @@
 ﻿namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
+/// <summary>
+/// Executes the <see cref="BrainfuckSequence.Output"/> instruction.
+/// </summary>
+/// <param name="Context">The context to execute against.</param>
 public sealed record OutputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+    /// <inheritdoc />
     public override bool RequiredOutput => true;
 
+    /// <inheritdoc />
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
     {
         var sequenceIndex = Output();
@@ -13,6 +19,7 @@ public sealed record OutputCommand(BrainfuckContext Context) : BrainfuckSequence
         };
     }
 
+    /// <inheritdoc />
     public override async ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
