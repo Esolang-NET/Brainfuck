@@ -28,7 +28,7 @@ public partial class MethodGenerator
             return null;
         if (sequences.RequiredOutput && (returnType & (ReturnType.String | ReturnType.Byte | ReturnType.Enumerable)) == 0 && string.IsNullOrEmpty(parameterOptions.VaribalePipeWriter))
         {
-            // 出力機能不足
+            // Missing required output interface.
             context.ReportDiagnostic(
                 Diagnostic.Create(
                     DiagnosticDescriptors.RequiredOutputInterface,
@@ -38,7 +38,7 @@ public partial class MethodGenerator
         }
         if (sequences.RequiredInput && string.IsNullOrEmpty(parameterOptions.VariablePipeReader) && string.IsNullOrEmpty(parameterOptions.VariableInputString))
         {
-            // 入力機能不足
+            // Missing required input interface.
             context.ReportDiagnostic(
                 Diagnostic.Create(
                     DiagnosticDescriptors.RequiredInputInterface,
@@ -160,7 +160,7 @@ public partial class MethodGenerator
                 {
                     if (!string.IsNullOrEmpty(variableCancellation))
                     {
-                        //多重宣言は不可
+                        // Duplicate declarations are not allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.DuplicateParameter,
@@ -177,7 +177,7 @@ public partial class MethodGenerator
                 {
                     if (!sequences.RequiredInput)
                     {
-                        // 入力不可なソースの場合
+                        // Input is not allowed for this source.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.InvalidParameter,
@@ -188,7 +188,7 @@ public partial class MethodGenerator
                     }
                     if (!string.IsNullOrEmpty(variablePipeReder))
                     {
-                        // pipeReader / input string とどちらかのみ可
+                        // Only one of PipeReader or input string is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.NotSupportParameterPattern,
@@ -198,7 +198,7 @@ public partial class MethodGenerator
                     }
                     if (!string.IsNullOrEmpty(variableInputString))
                     {
-                        //多重宣言は不可
+                        // Duplicate declarations are not allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.DuplicateParameter,
@@ -215,7 +215,7 @@ public partial class MethodGenerator
                 {
                     if (!sequences.RequiredInput)
                     {
-                        // 入力不可なソースの場合
+                        // Input is not allowed for this source.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.InvalidParameter,
@@ -226,7 +226,7 @@ public partial class MethodGenerator
                     }
                     if (!string.IsNullOrEmpty(variableInputString))
                     {
-                        // pipeReader / input string とどちらかのみ可
+                        // Only one of PipeReader or input string is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.NotSupportParameterPattern,
@@ -234,7 +234,7 @@ public partial class MethodGenerator
                         );
                         return null;
                     }
-                    //多重宣言は不可
+                    // Duplicate declarations are not allowed.
                     if (!string.IsNullOrEmpty(variablePipeReder))
                     {
                         context.ReportDiagnostic(
@@ -253,7 +253,7 @@ public partial class MethodGenerator
                 {
                     if (!sequences.RequiredOutput)
                     {
-                        // 出力不可なソースの場合
+                        // Output is not allowed for this source.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.InvalidParameter,
@@ -264,7 +264,7 @@ public partial class MethodGenerator
                     }
                     if ((returnType & (ReturnType.String | ReturnType.Enumerable)) > 0)
                     {
-                        // 戻り型が string | 列挙モード の場合は設定不可
+                        // Not allowed when return type uses string or enumerable mode.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
@@ -276,7 +276,7 @@ public partial class MethodGenerator
                     }
                     if (!string.IsNullOrEmpty(variablePipeWriter))
                     {
-                        //多重宣言は不可
+                        // Duplicate declarations are not allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.DuplicateParameter,
@@ -332,7 +332,7 @@ public partial class MethodGenerator
             """);
         if (sequences.RequiredOutput)
         {
-            // 文字列を返す場合はこの宣言が必要
+            // This declaration is required when returning string output.
             if (string.IsNullOrEmpty(pipeWriter)
                 && (returnType & ReturnType.String) == ReturnType.String)
             {

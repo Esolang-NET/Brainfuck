@@ -21,48 +21,48 @@ public static class BrainfuckInterpreterExtensions
     {
         var noUseDefaultValue = new Option<bool>("--syntax-no-use-default-value", "-snd")
         {
-            Description = "not use brainfuck option default value.",
+            Description = SR.Get("SyntaxNoUseDefaultValueDescription"),
             DefaultValueFactory = _ => false,
         };
         rootCommand.Options.Add(noUseDefaultValue);
         var incrementPointer = new Option<string?>("--syntax-increment-pointer", "-sip")
         {
             DefaultValueFactory = _ => null,
-            Description = "Increment the data pointer by one (to point to the next cell to the right).",
+            Description = SR.Get("SyntaxIncrementPointerDescription"),
         };
         rootCommand.Options.Add(incrementPointer);
         var decrementPointer = new Option<string?>("--syntax-dencrement-pointer", "-sdp")
         {
             DefaultValueFactory = _ => null,
-            Description = "Decrement the data pointer by one (to point to the next cell to the left).",
+            Description = SR.Get("SyntaxDecrementPointerDescription"),
         };
         rootCommand.Options.Add(decrementPointer);
         var incrementCurrent = new Option<string?>("--syntax-increment-current", "-sic") 
         { 
             DefaultValueFactory = _ => null, 
-            Description = "Increment the byte at the data pointer by one.",
+            Description = SR.Get("SyntaxIncrementCurrentDescription"),
         };
         rootCommand.Options.Add(incrementCurrent);
         var decrementCurrent = new Option<string?>("--syntax-decrement-current", "-sdc") { 
             DefaultValueFactory = _ => null, 
-            Description = "Decrement the byte at the data pointer by one.",
+            Description = SR.Get("SyntaxDecrementCurrentDescription"),
         };
         rootCommand.Options.Add(decrementCurrent);
         var output = new Option<string?>("--syntax-output", "-so") 
         {
             DefaultValueFactory = _ => null,
-            Description = "Output the byte at the data pointer." ,
+            Description = SR.Get("SyntaxOutputDescription") ,
         };
         rootCommand.Options.Add(output);
         var input = new Option<string?>("--syntax-input", "-si") 
         { 
             DefaultValueFactory = _ => null, 
-            Description = "Accept one byte of input, storing its value in the byte at the data pointer." 
+            Description = SR.Get("SyntaxInputDescription") 
         };
         rootCommand.Options.Add(input);
-        var begin = new Option<string?>("--syntax-begin", "-sb") { DefaultValueFactory = _ => null, Description = "If the byte at the data pointer is zero, then instead of moving the instruction pointer forward to the next command, jump it forward to the command after the matching ] command." };
+        var begin = new Option<string?>("--syntax-begin", "-sb") { DefaultValueFactory = _ => null, Description = SR.Get("SyntaxBeginDescription") };
         rootCommand.Options.Add(begin);
-        var end = new Option<string?>("--syntax-end", "-se") { DefaultValueFactory = _ => null, Description = "If the byte at the data pointer is nonzero, then instead of moving the instruction pointer forward to the next command, jump it back to the command after the matching [ command." };
+        var end = new Option<string?>("--syntax-end", "-se") { DefaultValueFactory = _ => null, Description = SR.Get("SyntaxEndDescription") };
         rootCommand.Options.Add(end);
         return new(
             noUseDefaultValue: noUseDefaultValue,
@@ -84,10 +84,10 @@ public static class BrainfuckInterpreterExtensions
     /// <returns>The configured root command.</returns>
     public static RootCommand AddDefaultCommand(this RootCommand rootCommand, BrainfuckOptionBinder option)
     {
-        rootCommand.Description = "run brainfuck from source code";
+        rootCommand.Description = SR.Get("RootCommandDescription");
         var sourceArgument = new Argument<string>("source")
         {
-            Description = "brainfuck source",
+            Description = SR.Get("SourceArgumentDescription"),
         };
         rootCommand.Arguments.Add(sourceArgument);
         rootCommand.SetAction(async (result, cancellationToken) =>
@@ -150,11 +150,11 @@ public static class BrainfuckInterpreterExtensions
     /// <returns>The configured root command.</returns>
     public static RootCommand AddParseCommand(this RootCommand rootCommand, BrainfuckOptionBinder option)
     {
-        var parseCommand = new Command("parse", "parse brainfuck source code.");
+        var parseCommand = new Command("parse", SR.Get("ParseCommandDescription"));
 
         var sourceArgument = new Argument<string>("source")
         {
-            Description = "brainfuck source",
+            Description = SR.Get("SourceArgumentDescription"),
         };
         parseCommand.Arguments.Add(sourceArgument);
         parseCommand.SetAction(parseResult =>

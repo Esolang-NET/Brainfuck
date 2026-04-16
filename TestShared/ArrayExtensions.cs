@@ -1,7 +1,7 @@
 ﻿namespace TestShared;
 
 /// <summary>
-/// MSTest 向けの serialize な Array wrapper
+/// Serializable array wrapper helpers for MSTest.
 /// </summary>
 internal static class ArrayExtensions
 {

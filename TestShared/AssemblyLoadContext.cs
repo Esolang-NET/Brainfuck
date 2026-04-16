@@ -23,7 +23,7 @@ internal class AssemblyLoadContext
 #if NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER
         : base(isCollectible: true)
 #endif
-#pragma warning disable IDE0021 // コンストラクターに式本体を使用する
+#pragma warning disable IDE0021 // Use expression body for constructors
     {
 #if !(NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER)
         _domain = AppDomain.CreateDomain(DOMAIN_NAME);
@@ -76,10 +76,10 @@ internal class AssemblyLoadContext
         return Assembly.Load(rowAssembly);
     }
 #endif
-#pragma warning restore IDE0021 // コンストラクターに式本体を使用する
+#pragma warning restore IDE0021 // Use expression body for constructors
 
     public void Dispose()
-#pragma warning disable IDE0022 // メソッドに式本体を使用する
+#pragma warning disable IDE0022 // Use expression body for methods
     {
 #if NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER
         Unload();
@@ -89,5 +89,5 @@ internal class AssemblyLoadContext
         _domain = null!;
 #endif
     }
-#pragma warning restore IDE0022 // メソッドに式本体を使用する
+#pragma warning restore IDE0022 // Use expression body for methods
 }

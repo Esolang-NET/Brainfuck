@@ -4,9 +4,9 @@ using System.Text;
 
 namespace TestShared;
 /// <summary>
-/// MSTest 向けの serialize な Array wrapper
+/// Serializable array wrapper for MSTest.
 /// </summary>
-/// <typeparam name="T">要素型</typeparam>
+/// <typeparam name="T">Element type.</typeparam>
 [Serializable]
 public readonly struct Array<T> : ISerializable, IEquatable<T[]>, IEquatable<Array<T>>, IReadOnlyList<T>
 {
