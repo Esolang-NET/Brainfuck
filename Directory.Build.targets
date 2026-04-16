@@ -8,7 +8,6 @@
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="18.4.0" />
     <PackageReference Update="MSTest.TestAdapter" Version="4.2.1" />
     <PackageReference Update="MSTest.TestFramework" Version="4.2.1" />
-    <PackageReference Update="System.Memory" Version="4.6.3" />
     <PackageReference Update="System.Collections.Immutable" Version="10.0.6" />
     <PackageReference Update="System.CommandLine" Version="2.0.6" />
     <PackageReference Update="System.CommandLine.Hosting" Version="2.0.6" />

@@ -29,7 +29,6 @@
 
   <ItemGroup>
     <PackageReference Include="IndexRange" />
-    <PackageReference Include="System.Memory" />
   </ItemGroup>
 
   <ItemGroup>

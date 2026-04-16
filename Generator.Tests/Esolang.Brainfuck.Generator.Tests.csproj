@@ -17,7 +17,6 @@
     <PackageReference Include="MSTest.TestFramework" />
     <PackageReference Include="coverlet.collector" />
     <PackageReference Include="System.IO.Pipelines" />
-    <PackageReference Include="System.Memory" />
     <PackageReference Include="Basic.Reference.Assemblies.Net100" />
     <PackageReference Include="Basic.Reference.Assemblies.Net472" />
     <PackageReference Include="Basic.Reference.Assemblies.Net60" />

@@ -16,7 +16,6 @@
     <PackageReference Include="MSTest.TestAdapter" />
     <PackageReference Include="MSTest.TestFramework" />
     <PackageReference Include="coverlet.collector" />
-    <PackageReference Include="System.Memory" />
   </ItemGroup>
 
   <ItemGroup>
