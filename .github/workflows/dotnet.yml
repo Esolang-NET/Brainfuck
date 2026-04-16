@@ -23,9 +23,9 @@ jobs:
         os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
@@ -80,7 +80,7 @@ jobs:
       run: |
         dotnet pack -o artifacts/
       
-    - uses: actions/upload-artifact@v1
+    - uses: actions/upload-artifact@v4
       if: ${{ matrix.os == 'ubuntu-latest' }}
       with:
         name: artifacts
