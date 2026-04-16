@@ -1,4 +1,4 @@
-# Brainfuck .NET library
+# Esolang.Brainfuck
 
 [![.NET](https://github.com/Esolang-NET/Brainfuck/actions/workflows/dotnet.yml/badge.svg)](https://github.com/Esolang-NET/Brainfuck/actions/workflows/dotnet.yml)
 
