@@ -8,7 +8,7 @@ using static Esolang.Brainfuck.BrainfuckSequence;
 namespace Esolang.Brainfuck.Generator;
 public partial class MethodGenerator
 {
-    static void Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source)
+    static EmittedMethod? Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source)
     {
         var format = SymbolDisplayFormat.FullyQualifiedFormat
             .WithMiscellaneousOptions(
@@ -18,16 +18,14 @@ public partial class MethodGenerator
         var methodSymbol = (IMethodSymbol)source.TargetSymbol;
         var methodDeclarationSyntax = (MethodDeclarationSyntax)source.TargetNode;
         if (GetSources(context, methodSymbol, methodDeclarationSyntax) is not { } sequences)
-            return;
-        var containingClassSymbol = methodSymbol.ContainingType ??
-            throw new InvalidOperationException($"IMethodSymbol.ContainingType is null");
+            return null;
         if (GetReturnType(methodSymbol.ReturnType,
             sequences,
             context,
             methodDeclarationSyntax) is not ReturnType returnType)
-            return;
+            return null;
         if (GetParameterOptions(methodSymbol, returnType, methodSymbol.ReturnType.ToString(), sequences, context, methodDeclarationSyntax) is not { } parameterOptions)
-            return;
+            return null;
         if (sequences.RequiredOutput && (returnType & (ReturnType.String | ReturnType.Byte | ReturnType.Enumerable)) == 0 && string.IsNullOrEmpty(parameterOptions.VaribalePipeWriter))
         {
             // 出力機能不足
@@ -36,7 +34,7 @@ public partial class MethodGenerator
                     DiagnosticDescriptors.RequiredOutputInterface,
                     methodDeclarationSyntax.Identifier.GetLocation())
             );
-            return;
+            return null;
         }
         if (sequences.RequiredInput && string.IsNullOrEmpty(parameterOptions.VariablePipeReader) && string.IsNullOrEmpty(parameterOptions.VariableInputString))
         {
@@ -46,7 +44,7 @@ public partial class MethodGenerator
                     DiagnosticDescriptors.RequiredInputInterface,
                     methodDeclarationSyntax.Identifier.GetLocation())
             );
-            return;
+            return null;
         }
 
         var (openingDefinitionCode, codeForClosingDefinition) = Utils.GenerateOpeningClosingTypeDefinitionCode(methodSymbol);
@@ -81,17 +79,7 @@ public partial class MethodGenerator
             {{codeForClosingDefinition}}
 
             """;
-        if (writeOption.UseListAsMemory)
-        {
-            generatedSourceCode += $$"""
-            file class ListDummy<T> { internal T[] Items = default!; }
-            """;
-        }
-
-        var classPart = containingClassSymbol?.ToDisplayString(format) ?? "__global__";
-        var returnTypePart = methodSymbol.ReturnType.ToDisplayString(format);
-        var generatingSourceFileName = Utils.SanitizeForFileName($"{classPart}.{methodSymbol.Name}.{returnTypePart}.g.cs");
-        context.AddSource(generatingSourceFileName, generatedSourceCode);
+        return new EmittedMethod(generatedSourceCode, writeOption.UseListAsMemory);
 
         static ReturnType? GetReturnType(
             ITypeSymbol returnType,

@@ -11,6 +11,7 @@ namespace Esolang.Brainfuck.Generator.Tests;
 public class MethodGeneratorTests
 {
     public TestContext TestContext { get; set; } = default!;
+    CancellationToken CancellationToken => TestContext.CancellationToken;
     Compilation baseCompilation = default!;
 
     [TestInitialize]
@@ -297,8 +298,8 @@ partial class TestClass
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
-        Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
-        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        Assert.HasCount(3, outputCompilation.SyntaxTrees);
+        AssertDiagnostics(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
     }
     static IEnumerable<object?[]> DiagnoticsTestData
     {
@@ -479,5 +480,65 @@ partial class TestClass
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+    }
+
+    [TestMethod]
+    public void GeneratedFileNameTest()
+    {
+        var source = $$"""
+        using Esolang.Brainfuck;
+        namespace TestProject;
+        #nullable enable
+        partial class TestClass
+        {
+            [GenerateBrainfuckMethod("0.")]
+            public static partial string? SampleMethod1();
+
+            [GenerateBrainfuckMethod("0.")]
+            public static partial string? SampleMethod2();
+        }
+        """;
+
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        AssertDiagnostics(diagnostics, outputCompilation);
+        Assert.HasCount(3, outputCompilation.SyntaxTrees);
+        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+
+        var generatedTrees = outputCompilation.SyntaxTrees
+            .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
+            .ToArray();
+        Assert.HasCount(1, generatedTrees);
+
+        var generatedSource = generatedTrees[0].ToString();
+        StringAssert.Contains(generatedSource, "SampleMethod1()");
+        StringAssert.Contains(generatedSource, "SampleMethod2()");
+    }
+
+    [TestMethod]
+    public void GeneratedFile_SharedHelperDeclaredOnceTest()
+    {
+        var source = $$"""
+        using Esolang.Brainfuck;
+        namespace TestProject;
+        #nullable enable
+        partial class TestClass
+        {
+            [GenerateBrainfuckMethod("0.")]
+            public static partial string? SampleMethod1();
+
+            [GenerateBrainfuckMethod("0.")]
+            public static partial string? SampleMethod2();
+        }
+        """;
+
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        AssertDiagnostics(diagnostics, outputCompilation);
+        Assert.HasCount(3, outputCompilation.SyntaxTrees);
+        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+
+        var generatedTree = outputCompilation.SyntaxTrees
+            .Single(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal));
+        var generatedSource = generatedTree.ToString();
+        Assert.AreEqual(1, generatedSource.Split(new[] { "file class ListDummy<T>" }, StringSplitOptions.None).Length - 1);
     }
 }
