@@ -1,9 +1,6 @@
 <Solution>
   <Folder Name="/samples/" />
-  <Folder Name="/samples/Esolang.Brainfuck.Generator/">
-    <File Path="samples/Generator/Directory.Build.targets" />
-  </Folder>
-  <Project Path="samples/Generator/Esolang.Brainfuck.Generator.UseConsole.csproj" />
+  <Project Path="samples/Generator.UseConsole/Esolang.Brainfuck.Generator.UseConsole.csproj" />
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path="Directory.Build.props" />
