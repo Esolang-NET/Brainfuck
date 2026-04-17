@@ -237,8 +237,8 @@ partial class TestClass
                 options: "#nullable disable");
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_6",
-                "System.Threading.Tasks.ValueTask<string>",
-                options: "#nullable disable");
+                "System.Threading.Tasks.ValueTask<string?>",
+                options: "#nullable enable");
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_7",
                 "System.Collections.Generic.IEnumerable<byte>");
@@ -327,7 +327,7 @@ partial class TestClass
                 "string input, System.Threading.CancellationToken cancellationToken = default"
                 );
             static object?[] ReturnTypeAndParameterPatternsTest(string source, string returnType, string parameters = "", string options = "")
-                => new object?[] { source, returnType, parameters, options };
+                => [source, returnType, parameters, options];
         }
     }
     [TestMethod]
