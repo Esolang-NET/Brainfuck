@@ -185,10 +185,14 @@ dotnet run --project samples/Generator.UseConsole/Esolang.Brainfuck.Generator.Us
 Current sample methods in `samples/Generator.UseConsole/Esolang.Brainfuck.Generator.UseConsole.cs` include:
 
 - `Task<string?>` return pattern.
+- `ValueTask<string?>` return pattern.
+- `string?` return pattern.
+- `IEnumerable<byte>` / `IAsyncEnumerable<byte>` return pattern.
 - `string` input pattern.
 - `PipeReader` input pattern.
+- `TextReader` input pattern.
 - `PipeWriter` output pattern.
-- `TextReader` / `TextWriter` pattern.
+- `TextWriter` output pattern.
 - Custom Brainfuck token mapping pattern.
 
 Example output:
@@ -196,8 +200,14 @@ Example output:
 ```text
 SampleMethod1: 0123456789
 SampleMethod2: Hello, world!
+SampleMethod6: 0123456789
+SampleMethod7: 0123456789
+SampleMethod8: 0123456789
+SampleMethod9: 0123456789
 SampleMethod3: A
+SampleMethod10: B
 SampleMethod4: Z
+SampleMethod11: 0123456789
 SampleMethod5: 0123456789
 ```
 
