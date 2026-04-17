@@ -1,4 +1,4 @@
-# dotnet-brainfuck
+# dotnet-brainfuck (Esolang.Brainfuck.Interpreter)
 
 Brainfuck .NET tool.
 

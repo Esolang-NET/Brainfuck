@@ -1,4 +1,4 @@
-# Brainfuck .NET library
+# Esolang.Brainfuck
 
 [![.NET](https://github.com/Esolang-NET/Brainfuck/actions/workflows/dotnet.yml/badge.svg)](https://github.com/Esolang-NET/Brainfuck/actions/workflows/dotnet.yml)
 
@@ -22,6 +22,16 @@ partial class BrainfuckSample
 ```
 
 As far as we know, this is the first Brainfuck source generator for .NET.
+
+## Generator Guide
+
+For detailed Generator signatures and patterns (`string`, `PipeReader`, `PipeWriter`, async returns), see:
+
+- [Generator README](./Generator/README.md)
+
+For runnable examples including `PipeReader` input and `PipeWriter` output patterns, see:
+
+- [UseConsole sample](./samples/Generator.UseConsole/Esolang.Brainfuck.Generator.UseConsole.cs)
 
 ## Install
 

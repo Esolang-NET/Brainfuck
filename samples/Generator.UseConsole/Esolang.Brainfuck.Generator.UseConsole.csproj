@@ -14,4 +14,9 @@
     <PackageReference Include="System.IO.Pipelines" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- use Esolang.Brainfuck.Generator analyzer project -->
+    <ProjectReference Include="..\..\Generator\Esolang.Brainfuck.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
 </Project>

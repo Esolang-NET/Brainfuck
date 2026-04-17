@@ -1,7 +1,0 @@
-<Project>
-  <ItemGroup>
-    <!-- use Esolang.Brainfuck.Generator Analyzer Project -->
-    <ProjectReference Include="..\..\Generator\Esolang.Brainfuck.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-  </ItemGroup>
-  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.targets', '$(MSBuildThisFileDirectory)..'))" />
-</Project>
