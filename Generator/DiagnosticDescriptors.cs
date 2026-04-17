@@ -53,12 +53,12 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0005: not support parameter pattern: The parameter of the method 'System.IO.Pipelines.PipeReader' and 'string' not support pattern.
+    /// BF0005: not support parameter pattern: Input parameters use an unsupported combination.
     /// </summary>
     public static readonly DiagnosticDescriptor NotSupportParameterPattern = new(
         id: "BF0005",
         title: "not support parameter pattern",
-        messageFormat: "The parameter of the method 'System.IO.Pipelines.PipeReader' and 'string' not support pattern",
+        messageFormat: "input parameters use an unsupported combination (allowed: one of 'string', 'PipeReader', or 'TextReader')",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -75,23 +75,23 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0007: required output interface in souce: required return <see cref="string"/>, <see cref="Task{TResult}"/>, <see cref="ValueTask{TResult}"/>, byte sequence, or parameter <c>System.IO.Pipelines.PipeWriter</c>.
+    /// BF0007: required output interface in souce: required return <see cref="string"/>, <see cref="Task{TResult}"/>, <see cref="ValueTask{TResult}"/>, byte sequence, or parameter <c>System.IO.Pipelines.PipeWriter</c>/<c>System.IO.TextWriter</c>.
     /// </summary>
     public static readonly DiagnosticDescriptor RequiredOutputInterface = new(
         id: "BF0007",
         title: "required output interface in souce",
-        messageFormat: "required return 'string', 'Task<string>', 'ValueTask<string>', 'IEnumerable<byte>', 'IAsyncEnumerable<byte>' or parameter 'PipeWriter'",
+        messageFormat: "required return 'string', 'Task<string>', 'ValueTask<string>', 'IEnumerable<byte>', 'IAsyncEnumerable<byte>' or parameter 'PipeWriter'/'TextWriter'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0008: required input interface in souce: required parameter <see cref="string"/> or <c>System.IO.Pipelines.PipeReader</c>.
+    /// BF0008: required input interface in souce: required parameter <see cref="string"/>, <c>System.IO.Pipelines.PipeReader</c>, or <c>System.IO.TextReader</c>.
     /// </summary>
     public static readonly DiagnosticDescriptor RequiredInputInterface = new(
         id: "BF0008",
         title: "required input interface in souce",
-        messageFormat: "required parameter 'string' or 'PipeReader'",
+        messageFormat: "required parameter 'string', 'PipeReader', or 'TextReader'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);

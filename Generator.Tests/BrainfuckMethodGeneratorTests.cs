@@ -264,6 +264,15 @@ partial class TestClass
                 "1_C",
                 "void",
                 "System.IO.Pipelines.PipeReader input");
+            // BF0009 (Hidden): input param present but source has no input command
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_D",
+                "void",
+                "System.IO.TextReader input");
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_E",
+                "void",
+                "System.IO.TextWriter output");
             yield return ReturnTypeAndParameterPatternsTest(
                 "2_1_1+.",
                 "string",
@@ -307,6 +316,11 @@ partial class TestClass
                 "System.IO.Pipelines.PipeWriter output, System.Threading.CancellationToken cancellationToken = default"
                 );
             yield return ReturnTypeAndParameterPatternsTest(
+                "4_3+.",
+                "System.Threading.Tasks.Task",
+                "System.IO.TextWriter output, System.Threading.CancellationToken cancellationToken = default"
+                );
+            yield return ReturnTypeAndParameterPatternsTest(
                 "5_1+,",
                 "void",
                 "System.IO.Pipelines.PipeReader input, System.Threading.CancellationToken cancellationToken = default"
@@ -325,6 +339,11 @@ partial class TestClass
                 "5_4+,",
                 "System.Threading.Tasks.Task",
                 "string input, System.Threading.CancellationToken cancellationToken = default"
+                );
+            yield return ReturnTypeAndParameterPatternsTest(
+                "5_5+,",
+                "System.Threading.Tasks.Task",
+                "System.IO.TextReader input, System.Threading.CancellationToken cancellationToken = default"
                 );
             static object?[] ReturnTypeAndParameterPatternsTest(string source, string returnType, string parameters = "", string options = "")
                 => [source, returnType, parameters, options];
@@ -366,6 +385,8 @@ partial class TestClass
             yield return DiagnoticsTest("BF0009", "3_2", "void", "string input");
             // BF0009: unused input parameter PipeReader (source no input)
             yield return DiagnoticsTest("BF0009", "3_3", "void", "System.IO.Pipelines.PipeReader input");
+            // BF0009: unused input parameter TextReader (source no input)
+            yield return DiagnoticsTest("BF0009", "3_4", "void", "System.IO.TextReader input");
             // BF0004: duplicate parameter CancellationToken
             yield return DiagnoticsTest("BF0004", "4_1.", "string", "System.Threading.CancellationToken token1, System.Threading.CancellationToken token2");
             // BF0004: duplicate parameter string
@@ -374,10 +395,20 @@ partial class TestClass
             yield return DiagnoticsTest("BF0004", "4_3,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.Pipelines.PipeReader input2");
             // BF0004: duplicate parameter System.IO.Pipelines.PipeWriter
             yield return DiagnoticsTest("BF0004", "4_4.", "void", "System.IO.Pipelines.PipeWriter output1, System.IO.Pipelines.PipeWriter output2");
+            // BF0004: duplicate parameter System.IO.TextReader
+            yield return DiagnoticsTest("BF0004", "4_5,", "void", "System.IO.TextReader input1, System.IO.TextReader input2");
+            // BF0004: duplicate parameter System.IO.TextWriter
+            yield return DiagnoticsTest("BF0004", "4_6.", "void", "System.IO.TextWriter output1, System.IO.TextWriter output2");
             // BF0005: duplicate parameter System.IO.Pipelines.PipeReader and string
             yield return DiagnoticsTest("BF0005", "5_1,", "void", "System.IO.Pipelines.PipeReader input1, string input2");
             // BF0005: duplicate parameter string and System.IO.Pipelines.PipeReader
             yield return DiagnoticsTest("BF0005", "5_2,", "void", "string input1, System.IO.Pipelines.PipeReader input2");
+            // BF0005: duplicate parameter TextReader and string
+            yield return DiagnoticsTest("BF0005", "5_3,", "void", "System.IO.TextReader input1, string input2");
+            // BF0005: duplicate parameter string and TextReader
+            yield return DiagnoticsTest("BF0005", "5_4,", "void", "string input1, System.IO.TextReader input2");
+            // BF0005: duplicate parameter PipeReader and TextReader
+            yield return DiagnoticsTest("BF0005", "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
             // BF0006: duplicate return string and parameter System.IO.Pipelines.PipeWriter
             yield return DiagnoticsTest("BF0006", "6_1.", "string", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
@@ -386,9 +417,19 @@ partial class TestClass
             yield return DiagnoticsTest("BF0006", "6_3.", "System.Threading.Tasks.ValueTask<string>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
             yield return DiagnoticsTest("BF0006", "6_4.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
+            // BF0006: duplicate return string and parameter System.IO.TextWriter
+            yield return DiagnoticsTest("BF0006", "6_6.", "string", "System.IO.TextWriter output");
+            // BF0006: duplicate return Task<string> and parameter System.IO.TextWriter
+            yield return DiagnoticsTest("BF0006", "6_7.", "System.Threading.Tasks.Task<string>", "System.IO.TextWriter output");
+            // BF0006: duplicate return ValueTask<string> and parameter System.IO.TextWriter
+            yield return DiagnoticsTest("BF0006", "6_8.", "System.Threading.Tasks.ValueTask<string>", "System.IO.TextWriter output");
+            // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.TextWriter
+            yield return DiagnoticsTest("BF0006", "6_9.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.TextWriter output");
 #if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER  //netframework not support IAsyncEnumerable<>
             // BF0006: duplicate return IAsyncEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
             yield return DiagnoticsTest("BF0006", "6_5.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
+            // BF0006: duplicate return IAsyncEnumerable<byte> and parameter System.IO.TextWriter
+            yield return DiagnoticsTest("BF0006", "6_A.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.TextWriter output");
 #endif
             // BF0007: no outuput
             yield return DiagnoticsTest("BF0007", "7_1.", "void");
@@ -410,6 +451,8 @@ partial class TestClass
             yield return DiagnoticsTest("BF0008", "8_6,", "System.Threading.Tasks.ValueTask<string>", options: "#nullable disable");
             // BF0008: no input
             yield return DiagnoticsTest("BF0008", "8_7,", "void", "System.IO.Pipelines.PipeWriter output");
+            // BF0008: no input
+            yield return DiagnoticsTest("BF0008", "8_8,", "void", "System.IO.TextWriter output");
             static object?[] DiagnoticsTest(string expected, string source, string returnType, string parameters = "", string options = "")
                 => [expected, source, returnType, parameters, options];
         }

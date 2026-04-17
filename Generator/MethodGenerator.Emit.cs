@@ -27,7 +27,10 @@ public partial class MethodGenerator
             return null;
         if (GetParameterOptions(methodSymbol, returnType, methodSymbol.ReturnType.ToString(), sequences, context, methodDeclarationSyntax) is not { } parameterOptions)
             return null;
-        if (sequences.RequiredOutput && (returnType & (ReturnType.String | ReturnType.Byte | ReturnType.Enumerable)) == 0 && string.IsNullOrEmpty(parameterOptions.VaribalePipeWriter))
+        if (sequences.RequiredOutput
+            && (returnType & (ReturnType.String | ReturnType.Byte | ReturnType.Enumerable)) == 0
+            && string.IsNullOrEmpty(parameterOptions.VaribalePipeWriter)
+            && string.IsNullOrEmpty(parameterOptions.VariableTextWriter))
         {
             // Missing required output interface.
             context.ReportDiagnostic(
@@ -37,7 +40,10 @@ public partial class MethodGenerator
             );
             return null;
         }
-        if (sequences.RequiredInput && string.IsNullOrEmpty(parameterOptions.VariablePipeReader) && string.IsNullOrEmpty(parameterOptions.VariableInputString))
+        if (sequences.RequiredInput
+            && string.IsNullOrEmpty(parameterOptions.VariablePipeReader)
+            && string.IsNullOrEmpty(parameterOptions.VariableInputString)
+            && string.IsNullOrEmpty(parameterOptions.VariableTextReader))
         {
             // Missing required input interface.
             context.ReportDiagnostic(
@@ -56,7 +62,9 @@ public partial class MethodGenerator
             VariableStackIndex: STACK_INDEX,
             VariableCancellationToken: parameterOptions.VariableCancellation,
             VariablePipeWriter: parameterOptions.VaribalePipeWriter,
+            VariableTextWriter: parameterOptions.VariableTextWriter,
             VariablePipeReader: parameterOptions.VariablePipeReader,
+            VariableTextReader: parameterOptions.VariableTextReader,
             VariableInputString: parameterOptions.VariableInputString,
             ReturnType: returnType
         );
@@ -148,9 +156,13 @@ public partial class MethodGenerator
             const string STRING_TYPE = "string";
             const string PIPE_WRITER_TYPE = "global::System.IO.Pipelines.PipeWriter";
             const string PIPE_READER_TYPE = "global::System.IO.Pipelines.PipeReader";
+            const string TEXT_WRITER_TYPE = "global::System.IO.TextWriter";
+            const string TEXT_READER_TYPE = "global::System.IO.TextReader";
             var variableCancellation = string.Empty;
             var variablePipeWriter = string.Empty;
             var variablePipeReder = string.Empty;
+            var variableTextWriter = string.Empty;
+            var variableTextReader = string.Empty;
             var variableInputString = string.Empty;
             List<string>? builder = null;
             foreach (var param in methodSymbol.Parameters)
@@ -186,9 +198,9 @@ public partial class MethodGenerator
                                 typeName)
                         );
                     }
-                    if (!string.IsNullOrEmpty(variablePipeReder))
+                    if (!string.IsNullOrEmpty(variablePipeReder) || !string.IsNullOrEmpty(variableTextReader))
                     {
-                        // Only one of PipeReader or input string is allowed.
+                        // Only one input source is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.NotSupportParameterPattern,
@@ -223,9 +235,9 @@ public partial class MethodGenerator
                                 typeName)
                         );
                     }
-                    if (!string.IsNullOrEmpty(variableInputString))
+                    if (!string.IsNullOrEmpty(variableInputString) || !string.IsNullOrEmpty(variableTextReader))
                     {
-                        // Only one of PipeReader or input string is allowed.
+                        // Only one input source is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 DiagnosticDescriptors.NotSupportParameterPattern,
@@ -246,6 +258,43 @@ public partial class MethodGenerator
                     }
                     variablePipeReder = param.Name;
                     (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeReder}");
+                    continue;
+                }
+                if (typeName is TEXT_READER_TYPE)
+                {
+                    if (!sequences.RequiredInput)
+                    {
+                        // Input parameter present but source does not use input - report as Hidden.
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.UnusedInputParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                    }
+                    if (!string.IsNullOrEmpty(variableInputString) || !string.IsNullOrEmpty(variablePipeReder))
+                    {
+                        // Only one input source is allowed.
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.NotSupportParameterPattern,
+                                methodDeclarationSyntax.GetLocation())
+                        );
+                        return null;
+                    }
+                    if (!string.IsNullOrEmpty(variableTextReader))
+                    {
+                        // Duplicate declarations are not allowed.
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.DuplicateParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
+                    variableTextReader = param.Name;
+                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextReader}");
                     continue;
                 }
                 if (typeName is PIPE_WRITER_TYPE)
@@ -273,8 +322,48 @@ public partial class MethodGenerator
                         );
                         return null;
                     }
+                    if (!string.IsNullOrEmpty(variableTextWriter))
+                    {
+                        // Only one output sink is allowed.
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.DuplicateParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
                     variablePipeWriter = param.Name;
                     (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeWriter}");
+                    continue;
+                }
+                if (typeName is TEXT_WRITER_TYPE)
+                {
+                    if ((returnType & (ReturnType.String | ReturnType.Enumerable)) > 0)
+                    {
+                        // Not allowed when return type uses string or enumerable mode.
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName,
+                                returnTypeName)
+                        );
+                        return null;
+                    }
+                    if (!string.IsNullOrEmpty(variableTextWriter) || !string.IsNullOrEmpty(variablePipeWriter))
+                    {
+                        // Only one output sink is allowed.
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                DiagnosticDescriptors.DuplicateParameter,
+                                methodDeclarationSyntax.GetLocation(),
+                                typeName)
+                        );
+                        return null;
+                    }
+                    variableTextWriter = param.Name;
+                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextWriter}");
                     continue;
                 }
 
@@ -290,7 +379,9 @@ public partial class MethodGenerator
                 ParameterSymbols: builder?.Count > 0 ? string.Join(", ", builder) : string.Empty,
                 VariableCancellation: variableCancellation,
                 VaribalePipeWriter: variablePipeWriter,
+                VariableTextWriter: variableTextWriter,
                 VariablePipeReader: variablePipeReder,
+                VariableTextReader: variableTextReader,
                 VariableInputString: variableInputString
             );
         }
@@ -313,6 +404,8 @@ public partial class MethodGenerator
         var returnType = options.ReturnType;
         var pipeWriter = options.VariablePipeWriter;
         var pipeReader = options.VariablePipeReader;
+        var textWriter = options.VariableTextWriter;
+        var textReader = options.VariableTextReader;
         var isAsync = options.ReturnType.IsAsync();
         builder.AppendLine($$"""
             {{space}}var {{options.VariableStack}} = new global::System.Collections.Generic.List<byte>(){ 0 };
@@ -320,6 +413,19 @@ public partial class MethodGenerator
             """);
         if (sequences.RequiredOutput)
         {
+            if (string.IsNullOrEmpty(pipeWriter) && !string.IsNullOrEmpty(textWriter))
+            {
+                pipeWriter = "pipeWriter";
+                options = options with
+                {
+                    VariablePipeWriter = pipeWriter,
+                };
+
+                builder.AppendLine($"""
+                    {space}var outputPipe = new global::System.IO.Pipelines.Pipe();
+                    {space}var {pipeWriter} = outputPipe.Writer;
+                    """);
+            }
             // This declaration is required when returning string output.
             if (string.IsNullOrEmpty(pipeWriter)
                 && (returnType & ReturnType.String) == ReturnType.String)
@@ -369,6 +475,50 @@ public partial class MethodGenerator
                     builder.AppendLine($$"""
                         {{space}}{{SPACE}}{{SPACE}}global::System.MemoryExtensions.AsSpan(bytes).CopyTo(inputPipe.Writer.GetSpan(bytes.Length));
                         {{space}}{{SPACE}}inputPipe.Writer.Advance(bytes.Length);
+                        {{space}}{{SPACE}}inputPipe.Writer.Complete();
+                        """);
+                }
+                builder.AppendLine($$"""
+                    {{space}}{{SPACE}}{{pipeReader}} = inputPipe.Reader;
+                    {{space}}}
+                    """);
+            }
+            else if (!string.IsNullOrEmpty(textReader) && string.IsNullOrEmpty(pipeReader))
+            {
+                pipeReader = "pipeReader";
+                options = options with
+                {
+                    VariablePipeReader = pipeReader,
+                };
+                builder.AppendLine($$"""
+                    {{space}}global::System.IO.Pipelines.PipeReader {{pipeReader}};
+                    {{space}}{
+                    {{space}}{{SPACE}}var inputPipe = new global::System.IO.Pipelines.Pipe();
+                    """);
+                if (isAsync)
+                {
+                    builder.AppendLine($$"""
+                        {{space}}{{SPACE}}var text = await {{textReader}}.ReadToEndAsync();
+                        {{space}}{{SPACE}}var bytes = string.IsNullOrEmpty(text) ? global::System.Array.Empty<byte>() : global::System.Text.Encoding.UTF8.GetBytes(text);
+                        {{space}}{{SPACE}}if (bytes.Length > 0)
+                        {{space}}{{SPACE}}{{SPACE}}await inputPipe.Writer.WriteAsync(bytes);
+                        {{space}}{{SPACE}}await inputPipe.Writer.CompleteAsync();
+                        """);
+                    options = options with
+                    {
+                        UseAwait = true,
+                    };
+                }
+                else
+                {
+                    builder.AppendLine($$"""
+                        {{space}}{{SPACE}}var text = {{textReader}}.ReadToEnd();
+                        {{space}}{{SPACE}}var bytes = string.IsNullOrEmpty(text) ? global::System.Array.Empty<byte>() : global::System.Text.Encoding.UTF8.GetBytes(text);
+                        {{space}}{{SPACE}}if (bytes.Length > 0)
+                        {{space}}{{SPACE}}{
+                        {{space}}{{SPACE}}{{SPACE}}global::System.MemoryExtensions.AsSpan(bytes).CopyTo(inputPipe.Writer.GetSpan(bytes.Length));
+                        {{space}}{{SPACE}}{{SPACE}}inputPipe.Writer.Advance(bytes.Length);
+                        {{space}}{{SPACE}}}
                         {{space}}{{SPACE}}inputPipe.Writer.Complete();
                         """);
                 }
@@ -461,6 +611,51 @@ public partial class MethodGenerator
             builder.AppendLine($$"""
                 {{space}}yield break;
                 """);
+        }
+        if (sequences.RequiredOutput && !string.IsNullOrEmpty(textWriter))
+        {
+            if (isAsync)
+            {
+                builder.AppendLine($$"""
+                    {{space}}{
+                    {{space}}{{SPACE}}await {{pipeWriter}}.CompleteAsync();
+                    {{space}}{{SPACE}}if (await outputPipe.Reader.ReadAsync() is { } outputResult)
+                    {{space}}{{SPACE}}{
+                    {{space}}{{SPACE}}{{SPACE}}var resultArray = global::System.Buffers.BuffersExtensions.ToArray(outputResult.Buffer);
+                    {{space}}{{SPACE}}{{SPACE}}outputPipe.Reader.AdvanceTo(outputResult.Buffer.End);
+                    {{space}}{{SPACE}}{{SPACE}}if (resultArray.Length > 0)
+                    {{space}}{{SPACE}}{{SPACE}}{
+                    {{space}}{{SPACE}}{{SPACE}}{{SPACE}}var outputText = global::System.Text.Encoding.UTF8.GetString(resultArray).TrimEnd('\0');
+                    {{space}}{{SPACE}}{{SPACE}}{{SPACE}}if (outputText.Length > 0)
+                    {{space}}{{SPACE}}{{SPACE}}{{SPACE}}{{SPACE}}await {{textWriter}}.WriteAsync(outputText);
+                    {{space}}{{SPACE}}{{SPACE}}}
+                    {{space}}{{SPACE}}}
+                    {{space}}}
+                    """);
+                options = options with
+                {
+                    UseAwait = true,
+                };
+            }
+            else
+            {
+                builder.AppendLine($$"""
+                    {{space}}{
+                    {{space}}{{SPACE}}{{pipeWriter}}.Complete();
+                    {{space}}{{SPACE}}if (outputPipe.Reader.TryRead(out var outputResult))
+                    {{space}}{{SPACE}}{
+                    {{space}}{{SPACE}}{{SPACE}}var resultArray = global::System.Buffers.BuffersExtensions.ToArray(outputResult.Buffer);
+                    {{space}}{{SPACE}}{{SPACE}}outputPipe.Reader.AdvanceTo(outputResult.Buffer.End);
+                    {{space}}{{SPACE}}{{SPACE}}if (resultArray.Length > 0)
+                    {{space}}{{SPACE}}{{SPACE}}{
+                    {{space}}{{SPACE}}{{SPACE}}{{SPACE}}var outputText = global::System.Text.Encoding.UTF8.GetString(resultArray).TrimEnd('\0');
+                    {{space}}{{SPACE}}{{SPACE}}{{SPACE}}if (outputText.Length > 0)
+                    {{space}}{{SPACE}}{{SPACE}}{{SPACE}}{{SPACE}}{{textWriter}}.Write(outputText);
+                    {{space}}{{SPACE}}{{SPACE}}}
+                    {{space}}{{SPACE}}}
+                    {{space}}}
+                    """);
+            }
         }
         if (options.UseListAsMemory)
         {
@@ -691,7 +886,9 @@ internal record InternalOptions(
     string VariableStack,
     string VariableStackIndex,
     string VariablePipeWriter,
+    string VariableTextWriter,
     string VariablePipeReader,
+    string VariableTextReader,
     string VariableCancellationToken,
     string VariableInputString,
     ReturnType ReturnType,
@@ -702,7 +899,9 @@ internal record ParameterOptions(
     string ParameterSymbols,
     string VariableCancellation,
     string VaribalePipeWriter,
+    string VariableTextWriter,
     string VariablePipeReader,
+    string VariableTextReader,
     string VariableInputString
 );
 internal enum ParameterType
