@@ -55,6 +55,7 @@
 			"**/Thumbs.db": true,
 			"Generator": true,
 			"Generator.Tests": true,
+			"Generator.UseConsole": true,
 			"Interpreter": true,
 			"Parser": true,
 			"Parser.Tests": true,
