@@ -1,6 +1,7 @@
 ﻿using static Esolang.Brainfuck.BrainfuckSequence;
 
 namespace Esolang.Brainfuck.Generator.Sequences;
+
 internal static class SequenceExtensions
 {
     /// <summary>

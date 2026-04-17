@@ -46,6 +46,8 @@ partial class BrainfuckSample
 | Return type | `void`, `string`, `System.Threading.Tasks.Task<string>`, `System.Threading.Tasks.ValueTask<string>`, `System.Collections.Generic.IEnumerable<byte>`, `System.Collections.Generic.IAsyncEnumerable<byte>` |
 | Other parameter | `System.Threading.CancellationToken` |
 
+Output-related signatures are allowed even when the source does not contain `.`. In that case string returns produce `null`, byte-sequence returns complete without values, and `PipeWriter` parameters are simply left unused.
+
 ## Signature Patterns
 
 The generator accepts one input source, one output destination, and an optional `CancellationToken`.
@@ -148,7 +150,9 @@ Use when the consumer needs raw bytes and controls text decoding.
 - Do not combine `string` input and `PipeReader` input in the same method.
 - Use at most one of each special parameter kind (`string`, `PipeReader`, `PipeWriter`, `CancellationToken`).
 - If source contains `,`, one input parameter (`string` or `PipeReader`) is required.
-- If source contains `.`, either a string return type or a `PipeWriter` parameter is required.
+- If source contains `.`, one output target is required: `string`, `Task<string>`, `ValueTask<string>`, `IEnumerable<byte>`, `IAsyncEnumerable<byte>`, or `PipeWriter`.
+- If source does not contain `.`, output-related signatures are still valid and produce no output.
+- If source does not contain `,`, input parameters are still accepted but produce BF0009 (Hidden).
 
 ## UseConsole Sample Run
 
@@ -188,3 +192,4 @@ SampleMethod5: 0123456789
 | BF0006 | Unsupported parameter and return type combination. |
 | BF0007 | Source requires output interface (`string`/`Task<string>`/`ValueTask<string>` return or `PipeWriter` parameter). |
 | BF0008 | Source requires input interface (`string` or `PipeReader` parameter). |
+| BF0009 | Input parameter provided but source does not contain the input command (Hidden). |

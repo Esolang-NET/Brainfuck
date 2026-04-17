@@ -6,6 +6,7 @@ using System.Text;
 using static Esolang.Brainfuck.BrainfuckSequence;
 
 namespace Esolang.Brainfuck.Generator;
+
 public partial class MethodGenerator
 {
     static EmittedMethod? Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source)
@@ -116,13 +117,13 @@ public partial class MethodGenerator
                 (VOID_VALUETASK_TYPE, _, _, _) => ReturnType.Void | ReturnType.ValueTask,
                 #endregion
                 #region return string
-                (STRING_TYPE, NullableAnnotation.None or NullableAnnotation.Annotated, _, true) => ReturnType.String,
-                (STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, true) => ReturnType.String | ReturnType.Task,
-                (STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, true) => ReturnType.String | ReturnType.ValueTask,
+                (STRING_TYPE, NullableAnnotation.None or NullableAnnotation.Annotated, _, _) => ReturnType.String,
+                (STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnType.String | ReturnType.Task,
+                (STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnType.String | ReturnType.ValueTask,
                 #endregion
                 #region return enumerable byte
-                (BYTE_ENUMERABLE_TYPE, _, _, true) => ReturnType.Byte | ReturnType.Enumerable,
-                (BYTE_ASYNCENUMERABLE_TYPE, _, _, true) => ReturnType.Byte | ReturnType.Enumerable | ReturnType.ValueTask,
+                (BYTE_ENUMERABLE_TYPE, _, _, _) => ReturnType.Byte | ReturnType.Enumerable,
+                (BYTE_ASYNCENUMERABLE_TYPE, _, _, _) => ReturnType.Byte | ReturnType.Enumerable | ReturnType.ValueTask,
                 #endregion
                 _ => (ReturnType?)null,
             } is { } type)
@@ -177,14 +178,13 @@ public partial class MethodGenerator
                 {
                     if (!sequences.RequiredInput)
                     {
-                        // Input is not allowed for this source.
+                        // Input parameter present but source does not use input — report as Hidden.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.InvalidParameter,
+                                DiagnosticDescriptors.UnusedInputParameter,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
-                        return null;
                     }
                     if (!string.IsNullOrEmpty(variablePipeReder))
                     {
@@ -215,14 +215,13 @@ public partial class MethodGenerator
                 {
                     if (!sequences.RequiredInput)
                     {
-                        // Input is not allowed for this source.
+                        // Input parameter present but source does not use input — report as Hidden.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.InvalidParameter,
+                                DiagnosticDescriptors.UnusedInputParameter,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
-                        return null;
                     }
                     if (!string.IsNullOrEmpty(variableInputString))
                     {
@@ -251,17 +250,6 @@ public partial class MethodGenerator
                 }
                 if (typeName is PIPE_WRITER_TYPE)
                 {
-                    if (!sequences.RequiredOutput)
-                    {
-                        // Output is not allowed for this source.
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                DiagnosticDescriptors.InvalidParameter,
-                                methodDeclarationSyntax.GetLocation(),
-                                typeName)
-                        );
-                        return null;
-                    }
                     if ((returnType & (ReturnType.String | ReturnType.Enumerable)) > 0)
                     {
                         // Not allowed when return type uses string or enumerable mode.
@@ -400,7 +388,23 @@ public partial class MethodGenerator
         {
             if ((options.ReturnType & ReturnType.String) > 0)
             {
-                if (isAsync)
+                if (!sequences.RequiredOutput)
+                {
+                    if ((options.ReturnType & ReturnType.ValueTask) > 0)
+                    {
+                        // ValueTask<string?> is a struct; cannot return null directly. Use default value.
+                        builder.AppendLine($$"""
+                            {{space}}return new global::System.Threading.Tasks.ValueTask<string?>(default(string?));
+                            """);
+                    }
+                    else
+                    {
+                        builder.AppendLine($$"""
+                            {{space}}return null!;
+                            """);
+                    }
+                }
+                else if (isAsync)
                 {
                     builder.AppendLine($$"""
                         {{space}}{
@@ -441,6 +445,22 @@ public partial class MethodGenerator
                         """);
                 }
             }
+        }
+        else if (!sequences.RequiredOutput)
+        {
+            if (options.ReturnType == (ReturnType.Byte | ReturnType.Enumerable | ReturnType.ValueTask))
+            {
+                options = options with
+                {
+                    UseAwait = true,
+                };
+                builder.AppendLine($$"""
+                    {{space}}await global::System.Threading.Tasks.Task.CompletedTask;
+                    """);
+            }
+            builder.AppendLine($$"""
+                {{space}}yield break;
+                """);
         }
         if (options.UseListAsMemory)
         {

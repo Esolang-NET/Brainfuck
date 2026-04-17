@@ -75,12 +75,12 @@ public static class DiagnosticDescriptors
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0007: required output interface in souce: required return <see cref="string"/> or <see cref="Task{TResult}"/> or <see cref="ValueTask{TResult}"/> or parameter <c>System.IO.Pipelines.PipeWriter</c>.
+    /// BF0007: required output interface in souce: required return <see cref="string"/>, <see cref="Task{TResult}"/>, <see cref="ValueTask{TResult}"/>, byte sequence, or parameter <c>System.IO.Pipelines.PipeWriter</c>.
     /// </summary>
     public static readonly DiagnosticDescriptor RequiredOutputInterface = new(
         id: "BF0007",
         title: "required output interface in souce",
-        messageFormat: "required return 'string' or 'Task<string>' or 'ValueTask<string>' or parameter 'PipeWriter'",
+        messageFormat: "required return 'string', 'Task<string>', 'ValueTask<string>', 'IEnumerable<byte>', 'IAsyncEnumerable<byte>' or parameter 'PipeWriter'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -94,5 +94,16 @@ public static class DiagnosticDescriptors
         messageFormat: "required parameter 'string' or 'PipeReader'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    /// <summary>
+    /// BF0009: unused input parameter: The parameter '{0}' is provided but the source does not contain the input command.
+    /// </summary>
+    public static readonly DiagnosticDescriptor UnusedInputParameter = new(
+        id: "BF0009",
+        title: "unused input parameter",
+        messageFormat: "The parameter '{0}' is provided but the source does not contain the input command",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Hidden,
         isEnabledByDefault: true);
 }

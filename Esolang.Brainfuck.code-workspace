@@ -1,0 +1,72 @@
+{
+	"folders": [
+		{
+			"path": ".",
+			"name": "root"
+		},
+		{
+			"path": "Generator",
+			"name": "Esolang.Brainfuck.Generator"
+		},
+		{
+			"path": "Generator.Tests",
+			"name": "Esolang.Brainfuck.Generator.Tests"
+		},
+		{
+			"name": "samples/Esolang.Brainfuck.Generator.UseConsole",
+			"path": "samples/Generator.UseConsole"
+		},
+		{
+			"path": "Interpreter",
+			"name": "Esolang.Brainfuck.Interpreter"
+		},
+		{
+			"path": "Parser",
+			"name": "Esolang.Brainfuck.Parser"
+		},
+		{
+			"path": "Parser.Tests",
+			"name": "Esolang.Brainfuck.Parser.Tests"
+		},
+		{
+			"path": "Processor",
+			"name": "Esolang.Brainfuck.Processor"
+		},
+		{
+			"path": "Processor.Tests",
+			"name": "Esolang.Brainfuck.Processor.Tests"
+		},
+		{
+			"path": "Shared"
+		},
+		{
+			"path": "TestShared"
+		},
+		{
+			"path": "samples"
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			"**/.DS_Store": true,
+			"**/Thumbs.db": true,
+			"Generator": true,
+			"Generator.Tests": true,
+			"Interpreter": true,
+			"Parser": true,
+			"Parser.Tests": true,
+			"Processor": true,
+			"Processor.Tests": true,
+			"Shared": true,
+			"TestShared": true,
+		}
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-dotnettools.csdevkit"
+		]
+	}
+}
