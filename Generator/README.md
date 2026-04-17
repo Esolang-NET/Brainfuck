@@ -136,7 +136,7 @@ using System.IO;
 partial class BrainfuckSample
 {
     [GenerateBrainfuckMethod(",.")]
-    public static partial Task ReadOneCharFromTextReaderAsync(TextReader input, CancellationToken cancellationToken = default);
+    public static partial Task<string?> ReadOneCharFromTextReaderAsync(TextReader input, CancellationToken cancellationToken = default);
 
     [GenerateBrainfuckMethod("++++++[>++++++++<-]++++++++++[>.+<-]")]
     public static partial Task WriteDigitsToTextWriterAsync(TextWriter output, CancellationToken cancellationToken = default);
