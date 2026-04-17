@@ -54,6 +54,8 @@
     </ItemGroup>
   </Target>
 
-  <Import Project="..\Shared\Shared.projitems" Label="Shared" />
+  <ItemGroup>
+    <Compile Include="..\Shared\*.cs" />
+  </ItemGroup>
 
 </Project>

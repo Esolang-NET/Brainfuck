@@ -16,6 +16,4 @@
   <Project Path="Parser/Esolang.Brainfuck.Parser.csproj" />
   <Project Path="Processor.Tests/Esolang.Brainfuck.Processor.Tests.csproj" />
   <Project Path="Processor/Esolang.Brainfuck.Processor.csproj" />
-  <Project Path="Shared/Shared.shproj" />
-  <Project Path="TestShared/TestShared.shproj" />
 </Solution>
