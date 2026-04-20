@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Esolang.Brainfuck.Generator;
 
@@ -85,9 +86,17 @@ public partial class MethodGenerator : IIncrementalGenerator
         );
 
         var generatedTargets = source.Collect();
+        var languageVersion = context.ParseOptionsProvider
+            .Select(static (parseOptions, token) =>
+                parseOptions is CSharpParseOptions csharpParseOptions
+                    ? csharpParseOptions.LanguageVersion
+                    : LanguageVersion.Default);
+        var generationInputs = generatedTargets.Combine(languageVersion);
 
-        context.RegisterSourceOutput(generatedTargets, static (context, sources) =>
+        context.RegisterSourceOutput(generationInputs, static (context, input) =>
         {
+            var sources = input.Left;
+            var currentLanguageVersion = input.Right;
             if (sources.IsDefaultOrEmpty)
                 return;
 
@@ -95,7 +104,7 @@ public partial class MethodGenerator : IIncrementalGenerator
             var useListAsMemory = false;
             foreach (var source in sources)
             {
-                var generated = Emit(context, source);
+                var generated = Emit(context, source, currentLanguageVersion);
                 if (generated is not { } method)
                     continue;
 

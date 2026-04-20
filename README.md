@@ -25,11 +25,11 @@ As far as we know, this is the first Brainfuck source generator for .NET.
 
 ## Generator Guide
 
-For detailed Generator signatures and patterns (`string`, `PipeReader`, `PipeWriter`, async returns), see:
+For detailed Generator signatures and patterns (`string`, `TextReader`, `PipeReader`, `TextWriter`, `PipeWriter`, sync/async returns, byte-sequence returns), see:
 
 - [Generator README](./Generator/README.md)
 
-For runnable examples including `PipeReader` input and `PipeWriter` output patterns, see:
+For runnable examples including `TextReader`/`PipeReader` input, `TextWriter`/`PipeWriter` output, and multiple return patterns, see:
 
 - [UseConsole sample](./samples/Generator.UseConsole/Esolang.Brainfuck.Generator.UseConsole.cs)
 
@@ -72,3 +72,7 @@ dotnet tool install -g dotnet-brainfuck --prerelease
 ## Changelog
 
 - [CHANGELOG](./CHANGELOG.md)
+
+## See also
+
+- [The official Brainfuck page](https://www.muppetlabs.com/~breadbox/bf/)

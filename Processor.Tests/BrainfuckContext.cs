@@ -8,6 +8,7 @@ using System.Text;
 using OriginalBrainfuckContext = Esolang.Brainfuck.Processor.BrainfuckContext;
 
 namespace TestShared;
+
 [Serializable]
 [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
 public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence> Sequences, ImmutableArray<byte> Stack, int SequencesIndex = default, int StackIndex = default, PipeReader? Input = default, PipeWriter? Output = default) : ISerializable, IEquatable<BrainfuckContext>

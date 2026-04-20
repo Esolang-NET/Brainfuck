@@ -27,6 +27,9 @@
     <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage" />
   </ItemGroup>
 
-  <Import Project="..\TestShared\TestShared.projitems" Label="Shared" />
+  <ItemGroup>
+    <Compile Include="..\TestShared\*.cs" />
+    <Compile Include="..\Shared\*.cs" />
+  </ItemGroup>
 
 </Project>

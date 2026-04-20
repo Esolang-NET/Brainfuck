@@ -6,6 +6,7 @@ using System.Reflection;
 #endif
 
 namespace TestShared;
+
 internal class AssemblyLoadContext
     :
 

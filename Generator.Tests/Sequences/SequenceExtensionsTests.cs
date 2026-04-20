@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Esolang.Brainfuck.Generator.Sequences.Tests;
+
 [TestClass]
 public class SequenceExtensionsTests
 {

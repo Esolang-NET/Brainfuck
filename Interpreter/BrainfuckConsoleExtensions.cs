@@ -37,27 +37,28 @@ public static class BrainfuckInterpreterExtensions
             Description = SR.Get("SyntaxDecrementPointerDescription"),
         };
         rootCommand.Options.Add(decrementPointer);
-        var incrementCurrent = new Option<string?>("--syntax-increment-current", "-sic") 
-        { 
-            DefaultValueFactory = _ => null, 
+        var incrementCurrent = new Option<string?>("--syntax-increment-current", "-sic")
+        {
+            DefaultValueFactory = _ => null,
             Description = SR.Get("SyntaxIncrementCurrentDescription"),
         };
         rootCommand.Options.Add(incrementCurrent);
-        var decrementCurrent = new Option<string?>("--syntax-decrement-current", "-sdc") { 
-            DefaultValueFactory = _ => null, 
+        var decrementCurrent = new Option<string?>("--syntax-decrement-current", "-sdc")
+        {
+            DefaultValueFactory = _ => null,
             Description = SR.Get("SyntaxDecrementCurrentDescription"),
         };
         rootCommand.Options.Add(decrementCurrent);
-        var output = new Option<string?>("--syntax-output", "-so") 
+        var output = new Option<string?>("--syntax-output", "-so")
         {
             DefaultValueFactory = _ => null,
-            Description = SR.Get("SyntaxOutputDescription") ,
+            Description = SR.Get("SyntaxOutputDescription"),
         };
         rootCommand.Options.Add(output);
-        var input = new Option<string?>("--syntax-input", "-si") 
-        { 
-            DefaultValueFactory = _ => null, 
-            Description = SR.Get("SyntaxInputDescription") 
+        var input = new Option<string?>("--syntax-input", "-si")
+        {
+            DefaultValueFactory = _ => null,
+            Description = SR.Get("SyntaxInputDescription")
         };
         rootCommand.Options.Add(input);
         var begin = new Option<string?>("--syntax-begin", "-sb") { DefaultValueFactory = _ => null, Description = SR.Get("SyntaxBeginDescription") };

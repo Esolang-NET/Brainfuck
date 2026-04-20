@@ -54,3 +54,7 @@ foreach (var (sequence, syntax) in sequences)
 - Parsing is tokenization-focused. Non-command text is returned as `BrainfuckSequence.Comment`.
 - `BrainfuckSequenceEnumerable.RequiredInput` and `RequiredOutput` indicate whether the source contains input/output commands.
 - Custom syntaxes are matched by longest token first.
+
+## See also
+
+- [The official Brainfuck page](https://www.muppetlabs.com/~breadbox/bf/)
