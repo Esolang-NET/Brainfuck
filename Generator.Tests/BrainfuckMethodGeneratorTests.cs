@@ -59,7 +59,7 @@ public class MethodGeneratorTests
         baseCompilation = compilation;
     }
 
-    GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics, CancellationToken cancellationToken = default, LanguageVersion languageVersion = LanguageVersion.CSharp11)
+    GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics, LanguageVersion languageVersion = LanguageVersion.CSharp11, CancellationToken cancellationToken = default)
     {
         string[] preprocessorSymbols = [
 #if NETCOREAPP3_0_OR_GREATER
@@ -186,7 +186,7 @@ partial class TestClass
     public static partial string? SampleMethod();
 }
 """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
@@ -363,7 +363,7 @@ partial class TestClass
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         // BF0009 (Hidden) may be reported for unused input parameters; allow Hidden.
         AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
@@ -471,7 +471,7 @@ partial class TestClass
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         Assert.IsFalse(diagnostics.IsEmpty);
         try
         {
@@ -530,7 +530,7 @@ partial class TestClass
             source,
             out var outputCompilation,
             out var diagnostics,
-            languageVersion: LanguageVersion.CSharp7_3);
+            LanguageVersion.CSharp7_3);
 
         Assert.IsTrue(diagnostics.Any(v => v.Id == "BF0010" && v.Severity == DiagnosticSeverity.Warning));
         Assert.IsFalse(diagnostics.Any(v => v.Severity == DiagnosticSeverity.Error));
@@ -564,7 +564,7 @@ partial class TestClass
             public static partial void SampleMethod();
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
@@ -582,7 +582,7 @@ partial class TestClass
             public static partial string SampleMethod(string input);
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
@@ -602,7 +602,7 @@ partial class TestClass
             public static partial string SampleMethod(string input);
         }
         """";
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
@@ -625,7 +625,7 @@ partial class TestClass
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
@@ -684,7 +684,7 @@ partial class TestClass
             public static partial void UnusedPipeReaderInputMethod(PipeReader input);
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         // BF0009 (Hidden) may be reported; allow Hidden diagnostics.
         AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
         // OutputSource(outputCompilation.SyntaxTrees);  // Temporarily disabled for debugging
@@ -761,7 +761,7 @@ partial class TestClass
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         AssertDiagnostics(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
         AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
