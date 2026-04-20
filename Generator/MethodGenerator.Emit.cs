@@ -9,7 +9,7 @@ namespace Esolang.Brainfuck.Generator;
 
 public partial class MethodGenerator
 {
-    static EmittedMethod? Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source)
+    static EmittedMethod? Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source, LanguageVersion currentLanguageVersion)
     {
         var format = SymbolDisplayFormat.FullyQualifiedFormat
             .WithMiscellaneousOptions(
@@ -18,6 +18,15 @@ public partial class MethodGenerator
                 SymbolDisplayMiscellaneousOptions.IncludeNullableReferenceTypeModifier);
         var methodSymbol = (IMethodSymbol)source.TargetSymbol;
         var methodDeclarationSyntax = (MethodDeclarationSyntax)source.TargetNode;
+        if (!IsLanguageVersionAtLeastCSharp8(currentLanguageVersion))
+        {
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    DiagnosticDescriptors.LanguageVersionTooLow,
+                    methodDeclarationSyntax.Identifier.GetLocation(),
+                    methodSymbol.Name,
+                    currentLanguageVersion.ToString()));
+        }
         if (GetSources(context, methodSymbol, methodDeclarationSyntax) is not { } sequences)
             return null;
         if (GetReturnType(methodSymbol.ReturnType,
@@ -389,6 +398,17 @@ public partial class MethodGenerator
     const string SPACE = "    ";
     const string STACK_NAME = "stack";
     const string STACK_INDEX = "stackIndex";
+
+    static bool IsLanguageVersionAtLeastCSharp8(LanguageVersion languageVersion)
+        => languageVersion switch
+        {
+            LanguageVersion.Default => true,
+            LanguageVersion.Latest => true,
+            LanguageVersion.Preview => true,
+            LanguageVersion.LatestMajor => true,
+            _ => languageVersion >= LanguageVersion.CSharp8,
+        };
+
     /// <summary>
     /// Generates the method body code for the specified Brainfuck sequence.
     /// </summary>

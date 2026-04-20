@@ -8,102 +8,114 @@ namespace Esolang.Brainfuck.Generator;
 public static class DiagnosticDescriptors
 {
     const string Category = "Brainfuck";
+
     /// <summary>
-    /// BF0001: Invalid vlue parameter: The value parameter of the attribute on the method '{0}' must not be null.
+    /// BF0001: Invalid value parameter.
     /// </summary>
     public static readonly DiagnosticDescriptor InvalidValueParameter = new(
         id: "BF0001",
-        title: "Invalid vlue parameter",
+        title: "Invalid value parameter",
         messageFormat: "The value parameter of the attribute on the method '{0}' must not be null",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0002: not support return type: The method is support return type {0} is not support.
+    /// BF0002: Unsupported return type.
     /// </summary>
     public static readonly DiagnosticDescriptor InvalidReturnType = new(
         id: "BF0002",
-        title: "not support return type",
-        messageFormat: "The method is support return type {0} is not support",
+        title: "Unsupported return type",
+        messageFormat: "The method return type '{0}' is not supported for Brainfuck code generation",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0003: not support parameter type: The parameter of the method '{0}' not support type.
+    /// BF0003: Unsupported parameter type.
     /// </summary>
     public static readonly DiagnosticDescriptor InvalidParameter = new(
         id: "BF0003",
-        title: "not support parameter type",
-        messageFormat: "The parameter of the method '{0}' not support type",
+        title: "Unsupported parameter type",
+        messageFormat: "The parameter '{0}' of the method has an unsupported type",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0004: not support duplicate parameter type: The parameter of the method '{0}' duplicate type.
+    /// BF0004: Duplicate parameter type.
     /// </summary>
     public static readonly DiagnosticDescriptor DuplicateParameter = new(
         id: "BF0004",
-        title: "not support duplicate parameter type",
-        messageFormat: "The parameter of the method '{0}' duplicate type",
+        title: "Duplicate parameter type",
+        messageFormat: "The parameter type '{0}' is duplicated and not supported",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0005: not support parameter pattern: Input parameters use an unsupported combination.
+    /// BF0005: Unsupported parameter pattern.
     /// </summary>
     public static readonly DiagnosticDescriptor NotSupportParameterPattern = new(
         id: "BF0005",
-        title: "not support parameter pattern",
-        messageFormat: "input parameters use an unsupported combination (allowed: one of 'string', 'PipeReader', or 'TextReader')",
+        title: "Unsupported parameter pattern",
+        messageFormat: "Input parameters use an unsupported combination (allowed: one of 'string', 'PipeReader', or 'TextReader')",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0006: not support parameter and return type pattern: The parameter of the method parameter '{0}' and return type '{1}' not support pattern
+    /// BF0006: Return type and output parameter conflict.
     /// </summary>
     public static readonly DiagnosticDescriptor NotSupportParameterAndReturnTypePattern = new(
         id: "BF0006",
-        title: "not support parameter and return type pattern",
-        messageFormat: "The parameter of the method parameter '{0}' and return type '{1}' not support pattern",
+        title: "Return type and output parameter conflict",
+        messageFormat: "The output parameter type '{0}' cannot be combined with return type '{1}'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0007: required output interface in souce: required return <see cref="string"/>, <see cref="Task{TResult}"/>, <see cref="ValueTask{TResult}"/>, byte sequence, or parameter <c>System.IO.Pipelines.PipeWriter</c>/<c>System.IO.TextWriter</c>.
+    /// BF0007: Required output interface not provided.
     /// </summary>
     public static readonly DiagnosticDescriptor RequiredOutputInterface = new(
         id: "BF0007",
-        title: "required output interface in souce",
-        messageFormat: "required return 'string', 'Task<string>', 'ValueTask<string>', 'IEnumerable<byte>', 'IAsyncEnumerable<byte>' or parameter 'PipeWriter'/'TextWriter'",
+        title: "Required output interface not provided",
+        messageFormat: "The Brainfuck source requires output, but the method does not provide an output mechanism",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0008: required input interface in souce: required parameter <see cref="string"/>, <c>System.IO.Pipelines.PipeReader</c>, or <c>System.IO.TextReader</c>.
+    /// BF0008: Required input interface not provided.
     /// </summary>
     public static readonly DiagnosticDescriptor RequiredInputInterface = new(
         id: "BF0008",
-        title: "required input interface in souce",
-        messageFormat: "required parameter 'string', 'PipeReader', or 'TextReader'",
+        title: "Required input interface not provided",
+        messageFormat: "The Brainfuck source requires input, but the method does not provide an input mechanism",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     /// <summary>
-    /// BF0009: unused input parameter: The parameter '{0}' is provided but the source does not contain the input command.
+    /// BF0009: Input interface provided but not required.
     /// </summary>
     public static readonly DiagnosticDescriptor UnusedInputParameter = new(
         id: "BF0009",
-        title: "unused input parameter",
-        messageFormat: "The parameter '{0}' is provided but the source does not contain the input command",
+        title: "Input interface provided but not required",
+        messageFormat: "The Brainfuck source does not require input, but the method provides input parameter '{0}'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Hidden,
+        isEnabledByDefault: true);
+
+    /// <summary>
+    /// BF0010: Language version may be too low for generated code.
+    /// </summary>
+    public static readonly DiagnosticDescriptor LanguageVersionTooLow = new(
+        id: "BF0010",
+        title: "Language version may be too low",
+        messageFormat: "The method '{0}' may require C# 8.0 or later, but the current language version is '{1}'",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
 }

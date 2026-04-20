@@ -59,7 +59,7 @@ public class MethodGeneratorTests
         baseCompilation = compilation;
     }
 
-    GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics, CancellationToken cancellationToken = default)
+    GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics, CancellationToken cancellationToken = default, LanguageVersion languageVersion = LanguageVersion.CSharp11)
     {
         string[] preprocessorSymbols = [
 #if NETCOREAPP3_0_OR_GREATER
@@ -88,7 +88,7 @@ public class MethodGeneratorTests
 #endif
         ];
 
-        var parseOptions = new CSharpParseOptions(LanguageVersion.CSharp11, preprocessorSymbols: preprocessorSymbols);
+        var parseOptions = new CSharpParseOptions(languageVersion, preprocessorSymbols: preprocessorSymbols);
 
         GeneratorDriver driver;
         {
@@ -513,6 +513,30 @@ partial class TestClass
         }
         Assert.HasCount(2, outputCompilation.SyntaxTrees);
     }
+
+    [TestMethod]
+    public void DiagnoticsTest_LanguageVersionTooLow_ReportsWarning()
+    {
+        var source = """
+        using Esolang.Brainfuck;
+        namespace TestProject;
+        partial class TestClass
+        {
+            [GenerateBrainfuckMethod("+")]
+            public static partial void SampleMethod();
+        }
+        """;
+        RunGeneratorsAndUpdateCompilation(
+            source,
+            out var outputCompilation,
+            out var diagnostics,
+            languageVersion: LanguageVersion.CSharp7_3);
+
+        Assert.IsTrue(diagnostics.Any(v => v.Id == "BF0010" && v.Severity == DiagnosticSeverity.Warning));
+        Assert.IsFalse(diagnostics.Any(v => v.Severity == DiagnosticSeverity.Error));
+        Assert.HasCount(3, outputCompilation.SyntaxTrees);
+    }
+
     static IEnumerable<object?[]> ModuleSignatureTestData
     {
         get
