@@ -6,6 +6,22 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Added
+- Generator: Added C# language version check (BF0010) to warn if below C# 8.0.
+- Generator: Added support for `System.IO.TextReader`/`TextWriter` input/output patterns.
+- Generator: Added BF0009 (Hidden) diagnostic for unused input parameters.
+- Generator: Significantly expanded samples and test coverage (UseConsole sample, more comprehensive tests).
+- CI: Added release workflow to GitHub Actions.
+
+### Changed
+- Generator: Diagnostic messages and ID structure unified with the Piet project.
+- Generator: Clarified signature validation and combination rules.
+- All READMEs: Rewritten in English, reorganized, and expanded with install, usage, and API details.
+
+### Fixed
+- Generator: Improved accuracy of duplicate/invalid input/output parameter detection.
+- Tests: Target frameworks now auto-switch for Windows/non-Windows environments.
+
 ## [0.1.1-preview-1] - 2026-04-16
 
 ### Added
