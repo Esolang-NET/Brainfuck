@@ -36,6 +36,7 @@
   <PropertyGroup>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests')) == 'True'">
