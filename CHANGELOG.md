@@ -4,7 +4,7 @@ All notable changes to this repository are documented in this file.
 
 The format is based on Keep a Changelog.
 
-## [Unreleased]
+## [1.0.0] - 2026-05-06
 
 ### Added
 - Generator: Added C# language version check (BF0010) to warn if below C# 8.0.
@@ -17,6 +17,7 @@ The format is based on Keep a Changelog.
 - Generator: Diagnostic messages and ID structure unified with the Piet project.
 - Generator: Clarified signature validation and combination rules.
 - All READMEs: Rewritten in English, reorganized, and expanded with install, usage, and API details.
+- Build/package baseline: unified repository `Version` to `1.0.0`, unified `LangVersion` to C# 14, and set `AssemblyVersion` / `FileVersion` to `1.0.0.102`.
 
 ### Fixed
 - Generator: Improved accuracy of duplicate/invalid input/output parameter detection.
