@@ -1,3 +1,11 @@
+## Release 1.0.0
+
+### New Rules
+
+Rule ID | Category | Severity | Notes
+--------|----------|----------|--------------------
+BF0010 | Brainfuck | Warning | Language version may be too low
+
 ## Release 0.1.0.0
 
 ### New Rules
