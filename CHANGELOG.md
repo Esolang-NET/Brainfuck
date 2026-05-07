@@ -8,13 +8,14 @@ The format is based on Keep a Changelog.
 
 ### Added
 
-- `Esolang.Brainfuck.Processor/Processor/IProcessor.cs`: provisional execution abstractions under `Esolang.Processor` (`IProcessor<TProgram>`, `ITextProcessor<TProgram>`, `IPipeProcessor<TProgram>`) for later extraction to a shared package.
+- `Esolang.Processor.Abstractions` (`Esolang.Processor` namespace): shared execution abstractions package (`IProcessor<TProgram>`, `ITextProcessor<TProgram>`, `IPipeProcessor<TProgram>`).
 - `Esolang.Brainfuck.Processor/BrainfuckProcessor.IProcessor.cs`: partial implementation for unified execution interfaces, including text/pipe adapter paths.
 - `Esolang.Brainfuck.Processor.Tests`: coverage for `RunToEnd(...)` text I/O and `RunToEndAsync(...)` pipe I/O.
 
 ### Changed
 
 - `Esolang.Brainfuck.Processor`: `BrainfuckProcessor` now implements `ITextProcessor<ReadOnlyMemory<BrainfuckSequence>>` and `IPipeProcessor<ReadOnlyMemory<BrainfuckSequence>>`.
+- `Esolang.Brainfuck.Processor`: switched abstraction source from local `Processor/IProcessor.cs` to `Esolang.Processor.Abstractions` package.
 - `Esolang.Brainfuck.Generator`: added return-type support for `int`, `Task<int>`, and `ValueTask<int>` (returns `0` on normal completion).
 
 ## [1.0.0] - 2026-05-06
