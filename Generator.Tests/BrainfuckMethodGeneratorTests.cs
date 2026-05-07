@@ -223,11 +223,20 @@ partial class TestClass
                 "1_1+",
                 "void");
             yield return ReturnTypeAndParameterPatternsTest(
+                "1_1_1+",
+                "int");
+            yield return ReturnTypeAndParameterPatternsTest(
                 "1_2",
                 "System.Threading.Tasks.Task");
             yield return ReturnTypeAndParameterPatternsTest(
+                "1_2_1",
+                "System.Threading.Tasks.Task<int>");
+            yield return ReturnTypeAndParameterPatternsTest(
                 "1_3",
                 "System.Threading.Tasks.ValueTask");
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_3_1",
+                "System.Threading.Tasks.ValueTask<int>");
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_4",
                 "string",
@@ -376,8 +385,8 @@ partial class TestClass
         {
             // BF0001: GenerateBrainfuckMethod required first parameter.
             yield return DiagnoticsTest("BF0001", "", "void");
-            // BF0002: not support return type int.
-            yield return DiagnoticsTest("BF0002", "2_1", "int");
+            // BF0002: not support return type double.
+            yield return DiagnoticsTest("BF0002", "2_1", "double");
             // BF0002: not support return type string (in #nullable enable)
             yield return DiagnoticsTest("BF0002", "2_2.", "string", options: "#nullable enable"); ;
             // BF0003: not support parameter type int.
@@ -771,5 +780,46 @@ partial class TestClass
             .Single(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal));
         var generatedSource = generatedTree.ToString();
         Assert.AreEqual(1, generatedSource.Split(new[] { "file class ListDummy<T>" }, StringSplitOptions.None).Length - 1);
+    }
+
+    [TestMethod]
+    public async Task ExitCodeReturnPatterns_ReturnZero()
+    {
+        var source = $$"""
+        using Esolang.Brainfuck;
+        using System.Threading.Tasks;
+        namespace TestProject;
+        partial class TestClass
+        {
+            [GenerateBrainfuckMethod("+")]
+            public static partial int IntMethod();
+
+            [GenerateBrainfuckMethod("+")]
+            public static partial Task<int> TaskIntMethod();
+
+            [GenerateBrainfuckMethod("+")]
+            public static partial ValueTask<int> ValueTaskIntMethod();
+        }
+        """;
+
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
+        AssertDiagnostics(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
+
+        var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
+        using (context)
+        {
+            var testClassType = assembly.GetType("TestProject.TestClass");
+            Assert.IsNotNull(testClassType);
+
+            var intResult = (int?)testClassType!.GetMethod("IntMethod")!.Invoke(null, Array.Empty<object?>());
+            Assert.AreEqual(0, intResult);
+
+            var taskInt = (Task<int>)testClassType.GetMethod("TaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
+            Assert.AreEqual(0, await taskInt);
+
+            var valueTaskInt = (ValueTask<int>)testClassType.GetMethod("ValueTaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
+            Assert.AreEqual(0, await valueTaskInt);
+        }
     }
 }

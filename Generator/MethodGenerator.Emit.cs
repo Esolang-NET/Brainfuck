@@ -107,10 +107,16 @@ public partial class MethodGenerator
             #region return void 
             // void
             const string VOID_TYPE = "void";
+            // int
+            const string INT_TYPE = "int";
             // Task
             const string VOID_TASK_TYPE = "global::System.Threading.Tasks.Task";
+            // Task<int>
+            const string INT_TASK_TYPE = "global::System.Threading.Tasks.Task<int>";
             // ValueTask
             const string VOID_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask";
+            // ValueTask<int>
+            const string INT_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask<int>";
             #endregion
             #region return string
             // string
@@ -130,8 +136,11 @@ public partial class MethodGenerator
             {
                 #region return void 
                 (VOID_TYPE, _, _, _) => ReturnType.Void,
+                (INT_TYPE, _, _, _) => ReturnType.Int,
                 (VOID_TASK_TYPE, _, _, _) => ReturnType.Void | ReturnType.Task,
+                (INT_TASK_TYPE, _, _, _) => ReturnType.Int | ReturnType.Task,
                 (VOID_VALUETASK_TYPE, _, _, _) => ReturnType.Void | ReturnType.ValueTask,
+                (INT_VALUETASK_TYPE, _, _, _) => ReturnType.Int | ReturnType.ValueTask,
                 #endregion
                 #region return string
                 (STRING_TYPE, NullableAnnotation.None or NullableAnnotation.Annotated, _, _) => ReturnType.String,
@@ -686,15 +695,36 @@ public partial class MethodGenerator
                 {{space}}}
                 """);
         }
+        if ((options.ReturnType & ReturnType.Int) > 0 && options.UseAwait)
+        {
+            if ((options.ReturnType & ReturnType.Task) > 0 || (options.ReturnType & ReturnType.ValueTask) > 0)
+            {
+                builder.AppendLine($$"""
+                    {{space}}return 0;
+                    """);
+            }
+        }
         if (!options.UseAwait)
         {
             if (options.ReturnType is (ReturnType.Void | ReturnType.Task))
                 builder.AppendLine($$"""
                     {{space}}return global::System.Threading.Tasks.Task.CompletedTask;
                     """);
+            else if (options.ReturnType is ReturnType.Int)
+                builder.AppendLine($$"""
+                    {{space}}return 0;
+                    """);
+            else if (options.ReturnType is (ReturnType.Int | ReturnType.Task))
+                builder.AppendLine($$"""
+                    {{space}}return global::System.Threading.Tasks.Task.FromResult(0);
+                    """);
             else if (options.ReturnType is (ReturnType.Void | ReturnType.ValueTask))
                 builder.AppendLine($$"""
                     {{space}}return default;
+                    """);
+            else if (options.ReturnType is (ReturnType.Int | ReturnType.ValueTask))
+                builder.AppendLine($$"""
+                    {{space}}return new global::System.Threading.Tasks.ValueTask<int>(0);
                     """);
             else if (options.ReturnType is (ReturnType.Byte | ReturnType.Enumerable | ReturnType.ValueTask))
             {
@@ -933,7 +963,7 @@ internal enum ParameterType
 
 }
 /// <summary>
-/// Encodes return information in 00_0_000 form, ordered as TaskType | IsEnumerable | ReturnType from left to right.
+/// Encodes return information in 000_0_0000 form, ordered as TaskType | IsEnumerable | ReturnType from left to right.
 /// </summary>
 [Flags]
 internal enum ReturnType
@@ -941,27 +971,31 @@ internal enum ReturnType
     /// <summary>
     /// No return value.
     /// </summary>
-    Void = 0b_00_0_001,
+    Void = 0b_000_0_0001,
+    /// <summary>
+    /// Returns an exit code integer.
+    /// </summary>
+    Int = 0b_000_0_0010,
     /// <summary>
     /// Returns a string.
     /// </summary>
-    String = 0b_00_0_010,
+    String = 0b_000_0_0100,
     /// <summary>
     /// Returns a byte.
     /// </summary>
-    Byte = 0b_00_0_100,
+    Byte = 0b_000_0_1000,
     /// <summary>
     /// Returns an enumerable sequence.
     /// </summary>
-    Enumerable = 0b_00_1_000,
+    Enumerable = 0b_000_1_0000,
     /// <summary>
     /// Return value is wrapped in <see cref="Task"/>.
     /// </summary>
-    Task = 0b_01_0_000,
+    Task = 0b_001_0_0000,
     /// <summary>
     /// Return value is wrapped in <see cref="ValueTask"/>.
     /// </summary>
-    ValueTask = 0b_10_0_000,
+    ValueTask = 0b_010_0_0000,
 }
 static class OptionsExtensions
 {

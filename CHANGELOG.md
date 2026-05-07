@@ -15,6 +15,7 @@ The format is based on Keep a Changelog.
 ### Changed
 
 - `Esolang.Brainfuck.Processor`: `BrainfuckProcessor` now implements `ITextProcessor<ReadOnlyMemory<BrainfuckSequence>>` and `IPipeProcessor<ReadOnlyMemory<BrainfuckSequence>>`.
+- `Esolang.Brainfuck.Generator`: added return-type support for `int`, `Task<int>`, and `ValueTask<int>` (returns `0` on normal completion).
 
 ## [1.0.0] - 2026-05-06
 
