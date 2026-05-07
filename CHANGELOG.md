@@ -4,6 +4,18 @@ All notable changes to this repository are documented in this file.
 
 The format is based on Keep a Changelog.
 
+## [Unreleased]
+
+### Added
+
+- `Esolang.Brainfuck.Processor/Processor/IProcessor.cs`: provisional execution abstractions under `Esolang.Processor` (`IProcessor<TProgram>`, `ITextProcessor<TProgram>`, `IPipeProcessor<TProgram>`) for later extraction to a shared package.
+- `Esolang.Brainfuck.Processor/BrainfuckProcessor.IProcessor.cs`: partial implementation for unified execution interfaces, including text/pipe adapter paths.
+- `Esolang.Brainfuck.Processor.Tests`: coverage for `RunToEnd(...)` text I/O and `RunToEndAsync(...)` pipe I/O.
+
+### Changed
+
+- `Esolang.Brainfuck.Processor`: `BrainfuckProcessor` now implements `ITextProcessor<ReadOnlyMemory<BrainfuckSequence>>` and `IPipeProcessor<ReadOnlyMemory<BrainfuckSequence>>`.
+
 ## [1.0.0] - 2026-05-06
 
 ### Added
