@@ -469,6 +469,7 @@ partial class TestClass
     }
     [TestMethod]
     [DynamicData(nameof(DiagnoticsTestData))]
+    [Timeout(50000, CooperativeCancellation = true)]
     public void DiagnoticsTest(string expected, string source, string returnType, string parameters, string options)
     {
         source = $$"""

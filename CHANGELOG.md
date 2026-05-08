@@ -10,6 +10,7 @@ The format is based on Keep a Changelog.
 
 - Package metadata: added NuGet `PackageTags` for packable Brainfuck packages (`Generator`, `Parser`, `Processor`, `dotnet-brainfuck`) to improve search/discovery.
 - Fixed a Source Generator load failure where the Generator could not resolve `Esolang.Brainfuck.Parser` at build time; added a `buildTransitive` `.targets` file to ensure Parser assemblies are included as analyzers.
+- `Esolang.Brainfuck.Generator`: `PT0008` / `PT0007` Severity `Error`→ `Hidden`
 
 ## [1.1.0] - 2026-05-08
 
