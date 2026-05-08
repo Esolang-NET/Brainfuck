@@ -61,3 +61,9 @@ The format is based on Keep a Changelog.
 - Interpreter: new tests, CLI option registration fix, and tool E2E CI coverage.
 - Parser: README output text typo corrections.
 - Processor: README sample updated to use `BrainfuckProcessor`.
+
+[Unreleased]: https://github.com/Esolang-NET/Brainfuck/compare/v1.1.0...HEAD
+[0.1.1-preview-1]: https://github.com/Esolang-NET/Brainfuck/tree/v0.1.1-preview-1
+[1.0.0]: https://github.com/Esolang-NET/Brainfuck/tree/v1.0.0
+[1.0.1]: https://github.com/Esolang-NET/Brainfuck/tree/v1.0.1
+[1.1.0]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.0
