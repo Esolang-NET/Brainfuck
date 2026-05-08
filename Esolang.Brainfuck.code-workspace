@@ -64,6 +64,7 @@
 			"Processor.Tests": true,
 			"Shared": true,
 			"TestShared": true,
+			"samples": true,
 		}
 	},
 	"extensions": {
