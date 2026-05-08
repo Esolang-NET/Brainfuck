@@ -47,7 +47,6 @@ public partial class MethodGenerator
                     DiagnosticDescriptors.RequiredOutputInterface,
                     methodDeclarationSyntax.Identifier.GetLocation())
             );
-            return null;
         }
         if (sequences.RequiredInput
             && string.IsNullOrEmpty(parameterOptions.VariablePipeReader)
@@ -60,7 +59,6 @@ public partial class MethodGenerator
                     DiagnosticDescriptors.RequiredInputInterface,
                     methodDeclarationSyntax.Identifier.GetLocation())
             );
-            return null;
         }
 
         var (openingDefinitionCode, codeForClosingDefinition) = Utils.GenerateOpeningClosingTypeDefinitionCode(methodSymbol);

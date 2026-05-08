@@ -21,3 +21,13 @@ BF0006 | Brainfuck | Error | [DiagnosticDescriptors](./Rules/BF0006.md)
 BF0007 | Brainfuck | Error | [DiagnosticDescriptors](./Rules/BF0007.md)
 BF0008 | Brainfuck | Error | [DiagnosticDescriptors](./Rules/BF0008.md)
 BF0009 | Brainfuck | Hidden | [DiagnosticDescriptors](./Rules/BF0009.md)
+
+
+## Release 0.1.1.0
+
+### New Rules
+
+Rule ID | Category | Severity | Notes
+--------|----------|----------|--------------------
+BF0007 | Brainfuck | Hidden | [DiagnosticDescriptors](./Rules/BF0007.md)
+BF0008 | Brainfuck | Hidden | [DiagnosticDescriptors](./Rules/BF0008.md)s
