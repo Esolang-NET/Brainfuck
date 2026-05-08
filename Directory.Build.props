@@ -3,9 +3,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>14</LangVersion>
-    <AssemblyVersion>1.1.0.104</AssemblyVersion>
-    <FileVersion>1.1.0.104</FileVersion>
-    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.1.105</AssemblyVersion>
+    <FileVersion>1.1.1.105</FileVersion>
+    <Version>1.1.1</Version>
     <PackageProjectUrl>https://github.com/Esolang-NET/Brainfuck/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Esolang-NET/Brainfuck.git</RepositoryUrl>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
