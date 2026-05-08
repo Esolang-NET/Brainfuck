@@ -8,6 +8,7 @@
     <AnalyzerLanguage>cs</AnalyzerLanguage>
     <IsPublishable>false</IsPublishable>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>esolang;brainfuck;generator;source-generator;roslyn-analyzer</PackageTags>
 
     <!-- NuGet packaging settings. -->
     <IncludeBuildOutput>false</IncludeBuildOutput>

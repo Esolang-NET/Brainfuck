@@ -6,6 +6,10 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Changed
+
+- Package metadata: added NuGet `PackageTags` for packable Brainfuck packages (`Generator`, `Parser`, `Processor`, `dotnet-brainfuck`) to improve search/discovery.
+
 ## [1.1.0] - 2026-05-08
 
 ### Added
