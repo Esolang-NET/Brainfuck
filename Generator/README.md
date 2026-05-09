@@ -39,7 +39,7 @@ partial class BrainfuckSample
 | --- | --- |
 | Input parameter | `string`, `System.IO.Pipelines.PipeReader`, `System.IO.TextReader` |
 | Output parameter | `System.IO.Pipelines.PipeWriter`, `System.IO.TextWriter` |
-| Return type | `void`, `int`, `System.Threading.Tasks.Task<int>`, `System.Threading.Tasks.ValueTask<int>`, `string`, `System.Threading.Tasks.Task<string>`, `System.Threading.Tasks.ValueTask<string>`, `System.Collections.Generic.IEnumerable<byte>`, `System.Collections.Generic.IAsyncEnumerable<byte>` |
+| Return type | `void`, `int`, `System.Threading.Tasks.Task<int>`, `System.Threading.Tasks.ValueTask<int>`, `string?`, `string`,  `System.Threading.Tasks.Task<string?>`, `System.Threading.Tasks.Task<string>`, `System.Threading.Tasks.ValueTask<string?>`, `System.Threading.Tasks.ValueTask<string>`, `System.Collections.Generic.IEnumerable<byte>`, `System.Collections.Generic.IAsyncEnumerable<byte>` |
 | Other parameter | `System.Threading.CancellationToken` |
 
 Output-related signatures are allowed even when the source does not contain `.`. In that case string returns produce `null`, byte-sequence returns complete without values, and output parameters (`PipeWriter`/`TextWriter`) are simply left unused.

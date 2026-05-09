@@ -6,6 +6,10 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Changed
+
+- `Esolang.Brainfuck.Generator` now supports `string`, `Task<string>`, and `ValueTask<string>` as return types.
+
 ## [1.1.1]
 
 ### Changed

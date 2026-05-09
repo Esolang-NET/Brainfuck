@@ -387,8 +387,6 @@ partial class TestClass
             yield return DiagnoticsTest("BF0001", "", "void");
             // BF0002: not support return type double.
             yield return DiagnoticsTest("BF0002", "2_1", "double");
-            // BF0002: not support return type string (in #nullable enable)
-            yield return DiagnoticsTest("BF0002", "2_2.", "string", options: "#nullable enable"); ;
             // BF0003: not support parameter type int.
             yield return DiagnoticsTest("BF0003", "3_1", "void", "int param1");
             // BF0009: unused input parameter string (source no input)
@@ -463,14 +461,14 @@ partial class TestClass
             yield return DiagnoticsTest("BF0008", "8_7,", "void", "System.IO.Pipelines.PipeWriter output");
             // BF0008: no input
             yield return DiagnoticsTest("BF0008", "8_8,", "void", "System.IO.TextWriter output");
-            static object?[] DiagnoticsTest(string expected, string source, string returnType, string parameters = "", string options = "")
-                => [expected, source, returnType, parameters, options];
+            static object?[] DiagnoticsTest(string expected, string source, string returnType, string parameters = "", string options = "", int sourceCount = 3)
+                => [expected, source, returnType, parameters, options, sourceCount];
         }
     }
     [TestMethod]
     [DynamicData(nameof(DiagnoticsTestData))]
     [Timeout(50000, CooperativeCancellation = true)]
-    public void DiagnoticsTest(string expected, string source, string returnType, string parameters, string options)
+    public void DiagnoticsTest(string expected, string source, string returnType, string parameters, string options, int sourceCount)
     {
         source = $$"""
         using Esolang.Brainfuck;
@@ -483,7 +481,7 @@ partial class TestClass
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        Assert.IsFalse(diagnostics.IsEmpty);
+        Assert.IsFalse(diagnostics.IsEmpty, $"diagnostics is empty required {expected}");
         try
         {
             CollectionAssert.AreEqual(new[] { expected }, diagnostics.Select(v => v.Id).ToArray());
@@ -494,9 +492,7 @@ partial class TestClass
                 TestContext.WriteLine($"{diagnostic}");
             throw;
         }
-        // Hidden diagnostics (e.g. BF0009) still produce generated code (3 trees); errors do not (2 trees).
-        var expectedTreeCount = diagnostics.All(d => d.Severity == DiagnosticSeverity.Hidden) ? 3 : 2;
-        Assert.HasCount(expectedTreeCount, outputCompilation.SyntaxTrees);
+        Assert.HasCount(sourceCount, outputCompilation.SyntaxTrees);
     }
     [TestMethod]
     public void DiagnoticsTest_NoArgumentConstructor()
@@ -510,7 +506,7 @@ partial class TestClass
             public static partial void SampleMethod();
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         Assert.IsFalse(diagnostics.IsEmpty);
         try
         {
@@ -522,7 +518,7 @@ partial class TestClass
                 TestContext.WriteLine($"{diagnostic}");
             throw;
         }
-        Assert.HasCount(2, outputCompilation.SyntaxTrees);
+        Assert.HasCount(3, outputCompilation.SyntaxTrees);
     }
 
     [TestMethod]
@@ -541,7 +537,8 @@ partial class TestClass
             source,
             out var outputCompilation,
             out var diagnostics,
-            LanguageVersion.CSharp7_3);
+            LanguageVersion.CSharp7_3,
+            CancellationToken);
 
         Assert.IsTrue(diagnostics.Any(v => v.Id == "BF0010" && v.Severity == DiagnosticSeverity.Warning));
         Assert.IsFalse(diagnostics.Any(v => v.Severity == DiagnosticSeverity.Error));
