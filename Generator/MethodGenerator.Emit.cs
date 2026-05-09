@@ -2,6 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using static Esolang.Brainfuck.BrainfuckSequence;
 
@@ -27,15 +28,35 @@ public partial class MethodGenerator
                     methodSymbol.Name,
                     currentLanguageVersion.ToString()));
         }
-        if (GetSources(context, methodSymbol, methodDeclarationSyntax) is not { } sequences)
-            return null;
-        if (GetReturnType(methodSymbol.ReturnType,
+        if (!TryGetSources(context, methodSymbol, methodDeclarationSyntax, out var sequences))
+        {
+            var diagnostic = DiagnosticDescriptors.InvalidValueParameter;
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    diagnostic,
+                    methodDeclarationSyntax.Identifier.GetLocation(),
+                    methodSymbol.Name));
+            return EmitErrorMethod(methodSymbol, methodDeclarationSyntax, diagnostic.Id,
+                string.Format(diagnostic.MessageFormat.ToString(), methodSymbol.Name));
+        }
+        if (!TryGetReturnType(methodSymbol.ReturnType,
             sequences,
             context,
-            methodDeclarationSyntax) is not ReturnType returnType)
-            return null;
-        if (GetParameterOptions(methodSymbol, returnType, methodSymbol.ReturnType.ToString(), sequences, context, methodDeclarationSyntax) is not { } parameterOptions)
-            return null;
+            methodDeclarationSyntax,
+            out var returnType))
+        {
+            var diagnostic = DiagnosticDescriptors.InvalidReturnType;
+            var displayString = methodSymbol.ReturnType.ToDisplayString();
+            context.ReportDiagnostic(
+                Diagnostic.Create(
+                    diagnostic,
+                    methodDeclarationSyntax.Identifier.GetLocation(),
+                    displayString));
+            return EmitErrorMethod(methodSymbol, methodDeclarationSyntax, diagnostic.Id,
+                string.Format(diagnostic.MessageFormat.ToString(), displayString));
+        }
+        if (!TryGetParameterOptions(methodSymbol, returnType, methodSymbol.ReturnType.ToString(), sequences, context, methodDeclarationSyntax, out var parameterOptions, out var dest))
+            return EmitErrorMethod(methodSymbol, methodDeclarationSyntax, dest.Descriptor.Id, dest.Message);
         if (sequences.RequiredOutput
             && (returnType & (ReturnType.String | ReturnType.Byte | ReturnType.Enumerable)) == 0
             && string.IsNullOrEmpty(parameterOptions.VaribalePipeWriter)
@@ -75,10 +96,8 @@ public partial class MethodGenerator
             VariableInputString: parameterOptions.VariableInputString,
             ReturnType: returnType
         );
-        var returnTypeSyntax = methodSymbol.ReturnType.ToDisplayString(
-            returnType is ReturnType.String ? NullableFlowState.MaybeNull : NullableFlowState.None,
-            format);
-        var methodBodyCode = GenerateMethodBodyCode(2, sequences, ref writeOption);
+        var returnTypeSyntax = methodSymbol.ReturnType.ToDisplayString(format);
+        var methodBodyCode = GenerateMethodBodyCode(2, sequences, ref writeOption, methodSymbol);
         var withAsync = writeOption.ReturnType.IsAsync() && writeOption.UseAwait ? "async" : string.Empty;
 
         var generatedSourceCode = $$"""
@@ -91,13 +110,59 @@ public partial class MethodGenerator
 
             """;
         return new EmittedMethod(generatedSourceCode, writeOption.UseListAsMemory);
+        static EmittedMethod EmitErrorMethod(
+            IMethodSymbol methodSymbol,
+            MethodDeclarationSyntax methodSyntax,
+            string errorId,
+            string message)
+        {
+            var sb = new StringBuilder();
+            var (openingDefinitionCode, codeForClosingDefinition) = Utils.GenerateOpeningClosingTypeDefinitionCode(methodSymbol);
+            sb.Append($$"""
+        {{openingDefinitionCode}}
+        """);
 
-        static ReturnType? GetReturnType(
+            var accessibility = $"{SyntaxFacts.GetText(methodSymbol.DeclaredAccessibility)}{(methodSymbol.IsStatic ? " static" : string.Empty)} partial";
+            var returnType = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+            var parameters = string.Join(", ", methodSymbol.Parameters.Select(FormatParameter));
+
+            sb.Append("    ").Append(accessibility).Append(" partial ").Append(returnType)
+              .Append(' ').Append(methodSymbol.Name).Append('(').Append(parameters).AppendLine(")");
+            sb.AppendLine("    {");
+            sb.AppendLine($"        throw new global::System.NotImplementedException(\"{errorId}: {message}\");");
+            sb.AppendLine("    }");
+
+            sb.Append($$"""
+        {{codeForClosingDefinition}}
+        """);
+
+
+            return new EmittedMethod(sb.ToString(), false);
+
+            static string FormatParameter(IParameterSymbol parameter)
+            {
+                var modifier = parameter.RefKind switch
+                {
+                    RefKind.In => "in ",
+                    RefKind.Out => "out ",
+                    RefKind.Ref => "ref ",
+                    _ => string.Empty,
+                };
+
+                var paramsPrefix = parameter.IsParams ? "params " : string.Empty;
+                var typeName = parameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                return $"{paramsPrefix}{modifier}{typeName} {parameter.Name}";
+            }
+        }
+
+        static bool TryGetReturnType(
             ITypeSymbol returnType,
             BrainfuckSequenceEnumerable sequences,
             SourceProductionContext context,
-            MethodDeclarationSyntax methodDeclarationSyntax)
+            MethodDeclarationSyntax methodDeclarationSyntax,
+            [NotNullWhen(true)] out ReturnType returnTypeResult)
         {
+            returnTypeResult = default!;
             var returnType_ = (INamedTypeSymbol)returnType;
             var typeName = returnType_.ToDisplayString(NullableFlowState.NotNull, SymbolDisplayFormat.FullyQualifiedFormat);
             var nullable = returnType_.NullableAnnotation;
@@ -141,33 +206,38 @@ public partial class MethodGenerator
                 (INT_VALUETASK_TYPE, _, _, _) => ReturnType.Int | ReturnType.ValueTask,
                 #endregion
                 #region return string
-                (STRING_TYPE, NullableAnnotation.None or NullableAnnotation.Annotated, _, _) => ReturnType.String,
-                (STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnType.String | ReturnType.Task,
-                (STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnType.String | ReturnType.ValueTask,
+                (STRING_TYPE, NullableAnnotation.None or NullableAnnotation.Annotated, _, _) => ReturnType.String | ReturnType.Nullable,
+                (STRING_TYPE, _, _, _) => ReturnType.String,
+                (STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnType.String | ReturnType.Task | ReturnType.Nullable,
+                (STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, _, _) => ReturnType.String | ReturnType.Task,
+                (STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnType.String | ReturnType.ValueTask | ReturnType.Nullable,
+                (STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, _, _) => ReturnType.String | ReturnType.ValueTask,
                 #endregion
                 #region return enumerable byte
                 (BYTE_ENUMERABLE_TYPE, _, _, _) => ReturnType.Byte | ReturnType.Enumerable,
                 (BYTE_ASYNCENUMERABLE_TYPE, _, _, _) => ReturnType.Byte | ReturnType.Enumerable | ReturnType.ValueTask,
                 #endregion
                 _ => (ReturnType?)null,
-            } is { } type)
-                return type;
-            // not found support returntype.
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    DiagnosticDescriptors.InvalidReturnType,
-                    methodDeclarationSyntax.Identifier.GetLocation(),
-                    returnType.ToDisplayString()));
-            return null;
+            } is not { } type)
+            {
+                // not found support returntype.
+                return false;
+            }
+            returnTypeResult = type;
+            return true;
         }
-        static ParameterOptions? GetParameterOptions(
+        static bool TryGetParameterOptions(
             IMethodSymbol methodSymbol,
             ReturnType returnType,
             string returnTypeName,
             BrainfuckSequenceEnumerable sequences,
             SourceProductionContext context,
-            MethodDeclarationSyntax methodDeclarationSyntax)
+            MethodDeclarationSyntax methodDeclarationSyntax,
+            [NotNullWhen(true)] out ParameterOptions parameterOptions,
+            [NotNullWhen(false)] out (DiagnosticDescriptor Descriptor, string Message) dest)
         {
+            parameterOptions = default!;
+            dest = default;
             const string CANCELLATION_TOKEN = "global::System.Threading.CancellationToken";
             const string STRING_TYPE = "string";
             const string PIPE_WRITER_TYPE = "global::System.IO.Pipelines.PipeWriter";
@@ -189,14 +259,16 @@ public partial class MethodGenerator
                 {
                     if (!string.IsNullOrEmpty(variableCancellation))
                     {
+                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
                         // Duplicate declarations are not allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.DuplicateParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
-                        return null;
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        return false;
                     }
                     variableCancellation = param.Name;
                     (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableCancellation}");
@@ -206,34 +278,39 @@ public partial class MethodGenerator
                 {
                     if (!sequences.RequiredInput)
                     {
+                        var diagnostic = DiagnosticDescriptors.UnusedInputParameter;
                         // Input parameter present but source does not use input — report as Hidden.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.UnusedInputParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
                     }
                     if (!string.IsNullOrEmpty(variablePipeReder) || !string.IsNullOrEmpty(variableTextReader))
                     {
+                        var diagnostic = DiagnosticDescriptors.NotSupportParameterPattern;
                         // Only one input source is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.NotSupportParameterPattern,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation())
                         );
-                        return null;
+                        dest = (diagnostic, diagnostic.MessageFormat.ToString());
+                        return false;
                     }
                     if (!string.IsNullOrEmpty(variableInputString))
                     {
+                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
                         // Duplicate declarations are not allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.DuplicateParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
-                        return null;
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        return false;
                     }
                     variableInputString = param.Name;
                     (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
@@ -243,34 +320,39 @@ public partial class MethodGenerator
                 {
                     if (!sequences.RequiredInput)
                     {
+                        var diagnostic = DiagnosticDescriptors.UnusedInputParameter;
                         // Input parameter present but source does not use input — report as Hidden.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.UnusedInputParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
                     }
                     if (!string.IsNullOrEmpty(variableInputString) || !string.IsNullOrEmpty(variableTextReader))
                     {
+                        var diagnostic = DiagnosticDescriptors.NotSupportParameterPattern;
                         // Only one input source is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.NotSupportParameterPattern,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation())
                         );
-                        return null;
+                        dest = (diagnostic, diagnostic.MessageFormat.ToString());
+                        return false;
                     }
                     // Duplicate declarations are not allowed.
                     if (!string.IsNullOrEmpty(variablePipeReder))
                     {
+                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.DuplicateParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
-                        return null;
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        return false;
                     }
                     variablePipeReder = param.Name;
                     (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeReder}");
@@ -280,34 +362,39 @@ public partial class MethodGenerator
                 {
                     if (!sequences.RequiredInput)
                     {
+                        var diagnostic = DiagnosticDescriptors.UnusedInputParameter;
                         // Input parameter present but source does not use input - report as Hidden.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.UnusedInputParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
                     }
                     if (!string.IsNullOrEmpty(variableInputString) || !string.IsNullOrEmpty(variablePipeReder))
                     {
+                        var diagnostic = DiagnosticDescriptors.NotSupportParameterPattern;
                         // Only one input source is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.NotSupportParameterPattern,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation())
                         );
-                        return null;
+                        dest = (diagnostic, diagnostic.MessageFormat.ToString());
+                        return false;
                     }
                     if (!string.IsNullOrEmpty(variableTextReader))
                     {
+                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
                         // Duplicate declarations are not allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.DuplicateParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
-                        return null;
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        return false;
                     }
                     variableTextReader = param.Name;
                     (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextReader}");
@@ -317,37 +404,43 @@ public partial class MethodGenerator
                 {
                     if ((returnType & (ReturnType.String | ReturnType.Enumerable)) > 0)
                     {
+                        var diagnostic = DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern;
                         // Not allowed when return type uses string or enumerable mode.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName,
                                 returnTypeName)
                         );
-                        return null;
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName, returnTypeName));
+                        return false;
                     }
                     if (!string.IsNullOrEmpty(variablePipeWriter))
                     {
                         // Duplicate declarations are not allowed.
+                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.DuplicateParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
-                        return null;
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        return false;
                     }
                     if (!string.IsNullOrEmpty(variableTextWriter))
                     {
+                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
                         // Only one output sink is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.DuplicateParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
-                        return null;
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        return false;
                     }
                     variablePipeWriter = param.Name;
                     (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeWriter}");
@@ -357,41 +450,48 @@ public partial class MethodGenerator
                 {
                     if ((returnType & (ReturnType.String | ReturnType.Enumerable)) > 0)
                     {
+                        var diagnostic = DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern;
                         // Not allowed when return type uses string or enumerable mode.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName,
                                 returnTypeName)
                         );
-                        return null;
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName, returnTypeName));
+                        return false;
                     }
                     if (!string.IsNullOrEmpty(variableTextWriter) || !string.IsNullOrEmpty(variablePipeWriter))
                     {
+                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
                         // Only one output sink is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
-                                DiagnosticDescriptors.DuplicateParameter,
+                                diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
                                 typeName)
                         );
-                        return null;
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        return false;
                     }
                     variableTextWriter = param.Name;
                     (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextWriter}");
                     continue;
                 }
-
-                context.ReportDiagnostic(
-                    Diagnostic.Create(
-                        DiagnosticDescriptors.InvalidParameter,
-                        methodDeclarationSyntax.GetLocation(),
-                        typeName)
-                );
-                return null;
+                {
+                    var diagnostic = DiagnosticDescriptors.InvalidParameter;
+                    context.ReportDiagnostic(
+                        Diagnostic.Create(
+                            diagnostic,
+                            methodDeclarationSyntax.GetLocation(),
+                            typeName)
+                    );
+                    dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                    return false;
+                }
             }
-            return new(
+            parameterOptions = new(
                 ParameterSymbols: builder?.Count > 0 ? string.Join(", ", builder) : string.Empty,
                 VariableCancellation: variableCancellation,
                 VaribalePipeWriter: variablePipeWriter,
@@ -400,6 +500,7 @@ public partial class MethodGenerator
                 VariableTextReader: variableTextReader,
                 VariableInputString: variableInputString
             );
+            return true;
         }
     }
     const string SPACE = "    ";
@@ -422,8 +523,9 @@ public partial class MethodGenerator
     /// <param name="indent">Indent level (4 spaces per level).</param>
     /// <param name="sequences">The command sequence.</param>
     /// <param name="options">Internal generation options.</param>
+    /// <param name="methodSymbol">The method symbol for which the code is being generated.</param> 
     /// <returns>The generated method body source code.</returns>
-    static string GenerateMethodBodyCode(int indent, BrainfuckSequenceEnumerable sequences, ref InternalOptions options)
+    static string GenerateMethodBodyCode(int indent, BrainfuckSequenceEnumerable sequences, ref InternalOptions options, IMethodSymbol methodSymbol)
     {
         var builder = new StringBuilder();
         var SPACE = options.Space;
@@ -569,10 +671,42 @@ public partial class MethodGenerator
                 {
                     if ((options.ReturnType & ReturnType.ValueTask) > 0)
                     {
-                        // ValueTask<string?> is a struct; cannot return null directly. Use default value.
-                        builder.AppendLine($$"""
-                            {{space}}return new global::System.Threading.Tasks.ValueTask<string?>(default(string?));
-                            """);
+                        var returnType_ = (INamedTypeSymbol)methodSymbol.ReturnType;
+                        var innerType = returnType_.TypeArguments.First();
+                        var annoation = returnType_.TypeArgumentNullableAnnotations.First();
+                        if ((options.ReturnType & ReturnType.Nullable) > 0)
+                        {
+                            var bang = annoation is NullableAnnotation.None ? "!" : string.Empty;
+                            // ValueTask<string?> is a struct; cannot return null directly. Use default value.
+                            builder.AppendLine($$"""
+                                {{space}}return new global::System.Threading.Tasks.ValueTask<{{innerType.ToDisplayString()}}>(default({{innerType.ToDisplayString()}}){{bang}});
+                                """);
+                        }
+                        else
+                        {
+                            builder.AppendLine($$"""
+                                {{space}}return new global::System.Threading.Tasks.ValueTask<string>(string.Empty);
+                                """);
+                        }
+                    }
+                    else if ((options.ReturnType & ReturnType.Task) > 0)
+                    {
+                        var returnType_ = (INamedTypeSymbol)methodSymbol.ReturnType;
+                        var innerType = returnType_.TypeArguments.First();
+                        var annoation = returnType_.TypeArgumentNullableAnnotations.First();
+                        if ((options.ReturnType & ReturnType.Nullable) > 0)
+                        {
+                            var bang = annoation is NullableAnnotation.None ? "!" : string.Empty;
+                            builder.AppendLine($$"""
+                                {{space}}return global::System.Threading.Tasks.Task.FromResult<{{innerType.ToDisplayString()}}>(default({{innerType.ToDisplayString()}}){{bang}});
+                                """);
+                        }
+                        else
+                        {
+                            builder.AppendLine($$"""
+                                {{space}}return global::System.Threading.Tasks.Task.FromResult(string.Empty);
+                                """);
+                        }
                     }
                     else
                     {
@@ -875,13 +1009,14 @@ public partial class MethodGenerator
         builder.AppendLine($"{space}// {sequence}:{comment}");
     }
 
-    static BrainfuckSequenceEnumerable? GetSources(
+    static bool TryGetSources(
         SourceProductionContext context,
         IMethodSymbol methodSymbol,
-        MethodDeclarationSyntax methodDeclarationSyntax
+        MethodDeclarationSyntax methodDeclarationSyntax,
+        out BrainfuckSequenceEnumerable sequences
     )
     {
-
+        sequences = default!;
         var attributeData = methodSymbol.GetAttributes().Single(
             x => x.AttributeClass?.ToDisplayString() == NameSpaceName + "." + ClassNameBrainfuckAttribution
         );
@@ -890,12 +1025,7 @@ public partial class MethodGenerator
             || attributeData.ConstructorArguments[0] is not { IsNull: false, Value: string source }
             || string.IsNullOrEmpty(source))
         {
-            context.ReportDiagnostic(
-                Diagnostic.Create(
-                    DiagnosticDescriptors.InvalidValueParameter,
-                    methodDeclarationSyntax.Identifier.GetLocation(),
-                    methodSymbol.Name));
-            return null;
+            return false;
         }
         var incrementPointer = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.IncrementPointer), BrainfuckOptionsDefault.IncrementPointer);
         var decrementPointer = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.DecrementPointer), BrainfuckOptionsDefault.DecrementPointer);
@@ -905,7 +1035,7 @@ public partial class MethodGenerator
         var input = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.Input), BrainfuckOptionsDefault.Input);
         var begin = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.Begin), BrainfuckOptionsDefault.Begin);
         var end = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.End), BrainfuckOptionsDefault.End);
-        return new BrainfuckSequenceEnumerable(source!.AsMemory(), new BrainfuckOptions(
+        sequences = new BrainfuckSequenceEnumerable(source!.AsMemory(), new BrainfuckOptions(
             IncrementPointer: incrementPointer,
             DecrementPointer: decrementPointer,
             IncrementCurrent: incrementCurrent,
@@ -915,6 +1045,7 @@ public partial class MethodGenerator
             Begin: begin,
             End: end
         ));
+        return true;
         static T GetNamedArgumentOrDefault<T>(AttributeData attributeData, string name, T defaultValue)
         {
             // ImmutbaleArray<T> does not have a Find method...
@@ -969,31 +1100,35 @@ internal enum ReturnType
     /// <summary>
     /// No return value.
     /// </summary>
-    Void = 0b_000_0_0001,
+    Void = 0b_0_000_0_0001,
     /// <summary>
     /// Returns an exit code integer.
     /// </summary>
-    Int = 0b_000_0_0010,
+    Int = 0b_0_000_0_0010,
     /// <summary>
     /// Returns a string.
     /// </summary>
-    String = 0b_000_0_0100,
+    String = 0b_0_000_0_0100,
     /// <summary>
     /// Returns a byte.
     /// </summary>
-    Byte = 0b_000_0_1000,
+    Byte = 0b_0_000_0_1000,
     /// <summary>
     /// Returns an enumerable sequence.
     /// </summary>
-    Enumerable = 0b_000_1_0000,
+    Enumerable = 0b_0_000_1_0000,
     /// <summary>
     /// Return value is wrapped in <see cref="Task"/>.
     /// </summary>
-    Task = 0b_001_0_0000,
+    Task = 0b_0_001_0_0000,
     /// <summary>
     /// Return value is wrapped in <see cref="ValueTask"/>.
     /// </summary>
-    ValueTask = 0b_010_0_0000,
+    ValueTask = 0b_0_010_0_0000,
+    /// <summary>
+    /// Return value is Nullable type.
+    /// </summary>
+    Nullable = 0b_1_000_0_0000,
 }
 static class OptionsExtensions
 {
