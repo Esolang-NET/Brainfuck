@@ -6,6 +6,8 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+## [1.1.2]
+
 ### Changed
 
 - `Esolang.Brainfuck.Generator` now supports `string`, `Task<string>`, and `ValueTask<string>` as return types.
@@ -81,7 +83,8 @@ The format is based on Keep a Changelog.
 - Parser: README output text typo corrections.
 - Processor: README sample updated to use `BrainfuckProcessor`.
 
-[Unreleased]: https://github.com/Esolang-NET/Brainfuck/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Esolang-NET/Brainfuck/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.2
 [1.1.1]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.1
 [1.1.0]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.0
 [1.0.0]: https://github.com/Esolang-NET/Brainfuck/tree/v1.0.0
