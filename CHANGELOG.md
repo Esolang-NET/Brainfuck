@@ -6,6 +6,21 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Improved
+- Refactored the Brainfuck source generator to use a unified internal `Status` model for method analysis.
+  - Centralizes validation of return types, parameters, and Brainfuck source requirements.
+  - Simplifies generator control flow and improves maintainability.
+- Split method emission into dedicated `EmitSuccessMethod` and `EmitErrorMethod` paths, reducing complexity and clarifying generator behavior.
+- Reduced direct Roslyn API usage inside the generator by delegating symbol and diagnostic handling to the new `Status` abstraction.
+- Improved diagnostic consistency across the Brainfuck toolchain, including Hidden diagnostics for missing input/output interfaces (BF0007/BF0008).
+- Enhanced readability and structure of generated C# code by consolidating formatting and emission logic.
+
+### Internal
+- Significant internal cleanup of `MethodGenerator.Emit`:
+  - Now performs only high‑level dispatch based on analysis results.
+  - All detailed validation and diagnostic decisions are handled within `Status`.
+- Improved separation of concerns between parsing, analysis, and code generation layers.
+
 ## [1.1.2]
 
 ### Changed
