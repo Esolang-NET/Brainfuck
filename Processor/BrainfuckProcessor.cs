@@ -1,6 +1,6 @@
 ﻿using Esolang.Brainfuck.Processor.SequenceCommands;
 using System.Buffers;
-using System.Collections.Immutable;
+using System.Diagnostics;
 using System.IO.Pipelines;
 using System.Text;
 
@@ -9,12 +9,13 @@ namespace Esolang.Brainfuck.Processor;
 /// <summary>
 /// Runner that executes Brainfuck instruction sequences.
 /// </summary>
+[DebuggerDisplay("{" + nameof(ToString) + "()}")]
 public sealed partial class BrainfuckProcessor
 {
-    readonly ReadOnlyMemory<BrainfuckSequence> Sequences;
+    readonly ReadOnlyMemory<BrainfuckSequence> Program;
     readonly PipeReader? Input;
     readonly PipeWriter? Output;
-    BrainfuckContext Context => new(Sequences, SequencesIndex: 0, Stack: ImmutableArray.Create<byte>(0), StackIndex: 0, Input: Input, Output: Output);
+    BrainfuckContext Context => new(Program, SequencesIndex: 0, Stack: [0], StackIndex: 0, Input: Input, Output: Output);
 
     /// <summary>
     /// Initializes the processor from source code.
@@ -54,7 +55,7 @@ public sealed partial class BrainfuckProcessor
     /// <param name="output">The output pipe.</param>
     /// <param name="input">The input pipe.</param>
     public BrainfuckProcessor(ReadOnlyMemory<BrainfuckSequence> sequences, PipeWriter? output = default, PipeReader? input = default)
-        => (Sequences, Input, Output) = (sequences, input, output);
+        => (Program, Input, Output) = (sequences, input, output);
 
     /// <summary>
     /// Deconstructs and returns internal state.
@@ -63,7 +64,7 @@ public sealed partial class BrainfuckProcessor
     /// <param name="output">The output pipe.</param>
     /// <param name="input">The input pipe.</param>
     public void Deconstruct(out ReadOnlyMemory<BrainfuckSequence> sequences, out PipeWriter? output, out PipeReader? input)
-        => (sequences, input, output) = (Sequences, Input, Output);
+        => (sequences, input, output) = (Program, Input, Output);
 
     /// <summary>
     /// Runs synchronously from the default context.
@@ -185,8 +186,8 @@ public sealed partial class BrainfuckProcessor
 
     bool PrintMembers(StringBuilder builder)
     {
-        builder.Append(nameof(Sequences) + " = [");
-        builder.Append(string.Join(", ", Sequences));
+        builder.Append(nameof(Program) + " = [");
+        builder.Append(string.Join(", ", Program));
         builder.Append("], " + nameof(Input) + " = ");
         builder.Append(Input);
         builder.Append(", " + nameof(Output) + " = ");

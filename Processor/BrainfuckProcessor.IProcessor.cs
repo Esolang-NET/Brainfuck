@@ -1,5 +1,4 @@
 using Esolang.Processor;
-using System.Collections.Immutable;
 using System.IO.Pipelines;
 using System.Text;
 
@@ -8,7 +7,7 @@ namespace Esolang.Brainfuck.Processor;
 public sealed partial class BrainfuckProcessor : ITextProcessor<ReadOnlyMemory<BrainfuckSequence>>, IPipeProcessor<ReadOnlyMemory<BrainfuckSequence>>
 {
     /// <inheritdoc/>
-    public ReadOnlyMemory<BrainfuckSequence> Program => Sequences;
+    ReadOnlyMemory<BrainfuckSequence> IProcessor<ReadOnlyMemory<BrainfuckSequence>>.Program => Program;
 
     // ── ITextProcessor ────────────────────────────────────────────────────
 
