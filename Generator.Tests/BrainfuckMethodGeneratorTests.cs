@@ -355,6 +355,17 @@ partial class TestClass
                 "System.Threading.Tasks.Task",
                 "System.IO.TextReader input, System.Threading.CancellationToken cancellationToken = default"
                 );
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_F",
+                "void",
+                "System.IO.Pipelines.PipeWriter output, System.IO.Pipelines.PipeReader input",
+                options: "#nullable disable"); // Output + Input
+
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_G",
+                "System.Threading.Tasks.Task",
+                "System.IO.TextWriter output, System.IO.TextReader input",
+                options: "#nullable disable"); // Output + Input (Async)
             static object?[] ReturnTypeAndParameterPatternsTest(string source, string returnType, string parameters = "", string options = "")
                 => [source, returnType, parameters, options];
         }
@@ -461,6 +472,10 @@ partial class TestClass
             yield return DiagnoticsTest("BF0008", "8_7,", "void", "System.IO.Pipelines.PipeWriter output");
             // BF0008: no input
             yield return DiagnoticsTest("BF0008", "8_8,", "void", "System.IO.TextWriter output");
+            // BF0007: required output interface missing
+            yield return DiagnoticsTest("BF0007", "1+.", "void");
+            // BF0008: required input interface missing
+            yield return DiagnoticsTest("BF0008", "1,", "void");
             static object?[] DiagnoticsTest(string expected, string source, string returnType, string parameters = "", string options = "", int sourceCount = 3)
                 => [expected, source, returnType, parameters, options, sourceCount];
         }
