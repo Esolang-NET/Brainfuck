@@ -116,6 +116,42 @@ public partial class MethodGenerator
     const string STACK_NAME = "stack";
     const string STACK_INDEX = "stackIndex";
 
+    static string GenerateAsyncReturnCode(string space, in Status status, IMethodSymbol methodSymbol)
+    {
+        var returnType_ = (INamedTypeSymbol)methodSymbol.ReturnType;
+        var innerType = returnType_.TypeArguments.First();
+        var annoation = returnType_.TypeArgumentNullableAnnotations.First();
+        var builder = new StringBuilder();
+        var isTask = status.ReturnKind is ReturnKind.TaskNullableString or ReturnKind.TaskString;
+        var isNullable = status.ReturnKind is ReturnKind.TaskNullableString or ReturnKind.ValueTaskNullableString;
+
+        if (isNullable)
+        {
+            var bang = annoation is NullableAnnotation.None ? "!" : string.Empty;
+            var returnVal = $"default({innerType.ToDisplayString()}){bang}";
+            if (isTask)
+                builder.AppendLine($"{space}return global::System.Threading.Tasks.Task.FromResult<{innerType.ToDisplayString()}>({returnVal});");
+            else
+                builder.AppendLine($"{space}return new global::System.Threading.Tasks.ValueTask<{innerType.ToDisplayString()}>({returnVal});");
+        }
+        else
+        {
+            if (isTask)
+                builder.AppendLine($"{space}return global::System.Threading.Tasks.Task.FromResult(string.Empty);");
+            else
+                builder.AppendLine($"{space}return new global::System.Threading.Tasks.ValueTask<string>(string.Empty);");
+        }
+        return builder.ToString();
+    }
+
+    static string GenerateStringReturnCode(string space, in Status status)
+    {
+        var builder = new StringBuilder();
+        var returnVal = status.ReturnKind == ReturnKind.NullableString ? "null!" : "string.Empty";
+        builder.AppendLine($"{space}return {returnVal};");
+        return builder.ToString();
+    }
+
     /// <summary>
     /// Generates the method body code for the specified Brainfuck sequence.
     /// </summary>
@@ -255,49 +291,9 @@ public partial class MethodGenerator
         switch (status, options)
         {
             case ({ ReturnKind: ReturnKind.ValueTaskString or ReturnKind.ValueTaskNullableString } and not { IsOutputRequired: true }, { UseAwait: false }):
-                {
-                    var returnType_ = (INamedTypeSymbol)methodSymbol.ReturnType;
-                    var innerType = returnType_.TypeArguments.First();
-                    var annoation = returnType_.TypeArgumentNullableAnnotations.First();
-                    if (status is { ReturnKind: ReturnKind.ValueTaskNullableString })
-                    {
-                        var bang = annoation is NullableAnnotation.None ? "!" : string.Empty;
-                        // ValueTask<string?> is a struct; cannot return null directly. Use default value.
-                        builder.AppendLine($$"""
-                            {{space}}return new global::System.Threading.Tasks.ValueTask<{{innerType.ToDisplayString()}}>(default({{innerType.ToDisplayString()}}){{bang}});
-
-                            """);
-                    }
-                    else
-                    {
-                        builder.AppendLine($$"""
-                            {{space}}return new global::System.Threading.Tasks.ValueTask<string>(string.Empty);
-
-                            """);
-                    }
-                }
-                break;
-
             case ({ ReturnKind: ReturnKind.TaskString or ReturnKind.TaskNullableString } and not { IsOutputRequired: true }, { UseAwait: false }):
                 {
-                    var returnType_ = (INamedTypeSymbol)methodSymbol.ReturnType;
-                    var innerType = returnType_.TypeArguments.First();
-                    var annoation = returnType_.TypeArgumentNullableAnnotations.First();
-                    if (status is { ReturnKind: ReturnKind.TaskNullableString })
-                    {
-                        var bang = annoation is NullableAnnotation.None ? "!" : string.Empty;
-                        builder.AppendLine($$"""
-                            {{space}}return global::System.Threading.Tasks.Task.FromResult<{{innerType.ToDisplayString()}}>(default({{innerType.ToDisplayString()}}){{bang}});
-
-                            """);
-                    }
-                    else
-                    {
-                        builder.AppendLine($$"""
-                            {{space}}return global::System.Threading.Tasks.Task.FromResult(string.Empty);
-
-                            """);
-                    }
+                    builder.Append(GenerateAsyncReturnCode(space, status, methodSymbol));
                 }
                 break;
 
@@ -308,20 +304,14 @@ public partial class MethodGenerator
                         or ReturnKind.ValueTaskNullableString
                 } and not { IsOutputRequired: true }, { UseAwait: true }):
                 {
-                    builder.AppendLine($$"""
-                        {{space}}return null!;
-
-                        """);
+                    builder.Append(GenerateStringReturnCode(space, status));
                 }
                 break;
 
             case ({ ReturnKind: ReturnKind.String } and not { IsOutputRequired: true }, _)
                 or ({ ReturnKind: ReturnKind.TaskString or ReturnKind.ValueTaskString } and not { IsOutputRequired: true }, { UseAwait: true }):
                 {
-                    builder.AppendLine($$"""
-                        {{space}}return string.Empty;
-
-                        """);
+                    builder.Append(GenerateStringReturnCode(space, status));
                 }
                 break;
 
