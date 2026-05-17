@@ -476,6 +476,12 @@ partial class TestClass
             yield return DiagnoticsTest("BF0007", "1+.", "void");
             // BF0008: required input interface missing
             yield return DiagnoticsTest("BF0008", "1,", "void");
+            // BF0005: duplicate parameter PipeReader and TextReader
+            yield return DiagnoticsTest("BF0005", "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
+            // BF0006: duplicate return string and parameter TextWriter
+            yield return DiagnoticsTest("BF0006", "6_6.", "string", "System.IO.TextWriter output");
+            // BF0003: Invalid parameter (e.g., int - unsupported)
+            yield return DiagnoticsTest("BF0003", "1+", "void", "int invalidParam");
             static object?[] DiagnoticsTest(string expected, string source, string returnType, string parameters = "", string options = "", int sourceCount = 3)
                 => [expected, source, returnType, parameters, options, sourceCount];
         }
