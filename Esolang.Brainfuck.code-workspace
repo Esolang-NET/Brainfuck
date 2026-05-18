@@ -21,6 +21,10 @@
 			"name": "Esolang.Brainfuck.Interpreter"
 		},
 		{
+			"path": "Interpreter.Tests",
+			"name": "Esolang.Brainfuck.Interpreter.Tests"
+		},
+		{
 			"path": "Parser",
 			"name": "Esolang.Brainfuck.Parser"
 		},
