@@ -14,6 +14,7 @@ The format is based on Keep a Changelog.
 - Reduced direct Roslyn API usage inside the generator by delegating symbol and diagnostic handling to the new `Status` abstraction.
 - Improved diagnostic consistency across the Brainfuck toolchain, including Hidden diagnostics for missing input/output interfaces (BF0007/BF0008).
 - Enhanced readability and structure of generated C# code by consolidating formatting and emission logic.
+- **Increased overall test coverage to 94.68% by adding missing tests for Processor I/O overloads and Generator return-type/parameter combinations.**
 
 ### Internal
 - Significant internal cleanup of `MethodGenerator.Emit`:
