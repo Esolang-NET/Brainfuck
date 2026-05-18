@@ -366,6 +366,43 @@ partial class TestClass
                 "System.Threading.Tasks.Task",
                 "System.IO.TextWriter output, System.IO.TextReader input",
                 options: "#nullable disable"); // Output + Input (Async)
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_H",
+                "System.Threading.Tasks.ValueTask",
+                "System.IO.TextWriter output, System.IO.TextReader input");
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_I",
+                "System.Threading.Tasks.ValueTask<int>",
+                "System.IO.TextWriter output, string input");
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_J",
+                "int",
+                "System.IO.TextWriter output, string input");
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_K",
+                "string",
+                "System.IO.TextReader input",
+                options: "#nullable disable");
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_L",
+                "System.Threading.Tasks.Task<string>",
+                "System.IO.TextReader input",
+                options: "#nullable disable");
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_M",
+                "System.Threading.Tasks.ValueTask<string?>",
+                "string input",
+                options: "#nullable enable");
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_N",
+                "System.Collections.Generic.IEnumerable<byte>",
+                "string input");
+#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER
+            yield return ReturnTypeAndParameterPatternsTest(
+                "1_O",
+                "System.Collections.Generic.IAsyncEnumerable<byte>",
+                "string input");
+#endif
             static object?[] ReturnTypeAndParameterPatternsTest(string source, string returnType, string parameters = "", string options = "")
                 => [source, returnType, parameters, options];
         }
