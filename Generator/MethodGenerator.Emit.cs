@@ -11,9 +11,9 @@ namespace Esolang.Brainfuck.Generator;
 
 public partial class MethodGenerator
 {
-    static EmittedMethod? Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source, LanguageVersion currentLanguageVersion)
+    static EmittedMethod? Emit(SourceProductionContext context, GeneratorAttributeSyntaxContext source, LanguageVersion currentLanguageVersion, Compilation compilation, KnownTypes types)
     {
-        Status status = new(context, source, currentLanguageVersion);
+        Status status = new(context, source, currentLanguageVersion, compilation, types);
         if (status.HasError)
             return EmitErrorMethod(status);
         return EmitSuccessMethod(status);
@@ -709,8 +709,12 @@ public partial class MethodGenerator
              or ReturnKind.AsyncEnumerableByte;
 
         public readonly IMethodSymbol MethodSymbol { get; }
-        public Status(SourceProductionContext context, GeneratorAttributeSyntaxContext source, LanguageVersion currentLanguageVersion)
+        public readonly Compilation Compilation { get; }
+        public readonly KnownTypes Types { get; }
+        public Status(SourceProductionContext context, GeneratorAttributeSyntaxContext source, LanguageVersion currentLanguageVersion, Compilation compilation, KnownTypes types)
         {
+            Compilation = compilation;
+            Types = types;
             CurrentLanguageVersion = currentLanguageVersion;
             var methodSymbol = (IMethodSymbol)source.TargetSymbol;
             MethodSymbol = methodSymbol;
@@ -741,6 +745,7 @@ public partial class MethodGenerator
             Sequences = sequences;
             if (!TryGetReturnKind(methodSymbol.ReturnType,
                 sequences,
+                types,
                 out var returnKind))
             {
                 InvalidReturnKind = true;
@@ -755,7 +760,8 @@ public partial class MethodGenerator
                 return;
             }
             ReturnKind = returnKind;
-            if (!TryGetParameterOptions(methodSymbol, returnKind, methodSymbol.ReturnType.ToString(), sequences, context, methodDeclarationSyntax, out var parameterOptions, out var dest))
+            if (!TryGetParameterOptions(methodSymbol, returnKind, methodSymbol.ReturnType.ToString(), sequences, context, methodDeclarationSyntax, types, out var parameterOptions, out var dest))
+
             {
                 InvalidParameterOptions = true;
                 Error = dest;
@@ -854,67 +860,38 @@ public partial class MethodGenerator
         static bool TryGetReturnKind(
             ITypeSymbol returnType,
             BrainfuckSequenceEnumerable sequences,
+            KnownTypes types,
             [NotNullWhen(true)] out ReturnKind returnKindResult)
         {
             returnKindResult = default!;
-            var returnType_ = (INamedTypeSymbol)returnType;
-            var typeName = returnType_.ToDisplayString(NullableFlowState.NotNull, SymbolDisplayFormat.FullyQualifiedFormat);
-            var nullable = returnType_.NullableAnnotation;
-            var innerNullable = returnType_.TypeArgumentNullableAnnotations.FirstOrDefault();
-            #region return void 
-            // void
-            const string VOID_TYPE = "void";
-            // int
-            const string INT_TYPE = "int";
-            // Task
-            const string VOID_TASK_TYPE = "global::System.Threading.Tasks.Task";
-            // Task<int>
-            const string INT_TASK_TYPE = "global::System.Threading.Tasks.Task<int>";
-            // ValueTask
-            const string VOID_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask";
-            // ValueTask<int>
-            const string INT_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask<int>";
-            #endregion
-            #region return string
-            // string
-            const string STRING_TYPE = "string";
-            // Task<string>
-            const string STRING_TASK_TYPE = "global::System.Threading.Tasks.Task<string>";
-            // ValueTask<string>
-            const string STRING_VALUETASK_TYPE = "global::System.Threading.Tasks.ValueTask<string>";
-            #endregion
-            #region return enumerable byte
-            // IEnumerable<byte>
-            const string BYTE_ENUMERABLE_TYPE = "global::System.Collections.Generic.IEnumerable<byte>";
-            // IAsyncEnumerable<byte>
-            const string BYTE_ASYNCENUMERABLE_TYPE = "global::System.Collections.Generic.IAsyncEnumerable<byte>";
-            #endregion
-            if ((typeName, nullable, innerNullable, sequences.RequiredOutput) switch
+
+            if (SymbolEqualityComparer.Default.Equals(returnType, types.TaskInt)) returnKindResult = ReturnKind.TaskInt;
+            else if (SymbolEqualityComparer.Default.Equals(returnType, types.Task)) returnKindResult = ReturnKind.Task;
+            else if (SymbolEqualityComparer.Default.Equals(returnType, types.TaskString))
             {
-                #region return void 
-                (VOID_TYPE, _, _, _) => ReturnKind.Void,
-                (INT_TYPE, _, _, _) => ReturnKind.Int,
-                (VOID_TASK_TYPE, _, _, _) => ReturnKind.Task,
-                (INT_TASK_TYPE, _, _, _) => ReturnKind.TaskInt,
-                (VOID_VALUETASK_TYPE, _, _, _) => ReturnKind.ValueTask,
-                (INT_VALUETASK_TYPE, _, _, _) => ReturnKind.ValueTaskInt,
-                #endregion
-                #region return string
-                (STRING_TYPE, NullableAnnotation.None or NullableAnnotation.Annotated, _, _) => ReturnKind.NullableString,
-                (STRING_TYPE, _, _, _) => ReturnKind.String,
-                (STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnKind.TaskNullableString,
-                (STRING_TASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, _, _) => ReturnKind.TaskString,
-                (STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, NullableAnnotation.None or NullableAnnotation.Annotated, _) => ReturnKind.ValueTaskNullableString,
-                (STRING_VALUETASK_TYPE, NullableAnnotation.None or NullableAnnotation.NotAnnotated, _, _) => ReturnKind.ValueTaskString,
-                #endregion
-                #region return enumerable byte
-                (BYTE_ENUMERABLE_TYPE, _, _, _) => ReturnKind.EnumerableByte,
-                (BYTE_ASYNCENUMERABLE_TYPE, _, _, _) => ReturnKind.AsyncEnumerableByte,
-                #endregion
-                _ => (ReturnKind?)null,
-            } is not { } kind)
-                return false;
-            returnKindResult = kind;
+                var named = (INamedTypeSymbol)returnType;
+                var isNullable = named.TypeArguments.FirstOrDefault()?.NullableAnnotation == NullableAnnotation.Annotated;
+                returnKindResult = isNullable ? ReturnKind.TaskNullableString : ReturnKind.TaskString;
+            }
+            else if (SymbolEqualityComparer.Default.Equals(returnType, types.ValueTaskInt)) returnKindResult = ReturnKind.ValueTaskInt;
+            else if (SymbolEqualityComparer.Default.Equals(returnType, types.ValueTask)) returnKindResult = ReturnKind.ValueTask;
+            else if (SymbolEqualityComparer.Default.Equals(returnType, types.ValueTaskString))
+            {
+                var named = (INamedTypeSymbol)returnType;
+                var isNullable = named.TypeArguments.FirstOrDefault()?.NullableAnnotation == NullableAnnotation.Annotated;
+                returnKindResult = isNullable ? ReturnKind.ValueTaskNullableString : ReturnKind.ValueTaskString;
+            }
+            else if (SymbolEqualityComparer.Default.Equals(returnType, types.IEnumerableByte)) returnKindResult = ReturnKind.EnumerableByte;
+            else if (SymbolEqualityComparer.Default.Equals(returnType, types.IAsyncEnumerableByte)) returnKindResult = ReturnKind.AsyncEnumerableByte;
+            else if (SymbolEqualityComparer.Default.Equals(returnType, types.String))
+            {
+                var isNullable = returnType.NullableAnnotation == NullableAnnotation.Annotated;
+                returnKindResult = isNullable ? ReturnKind.NullableString : ReturnKind.String;
+            }
+            else if (returnType.SpecialType == SpecialType.System_Void) returnKindResult = ReturnKind.Void;
+            else if (returnType.SpecialType == SpecialType.System_Int32) returnKindResult = ReturnKind.Int;
+            else return false;
+
             return true;
         }
         static bool TryGetParameterOptions(
@@ -924,17 +901,12 @@ public partial class MethodGenerator
             BrainfuckSequenceEnumerable sequences,
             SourceProductionContext context,
             MethodDeclarationSyntax methodDeclarationSyntax,
+            KnownTypes types,
             [NotNullWhen(true)] out ParameterOptions parameterOptions,
             [NotNullWhen(false)] out (DiagnosticDescriptor Descriptor, string Message) dest)
         {
             parameterOptions = default!;
             dest = default;
-            const string CANCELLATION_TOKEN = "global::System.Threading.CancellationToken";
-            const string STRING_TYPE = "string";
-            const string PIPE_WRITER_TYPE = "global::System.IO.Pipelines.PipeWriter";
-            const string PIPE_READER_TYPE = "global::System.IO.Pipelines.PipeReader";
-            const string TEXT_WRITER_TYPE = "global::System.IO.TextWriter";
-            const string TEXT_READER_TYPE = "global::System.IO.TextReader";
             var variableCancellation = string.Empty;
             var variablePipeWriter = string.Empty;
             var variablePipeReder = string.Empty;
@@ -944,44 +916,41 @@ public partial class MethodGenerator
             List<string>? builder = null;
             foreach (var param in methodSymbol.Parameters)
             {
-                var typeName = param.Type.ToDisplayString(NullableFlowState.NotNull, SymbolDisplayFormat.FullyQualifiedFormat);
+                var type = param.Type;
 
-                if (typeName is CANCELLATION_TOKEN)
+                if (SymbolEqualityComparer.Default.Equals(type, types.CancellationToken))
                 {
                     if (!string.IsNullOrEmpty(variableCancellation))
                     {
                         var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        // Duplicate declarations are not allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
                         return false;
                     }
                     variableCancellation = param.Name;
-                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableCancellation}");
+                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableCancellation}");
                     continue;
                 }
-                if (typeName is STRING_TYPE)
+                if (SymbolEqualityComparer.Default.Equals(type, types.String))
                 {
                     if (!sequences.RequiredInput)
                     {
                         var diagnostic = DiagnosticDescriptors.UnusedInputParameter;
-                        // Input parameter present but source does not use input — report as Hidden.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
                     }
                     if (!string.IsNullOrEmpty(variablePipeReder) || !string.IsNullOrEmpty(variableTextReader))
                     {
                         var diagnostic = DiagnosticDescriptors.NotSupportParameterPattern;
-                        // Only one input source is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
@@ -993,37 +962,34 @@ public partial class MethodGenerator
                     if (!string.IsNullOrEmpty(variableInputString))
                     {
                         var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        // Duplicate declarations are not allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
                         return false;
                     }
                     variableInputString = param.Name;
-                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
+                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
                     continue;
                 }
-                if (typeName is PIPE_READER_TYPE)
+                if (SymbolEqualityComparer.Default.Equals(type, types.PipeReader))
                 {
                     if (!sequences.RequiredInput)
                     {
                         var diagnostic = DiagnosticDescriptors.UnusedInputParameter;
-                        // Input parameter present but source does not use input — report as Hidden.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
                     }
                     if (!string.IsNullOrEmpty(variableInputString) || !string.IsNullOrEmpty(variableTextReader))
                     {
                         var diagnostic = DiagnosticDescriptors.NotSupportParameterPattern;
-                        // Only one input source is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
@@ -1032,7 +998,6 @@ public partial class MethodGenerator
                         dest = (diagnostic, diagnostic.MessageFormat.ToString());
                         return false;
                     }
-                    // Duplicate declarations are not allowed.
                     if (!string.IsNullOrEmpty(variablePipeReder))
                     {
                         var diagnostic = DiagnosticDescriptors.DuplicateParameter;
@@ -1040,32 +1005,30 @@ public partial class MethodGenerator
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
                         return false;
                     }
                     variablePipeReder = param.Name;
-                    (builder ??= []).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeReder}");
+                    (builder ??= []).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeReder}");
                     continue;
                 }
-                if (typeName is TEXT_READER_TYPE)
+                if (SymbolEqualityComparer.Default.Equals(type, types.TextReader))
                 {
                     if (!sequences.RequiredInput)
                     {
                         var diagnostic = DiagnosticDescriptors.UnusedInputParameter;
-                        // Input parameter present but source does not use input - report as Hidden.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
                     }
                     if (!string.IsNullOrEmpty(variableInputString) || !string.IsNullOrEmpty(variablePipeReder))
                     {
                         var diagnostic = DiagnosticDescriptors.NotSupportParameterPattern;
-                        // Only one input source is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
@@ -1077,99 +1040,93 @@ public partial class MethodGenerator
                     if (!string.IsNullOrEmpty(variableTextReader))
                     {
                         var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        // Duplicate declarations are not allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
                         return false;
                     }
                     variableTextReader = param.Name;
-                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextReader}");
+                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextReader}");
                     continue;
                 }
-                if (typeName is PIPE_WRITER_TYPE)
+                if (SymbolEqualityComparer.Default.Equals(type, types.PipeWriter))
                 {
                     if (returnKind is not (ReturnKind.Void or ReturnKind.Task or ReturnKind.ValueTask
                          or ReturnKind.ValueTaskInt or ReturnKind.TaskInt or ReturnKind.Int))
                     {
                         var diagnostic = DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern;
-                        // Not allowed when return type uses string or enumerable mode.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName,
+                                type.ToDisplayString(),
                                 returnTypeName)
                         );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName, returnTypeName));
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString(), returnTypeName));
                         return false;
                     }
                     if (!string.IsNullOrEmpty(variablePipeWriter))
                     {
-                        // Duplicate declarations are not allowed.
                         var diagnostic = DiagnosticDescriptors.DuplicateParameter;
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
                         return false;
                     }
                     if (!string.IsNullOrEmpty(variableTextWriter))
                     {
                         var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        // Only one output sink is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
                         return false;
                     }
                     variablePipeWriter = param.Name;
-                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeWriter}");
+                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeWriter}");
                     continue;
                 }
-                if (typeName is TEXT_WRITER_TYPE)
+                if (SymbolEqualityComparer.Default.Equals(type, types.TextWriter))
                 {
                     if (returnKind is not (ReturnKind.Void or ReturnKind.Task or ReturnKind.ValueTask
                          or ReturnKind.ValueTaskInt or ReturnKind.TaskInt or ReturnKind.Int))
                     {
                         var diagnostic = DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern;
-                        // Not allowed when return type uses string or enumerable mode.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName,
+                                type.ToDisplayString(),
                                 returnTypeName)
                         );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName, returnTypeName));
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString(), returnTypeName));
                         return false;
                     }
                     if (!string.IsNullOrEmpty(variableTextWriter) || !string.IsNullOrEmpty(variablePipeWriter))
                     {
                         var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        // Only one output sink is allowed.
                         context.ReportDiagnostic(
                             Diagnostic.Create(
                                 diagnostic,
                                 methodDeclarationSyntax.GetLocation(),
-                                typeName)
+                                type.ToDisplayString())
                         );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
                         return false;
                     }
                     variableTextWriter = param.Name;
-                    (builder ??= new()).Add($"{param.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextWriter}");
+                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextWriter}");
                     continue;
                 }
                 {
@@ -1178,9 +1135,9 @@ public partial class MethodGenerator
                         Diagnostic.Create(
                             diagnostic,
                             methodDeclarationSyntax.GetLocation(),
-                            typeName)
+                            type.ToDisplayString())
                     );
-                    dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), typeName));
+                    dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
                     return false;
                 }
             }
