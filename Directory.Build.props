@@ -24,7 +24,7 @@
     
     <!-- There is no direct "make path relative" switch; instead map repository paths to a fixed virtual root. -->
     <DeterministicSourceRoot>/_/</DeterministicSourceRoot>
-    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\'))</RepoRoot>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepoRoot>
     
     <!-- Path remapping configuration used for deterministic source paths. -->
     <PathMap>$(RepoRoot)=$(DeterministicSourceRoot)</PathMap>
@@ -38,6 +38,10 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true' and Exists('$(MSBuildThisFileDirectory)icon.png')">
+    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" Visible="false" Link="icon.png" />
+  </ItemGroup>
 
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests')) == 'True'">
     <TestResultsFolderPath>$(MSBuildProjectDirectory)\TestResults</TestResultsFolderPath>

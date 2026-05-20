@@ -25,13 +25,28 @@ As far as we know, this is the first Brainfuck source generator for .NET.
 
 ## Generator Guide
 
-For detailed Generator signatures and patterns (`string`, `TextReader`, `PipeReader`, `TextWriter`, `PipeWriter`, sync/async returns, byte-sequence returns), see:
+For detailed Generator signatures and patterns, see:
 
 - [Generator README](./Generator/README.md)
 
-For runnable examples including `TextReader`/`PipeReader` input, `TextWriter`/`PipeWriter` output, and multiple return patterns, see:
+### Generator Signatures
+
+| Attribute Argument | `partial` Method Parameters (Input) | `partial` Method Return Types (Output) |
+| :--- | :--- | :--- |
+| `string` (Source) | `TextReader?`, `PipeReader?`, `byte[]?` | `void`, `string`, `string?`, `int`, `Task`, `ValueTask`, `IEnumerable<byte>`, `IAsyncEnumerable<byte>` |
+
+For runnable examples, see:
 
 - [UseConsole sample](./samples/Generator.UseConsole/Esolang.Brainfuck.Generator.UseConsole.cs)
+
+## Implementation Status
+
+| Area | Status |
+|---|---|
+| Core Brainfuck instructions | ✅ |
+| `[` `]` matching | ✅ |
+| `TextReader` / `PipeReader` input | ✅ |
+| `TextWriter` / `PipeWriter` output | ✅ |
 
 ## Install
 
@@ -39,7 +54,7 @@ For runnable examples including `TextReader`/`PipeReader` input, `TextWriter`/`P
 dotnet add package Esolang.Brainfuck.Generator
 dotnet add package Esolang.Brainfuck.Parser
 dotnet add package Esolang.Brainfuck.Processor
-dotnet tool install -g dotnet-brainfuck --prerelease
+dotnet tool install -g dotnet-brainfuck
 ```
 
 ## Choose Package
