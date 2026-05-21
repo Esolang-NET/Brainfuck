@@ -4,9 +4,9 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
+using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Linq;
 
 namespace Esolang.Brainfuck.Generator.Tests;
 
@@ -65,61 +65,6 @@ public class MethodGeneratorTests
             references: references,
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         baseCompilation = compilation;
-    }
-
-    [TestMethod]
-    public void LoggerParameterTest()
-    {
-        var source = """
-        using Esolang.Brainfuck;
-        using Microsoft.Extensions.Logging;
-        namespace TestProject;
-        partial static class TestClass
-        {
-            [GenerateBrainfuckMethod("+")]
-            public static partial void SampleMethod(ILogger logger);
-        }
-        """;
-        
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
-        AssertDiagnostics(diagnostics, outputCompilation);
-        
-        var generatedTrees = outputCompilation.SyntaxTrees
-            .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
-            .ToArray();
-        Assert.HasCount(1, generatedTrees);
-        
-        // var generatedSource = generatedTrees[0].ToString();
-        // TODO どうやって logger が有効出るかを判定するか
-        // Assert.Contains("var logger = logger;", generatedSource);
-    }
-
-    
-    [TestMethod]
-    public void LoggerPrimaryConstructorTest()
-    {
-        var source = """
-        using Esolang.Brainfuck;
-        using Microsoft.Extensions.Logging;
-        namespace TestProject;
-        partial class TestClass(ILogger logger)
-        {
-            [GenerateBrainfuckMethod("+")]
-            public static partial void SampleMethod();
-        }
-        """;
-        
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
-        AssertDiagnostics(diagnostics, outputCompilation);
-        
-        var generatedTrees = outputCompilation.SyntaxTrees
-            .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
-            .ToArray();
-        Assert.HasCount(1, generatedTrees);
-        
-        // var generatedSource = generatedTrees[0].ToString();
-        // TODO どうやって logger が有効出るかを判定するか
-        // Assert.Contains("var logger = logger;", generatedSource);
     }
 
     GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics, LanguageVersion languageVersion = LanguageVersion.CSharp11, CancellationToken cancellationToken = default)
@@ -897,7 +842,7 @@ partial class TestClass
         var generatedTree = outputCompilation.SyntaxTrees
             .Single(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal));
         var generatedSource = generatedTree.ToString();
-        Assert.AreEqual(1, generatedSource.Split(new[] { "file class ListDummy<T>" }, StringSplitOptions.None).Length - 1);
+        Assert.Contains("internal static class ListDummyHelper", generatedSource);
     }
 
     [TestMethod]
@@ -939,5 +884,140 @@ partial class TestClass
             var valueTaskInt = (ValueTask<int>)testClassType.GetMethod("ValueTaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
             Assert.AreEqual(0, await valueTaskInt);
         }
+    }
+
+
+    [TestMethod]
+    public async Task LoggerParameterTest()
+    {
+        var source = """
+        using Esolang.Brainfuck;
+        using Microsoft.Extensions.Logging;
+        using System;
+        using System.Collections.Generic;
+
+        namespace TestProject;
+
+        public class FakeLogger : ILogger
+        {
+            public List<string> Logs = new();
+            public IDisposable? BeginScope<TState>(TState state) where TState : notnull { return null; }
+            public bool IsEnabled(LogLevel logLevel) { return true; }
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+            {
+                Logs.Add(formatter(state, exception));
+            }
+        }
+
+        static partial class TestClass
+        {
+            [GenerateBrainfuckMethod("+")]
+            public static partial void SampleMethod(ILogger logger);
+        }
+        """;
+
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
+        AssertDiagnostics(diagnostics, outputCompilation);
+
+        var generatedTrees = outputCompilation.SyntaxTrees
+            .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
+            .ToArray();
+        Assert.HasCount(1, generatedTrees);
+
+        var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
+        await Task.Factory.StartNew(() =>
+        {
+            using (context)
+            {
+                var testClassType = assembly.GetType("TestProject.TestClass");
+                Assert.IsNotNull(testClassType);
+                var fakeLoggerType = assembly.GetType("TestProject.FakeLogger")!;
+                Assert.IsNotNull(fakeLoggerType);
+                var loggerInstance = Activator.CreateInstance(fakeLoggerType);
+                Assert.IsNotNull(loggerInstance);
+
+                var sampleMethod = testClassType.GetMethod("SampleMethod");
+                Assert.IsNotNull(sampleMethod);
+                sampleMethod.Invoke(null, [loggerInstance]);
+                var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
+                Assert.IsNotNull(logs);
+                try
+                {
+                    Assert.IsNotEmpty(logs);
+                    Assert.Contains("Executing command at index 0, value 1", logs);
+                }
+                catch
+                {
+                    OutputSource(outputCompilation.SyntaxTrees);
+                    throw;
+                }
+            }
+        }, CancellationToken);
+    }
+
+    [TestMethod]
+    public async Task LoggerPrimaryConstructorTest()
+    {
+        var source = $$"""
+            using Esolang.Brainfuck;
+            using Microsoft.Extensions.Logging;
+            using System;
+            using System.Collections.Generic;
+
+            namespace TestProject;
+
+            public class FakeLogger : ILogger<string>
+            {
+                public List<string> Logs = new();
+                public IDisposable? BeginScope<TState>(TState state) where TState : notnull { return null; }
+                public bool IsEnabled(LogLevel logLevel) { return true; }
+                public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+                {
+                    Logs.Add(formatter(state, exception));
+                }
+            }
+
+            partial class TestClass(ILogger<string> logger)
+            {
+                [GenerateBrainfuckMethod("+")]
+                public partial void SampleMethod();
+            }
+            """;
+
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, languageVersion: LanguageVersion.CSharp12, cancellationToken: CancellationToken);
+        AssertDiagnostics(diagnostics, outputCompilation);
+
+        var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
+        await Task.Factory.StartNew(() =>
+        {
+            using (context)
+            {
+                var testClassType = assembly.GetType("TestProject.TestClass");
+                Assert.IsNotNull(testClassType);
+                var fakeLoggerType = assembly.GetType("TestProject.FakeLogger")!;
+                Assert.IsNotNull(fakeLoggerType);
+                var loggerInstance = Activator.CreateInstance(fakeLoggerType);
+                Assert.IsNotNull(loggerInstance);
+                var instance = Activator.CreateInstance(testClassType, loggerInstance);
+                Assert.IsNotNull(instance);
+
+                var sampleMethod = testClassType.GetMethod("SampleMethod");
+                Assert.IsNotNull(sampleMethod);
+                sampleMethod.Invoke(instance, null);
+                var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
+                Assert.IsNotNull(logs);
+
+                try
+                {
+                    Assert.IsNotEmpty(logs);
+                    Assert.Contains("Executing command at index 0, value 1", logs);
+                }
+                catch
+                {
+                    OutputSource(outputCompilation.SyntaxTrees);
+                    throw;
+                }
+            }
+        }, CancellationToken);
     }
 }

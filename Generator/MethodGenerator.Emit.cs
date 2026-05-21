@@ -3,7 +3,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using System.Text;
 using static Esolang.Brainfuck.BrainfuckSequence;
 
@@ -528,7 +527,7 @@ public partial class MethodGenerator
             builder.AppendLine($$"""
                 {{space}}static global::System.Memory<T> AsMemory<T>(global::System.Collections.Generic.List<T> self)
                 {{space}}{
-                {{space}}{{SPACE}} return new global::System.Memory<T>(global::System.Runtime.CompilerServices.Unsafe.As<ListDummy<T>>(self).Items).Slice(0, self.Count);
+                {{space}}{{SPACE}} return new global::System.Memory<T>(global::System.Runtime.CompilerServices.Unsafe.As<global::Esolang.Brainfuck.__Generated.ListDummyHelper.ListDummy<T>>(self).Items).Slice(0, self.Count);
                 {{space}}}
                 """);
         }
@@ -580,12 +579,18 @@ public partial class MethodGenerator
                 {{space}}{
                 {{space}}{{SPACE}}var value = {{options.VariableStack}}[{{options.VariableStackIndex}}];
                 {{space}}{{SPACE}}{{options.VariableStack}}[{{options.VariableStackIndex}}] = unchecked((byte)(value + 1));
+                {{(options.HasLoggerParameter ? $$"""
+                {{space}}{{SPACE}}global::Esolang.Brainfuck.__Generated.LoggerUtilities.LogExecuting({{options.VariableLogger}}, {{options.VariableStackIndex}}, {{options.VariableStack}}[{{options.VariableStackIndex}}]);
+                """ : "")}}
                 {{space}}}
                 """,
             DecrementCurrent => $$"""
                 {{space}}{
                 {{space}}{{SPACE}}var value = {{options.VariableStack}}[{{options.VariableStackIndex}}];
                 {{space}}{{SPACE}}{{options.VariableStack}}[{{options.VariableStackIndex}}] = unchecked((byte)(value - 1));
+                {{(options.HasLoggerParameter ? $$"""
+                {{space}}{{SPACE}}global::Esolang.Brainfuck.__Generated.LoggerUtilities.LogExecuting({{options.VariableLogger}}, {{options.VariableStackIndex}}, {{options.VariableStack}}[{{options.VariableStackIndex}}]);
+                """ : "")}}
                 {{space}}}
                 """,
             Begin => $$"""
@@ -748,7 +753,6 @@ public partial class MethodGenerator
             }
             Sequences = sequences;
             if (!TryGetReturnKind(methodSymbol.ReturnType,
-                sequences,
                 types,
                 out var returnKind))
             {
@@ -863,7 +867,6 @@ public partial class MethodGenerator
         }
         static bool TryGetReturnKind(
             ITypeSymbol returnType,
-            BrainfuckSequenceEnumerable sequences,
             KnownTypes types,
             [NotNullWhen(true)] out ReturnKind returnKindResult)
         {
@@ -941,7 +944,7 @@ public partial class MethodGenerator
                     (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableCancellation}");
                     continue;
                 }
-                if (SymbolEqualityComparer.Default.Equals(type, types.ILogger) || (type is INamedTypeSymbol namedType && SymbolEqualityComparer.Default.Equals(namedType.ConstructedFrom, types.ILoggerT)))
+                if (IsLoggerType(type, types))
                 {
                     if (!string.IsNullOrEmpty(variableLogger))
                     {
@@ -1164,6 +1167,10 @@ public partial class MethodGenerator
                     return false;
                 }
             }
+
+            if (string.IsNullOrEmpty(variableLogger))
+                variableLogger = FindLoggerField(methodSymbol.ContainingType, methodSymbol.IsStatic, types, out var _) ?? string.Empty;
+
             parameterOptions = new(
                 ParameterSymbols: builder?.Count > 0 ? string.Join(", ", builder) : string.Empty,
                 VariableCancellation: variableCancellation,
@@ -1177,6 +1184,60 @@ public partial class MethodGenerator
             return true;
         }
 
+    }
+
+
+    static bool IsLoggerType(ITypeSymbol? type, KnownTypes types)
+    {
+        if (type is null) return false;
+        if (IsLoggerSymbol(type, types)) return true;
+        foreach (var iface in type.AllInterfaces)
+        {
+            if (IsLoggerSymbol(iface, types)) return true;
+        }
+        return false;
+    }
+
+    static bool IsLoggerSymbol(ITypeSymbol symbol, KnownTypes types)
+     => SymbolEqualityComparer.Default.Equals(symbol, types.ILogger)
+      || (symbol is INamedTypeSymbol named && named.IsGenericType && SymbolEqualityComparer.Default.Equals(named.ConstructedFrom, types.ILoggerT));
+
+    static string? FindLoggerField(ITypeSymbol? type, bool isStatic, KnownTypes types, out bool isField)
+    {
+        isField = false;
+        var currentType = type;
+        var shadowedNames = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
+        while (currentType != null)
+        {
+            foreach (var field in currentType.GetMembers().OfType<IFieldSymbol>())
+            {
+                if (isStatic && !field.IsStatic) continue;
+
+                if (IsLoggerType(field.Type, types))
+                {
+                    isField = true;
+                    return field.Name;
+                }
+                shadowedNames.Add(field.Name);
+            }
+            currentType = currentType.BaseType;
+        }
+
+        if (type is INamedTypeSymbol namedType)
+        {
+            foreach (var constructor in namedType.InstanceConstructors)
+            {
+                foreach (var parameter in constructor.Parameters)
+                {
+                    if (IsLoggerType(parameter.Type, types) && !shadowedNames.Contains(parameter.Name))
+                    {
+                        isField = false;
+                        return parameter.Name;
+                    }
+                }
+            }
+        }
+        return null;
     }
 }
 internal readonly record struct InternalOptions(
@@ -1210,6 +1271,7 @@ internal readonly record struct InternalOptions(
     public readonly bool HasLoggerParameter => !string.IsNullOrEmpty(VariableLogger);
 
 }
+
 internal readonly record struct ParameterOptions(
     string ParameterSymbols,
     string? VariableCancellation,
@@ -1236,6 +1298,7 @@ internal readonly record struct ParameterOptions(
     public readonly bool HasLoggerParameter => !string.IsNullOrEmpty(VariableLogger);
 
 }
+
 internal enum ParameterType
 {
     None = default,
@@ -1306,9 +1369,4 @@ internal enum ReturnKind
     /// The method returns <see langword="IAsyncEnumerable&lt;byte&gt;"/>, and the generated method body writes output by yielding byte values. The byte values are typically used to represent byte output of the Brainfuck program, but they can also be used for other purposes as needed. If the return type is <see langword="IAsyncEnumerable&lt;byte&gt;"/>, the method can only be used for Brainfuck programs that do not require input, since there is no way to provide input to the method. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
     /// </summary>
     AsyncEnumerableByte,
-    /// <summary>
-    /// The return type of the method is invalid for code generation, and the generator will report a diagnostic error and skip code generation for this method.
-    /// </summary>
-    Invalid,
 }
-

@@ -100,20 +100,27 @@ public partial class MethodGenerator : IIncrementalGenerator
         #pragma warning disable CS1998
 
         """;
-    const string ListDummyDeclaration = "file class ListDummy<T> { internal T[] Items = default!; }";
+    const string ListDummyDeclaration = $$"""
+        namespace Esolang.Brainfuck.__Generated {
+            internal static class ListDummyHelper {
+                internal class ListDummy<T> { internal T[] Items = default!; }
+            }
+        }
+        """;
     const string LoggerUtilityDeclaration = $$"""
-        namespace Esolang.Brainfuck.__Generated;
-        [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
-        internal static class LoggerUtilities
-        {
-            private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, int, byte, global::System.Exception?> ExecutingCommand =
-                global::Microsoft.Extensions.Logging.LoggerMessage.Define<int, byte>(global::Microsoft.Extensions.Logging.LogLevel.Trace, 0, "Executing command at index {Index}, value {Value}");
-
+        namespace Esolang.Brainfuck.__Generated {
             [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
-            public static void LogExecuting(global::Microsoft.Extensions.Logging.ILogger? logger, int index, byte value)
+            internal static class LoggerUtilities
             {
-                if (logger is null || !logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Trace)) return;
-                ExecutingCommand(logger, index, value, null);
+                private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, int, byte, global::System.Exception?> ExecutingCommand =
+                    global::Microsoft.Extensions.Logging.LoggerMessage.Define<int, byte>(global::Microsoft.Extensions.Logging.LogLevel.Trace, 0, "Executing command at index {Index}, value {Value}");
+
+                [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
+                public static void LogExecuting(global::Microsoft.Extensions.Logging.ILogger? logger, int index, byte value)
+                {
+                    if (logger is null || !logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Trace)) return;
+                    ExecutingCommand(logger, index, value, null);
+                }
             }
         }
         """;
