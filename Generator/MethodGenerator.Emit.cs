@@ -45,7 +45,8 @@ public partial class MethodGenerator
             VariableTextWriter: status.ParameterOptions.Value.VariableTextWriter,
             VariablePipeReader: status.ParameterOptions.Value.VariablePipeReader,
             VariableTextReader: status.ParameterOptions.Value.VariableTextReader,
-            VariableInputString: status.ParameterOptions.Value.VariableInputString
+            VariableInputString: status.ParameterOptions.Value.VariableInputString,
+            VariableLogger: status.ParameterOptions.Value.VariableLogger
         );
         var returnTypeSyntax = methodSymbol.ReturnType.ToDisplayString(format);
         var methodBodyCode = GenerateMethodBodyCode(2, status.Sequences, ref writeOption, methodSymbol, status);
@@ -60,7 +61,10 @@ public partial class MethodGenerator
             {{codeForClosingDefinition}}
 
             """;
-        return new EmittedMethod(generatedSourceCode, writeOption.UseListAsMemory);
+        var features = RuntimeFacadeFeatures.None;
+        if (writeOption.UseListAsMemory) features |= RuntimeFacadeFeatures.UseListAsMemory;
+        if (writeOption.HasLoggerParameter) features |= RuntimeFacadeFeatures.UseLogger;
+        return new EmittedMethod(generatedSourceCode, features);
     }
 
     /// <summary>
@@ -95,7 +99,7 @@ public partial class MethodGenerator
         """);
 
 
-        return new EmittedMethod(sb.ToString(), false);
+        return new EmittedMethod(sb.ToString(), RuntimeFacadeFeatures.None);
 
         static string FormatParameter(IParameterSymbol parameter)
         {
@@ -913,6 +917,7 @@ public partial class MethodGenerator
             var variableTextWriter = string.Empty;
             var variableTextReader = string.Empty;
             var variableInputString = string.Empty;
+            var variableLogger = string.Empty;
             List<string>? builder = null;
             foreach (var param in methodSymbol.Parameters)
             {
@@ -934,6 +939,24 @@ public partial class MethodGenerator
                     }
                     variableCancellation = param.Name;
                     (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableCancellation}");
+                    continue;
+                }
+                if (SymbolEqualityComparer.Default.Equals(type, types.ILogger) || (type is INamedTypeSymbol namedType && SymbolEqualityComparer.Default.Equals(namedType.ConstructedFrom, types.ILoggerT)))
+                {
+                    if (!string.IsNullOrEmpty(variableLogger))
+                    {
+                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
+                        context.ReportDiagnostic(
+                            Diagnostic.Create(
+                                diagnostic,
+                                methodDeclarationSyntax.GetLocation(),
+                                type.ToDisplayString())
+                        );
+                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
+                        return false;
+                    }
+                    variableLogger = param.Name;
+                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableLogger}");
                     continue;
                 }
                 if (SymbolEqualityComparer.Default.Equals(type, types.String))
@@ -1148,7 +1171,8 @@ public partial class MethodGenerator
                 VariableTextWriter: variableTextWriter,
                 VariablePipeReader: variablePipeReder,
                 VariableTextReader: variableTextReader,
-                VariableInputString: variableInputString
+                VariableInputString: variableInputString,
+                VariableLogger: variableLogger
             );
             return true;
         }
@@ -1165,6 +1189,7 @@ internal readonly record struct InternalOptions(
     string? VariableTextReader,
     string? VariableCancellationToken,
     string? VariableInputString,
+    string? VariableLogger,
     bool UseListAsMemory = false,
     bool UseAwait = false
 )
@@ -1181,6 +1206,8 @@ internal readonly record struct InternalOptions(
     public readonly bool HasInputStringParameter => !string.IsNullOrEmpty(VariableInputString);
     [MemberNotNullWhen(true, nameof(VariableCancellationToken))]
     public readonly bool HasCancellationTokenParameter => !string.IsNullOrEmpty(VariableCancellationToken);
+    [MemberNotNullWhen(true, nameof(VariableLogger))]
+    public readonly bool HasLoggerParameter => !string.IsNullOrEmpty(VariableLogger);
 
 }
 internal readonly record struct ParameterOptions(
@@ -1190,7 +1217,8 @@ internal readonly record struct ParameterOptions(
     string? VariableTextWriter,
     string? VariablePipeReader,
     string? VariableTextReader,
-    string? VariableInputString
+    string? VariableInputString,
+    string? VariableLogger
 )
 {
 
@@ -1204,6 +1232,8 @@ internal readonly record struct ParameterOptions(
     public readonly bool HasTextReaderParameter => !string.IsNullOrEmpty(VariableTextReader);
     [MemberNotNullWhen(true, nameof(VariableInputString))]
     public readonly bool HasInputStringParameter => !string.IsNullOrEmpty(VariableInputString);
+    [MemberNotNullWhen(true, nameof(VariableLogger))]
+    public readonly bool HasLoggerParameter => !string.IsNullOrEmpty(VariableLogger);
 
 }
 internal enum ParameterType

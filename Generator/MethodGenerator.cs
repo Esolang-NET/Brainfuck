@@ -45,6 +45,8 @@ public partial class MethodGenerator : IIncrementalGenerator
         public readonly INamedTypeSymbol? TextReader;
         public readonly INamedTypeSymbol? TextWriter;
         public readonly INamedTypeSymbol? CancellationToken;
+        public readonly INamedTypeSymbol? ILogger;
+        public readonly INamedTypeSymbol? ILoggerT;
 
         public KnownTypes(Compilation compilation)
         {
@@ -73,6 +75,8 @@ public partial class MethodGenerator : IIncrementalGenerator
             TextReader = GetBestTypeByMetadataName(compilation, "System.IO.TextReader");
             TextWriter = GetBestTypeByMetadataName(compilation, "System.IO.TextWriter");
             CancellationToken = GetBestTypeByMetadataName(compilation, "System.Threading.CancellationToken");
+            ILogger = GetBestTypeByMetadataName(compilation, "Microsoft.Extensions.Logging.ILogger");
+            ILoggerT = GetBestTypeByMetadataName(compilation, "Microsoft.Extensions.Logging.ILogger`1");
         }
 
         private static INamedTypeSymbol? GetBestTypeByMetadataName(Compilation compilation, string metadataName)
@@ -97,7 +101,15 @@ public partial class MethodGenerator : IIncrementalGenerator
 
         """;
     const string ListDummyDeclaration = "file class ListDummy<T> { internal T[] Items = default!; }";
-    readonly record struct EmittedMethod(string Source, bool UseListAsMemory);
+    [Flags]
+    enum RuntimeFacadeFeatures
+    {
+        None = 0,
+        UseListAsMemory = 1 << 0,
+        UseLogger = 1 << 1,
+    }
+
+    readonly record struct EmittedMethod(string Source, RuntimeFacadeFeatures Features);
 
     /// <summary>
     /// Initializes the generator and registers the attribute and method generation pipeline.
@@ -164,7 +176,7 @@ public partial class MethodGenerator : IIncrementalGenerator
                 return;
 
             var builder = new System.Text.StringBuilder();
-            var useListAsMemory = false;
+            var features = RuntimeFacadeFeatures.None;
             foreach (var source in sources)
             {
                 var generated = Emit(context, source, currentLanguageVersion, compilation, types);
@@ -176,10 +188,10 @@ public partial class MethodGenerator : IIncrementalGenerator
                 else
                     builder.Append("\n\n");
                 builder.Append(method.Source);
-                useListAsMemory |= method.UseListAsMemory;
+                features |= method.Features;
             }
 
-            if (useListAsMemory)
+            if (features.HasFlag(RuntimeFacadeFeatures.UseListAsMemory))
             {
                 if (builder.Length > 0)
                     builder.Append("\n\n");

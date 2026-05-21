@@ -47,6 +47,7 @@
     <TestResultsFolderPath>$(MSBuildProjectDirectory)\TestResults</TestResultsFolderPath>
     <NoWarn>$(NoWarn);RS1035</NoWarn>
     <OutputType>Exe</OutputType>
-    <EnableMSTestRunner>true</EnableMSTestRunner> 
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 </Project>

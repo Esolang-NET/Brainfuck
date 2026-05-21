@@ -1,10 +1,12 @@
-﻿using Basic.Reference.Assemblies;
+using Basic.Reference.Assemblies;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
 using System.Reflection;
 using System.Text;
+using System.Linq;
 
 namespace Esolang.Brainfuck.Generator.Tests;
 
@@ -35,17 +37,22 @@ public class MethodGeneratorTests
 #elif NET472_OR_GREATER
             Net472.References.All
 #endif
-#if NET47_OR_GREATER || NET5_0 || NET6_0 || NET7_0 || NET8_0 
+#if NET47_OR_GREATER || NET5_0_OR_GREATER
                 .Concat(
                     Enumerable.Empty<string>()
 #if NET5_0 || NET6_0 || NET7_0 || NET8_0 
-                    .Append(typeof(System.IO.Pipelines.Pipe).Assembly.Location)
+                    .Append(typeof(Pipe).Assembly.Location)
+                    .Append(typeof(ILogger).Assembly.Location)
+
+#elif NET9_0_OR_GREATER
+                    .Append(typeof(ILogger).Assembly.Location)
 #elif NET472_OR_GREATER
-                    .Append(typeof(System.IO.Pipelines.Pipe).Assembly.Location)
+                    .Append(typeof(Pipe).Assembly.Location)
                     .Append(typeof(Span<>).Assembly.Location)
                     .Append(typeof(System.Runtime.CompilerServices.Unsafe).Assembly.Location)
                     .Append(typeof(ValueTask<>).Assembly.Location)
                     .Append(typeof(IAsyncEnumerable<>).Assembly.Location)
+                    .Append(typeof(ILogger).Assembly.Location)
 #else
                     .Append(throw new InvalidOperationException())
 #endif
@@ -58,6 +65,61 @@ public class MethodGeneratorTests
             references: references,
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         baseCompilation = compilation;
+    }
+
+    [TestMethod]
+    public void LoggerParameterTest()
+    {
+        var source = """
+        using Esolang.Brainfuck;
+        using Microsoft.Extensions.Logging;
+        namespace TestProject;
+        partial static class TestClass
+        {
+            [GenerateBrainfuckMethod("+")]
+            public static partial void SampleMethod(ILogger logger);
+        }
+        """;
+        
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
+        AssertDiagnostics(diagnostics, outputCompilation);
+        
+        var generatedTrees = outputCompilation.SyntaxTrees
+            .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
+            .ToArray();
+        Assert.HasCount(1, generatedTrees);
+        
+        // var generatedSource = generatedTrees[0].ToString();
+        // TODO どうやって logger が有効出るかを判定するか
+        // Assert.Contains("var logger = logger;", generatedSource);
+    }
+
+    
+    [TestMethod]
+    public void LoggerPrimaryConstructorTest()
+    {
+        var source = """
+        using Esolang.Brainfuck;
+        using Microsoft.Extensions.Logging;
+        namespace TestProject;
+        partial class TestClass(ILogger logger)
+        {
+            [GenerateBrainfuckMethod("+")]
+            public static partial void SampleMethod();
+        }
+        """;
+        
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
+        AssertDiagnostics(diagnostics, outputCompilation);
+        
+        var generatedTrees = outputCompilation.SyntaxTrees
+            .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
+            .ToArray();
+        Assert.HasCount(1, generatedTrees);
+        
+        // var generatedSource = generatedTrees[0].ToString();
+        // TODO どうやって logger が有効出るかを判定するか
+        // Assert.Contains("var logger = logger;", generatedSource);
     }
 
     GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics, LanguageVersion languageVersion = LanguageVersion.CSharp11, CancellationToken cancellationToken = default)
