@@ -112,17 +112,19 @@ public class MethodGeneratorTests
         // Run the generator
         return driver.RunGeneratorsAndUpdateCompilation(compilation, out outputCompilation, out diagnostics, cancellationToken);
     }
+    void LogWriteLine(string message) => TestContext.WriteLine(message);
+
     (TestShared.AssemblyLoadContext Context, Assembly Assembly) Emit(Compilation compilation, TestShared.AssemblyLoadContext? context = null, CancellationToken cancellationToken = default)
     {
         using var stream = new MemoryStream();
         using var pdbStream = new MemoryStream();
         var emitResult = compilation.Emit(stream, pdbStream: pdbStream, cancellationToken: cancellationToken);
         if (!emitResult.Success)
-            AssertDiagnostics(emitResult.Diagnostics, compilation);
+            AssertNoErrors(emitResult.Diagnostics, compilation);
         Assert.IsTrue(emitResult.Success);
         stream.Seek(0, SeekOrigin.Begin);
         pdbStream.Seek(0, SeekOrigin.Begin);
-        TestContext.WriteLine($"assembly Length:{stream.Length}");
+        LogWriteLine($"assembly Length:{stream.Length}");
         var isNew = context is null;
         context ??= new TestShared.AssemblyLoadContext();
         try
@@ -140,15 +142,15 @@ public class MethodGeneratorTests
     {
         foreach (var tree in syntaxTrees)
         {
-            TestContext.WriteLine($"FilePath:{tree.FilePath}\r\nsource:↓\r\n{tree}");
+            LogWriteLine($"FilePath:{tree.FilePath}\r\nsource:↓\r\n{tree}");
         }
     }
     void OutputDiagnostics(ImmutableArray<Diagnostic> diagnostics)
     {
         foreach (var diagnostic in diagnostics)
-            TestContext.WriteLine($"{diagnostic}");
+            LogWriteLine($"{diagnostic}");
     }
-    void AssertDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
+    void AssertNoErrors(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
     {
         if (!diagnostics.IsEmpty)
         {
@@ -195,9 +197,9 @@ partial class TestClass
 }
 """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertDiagnostics(diagnostics, outputCompilation);
+        AssertNoErrors(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
         var (context, assembly) = Emit(outputCompilation, cancellationToken: cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         using (context)
@@ -215,6 +217,7 @@ partial class TestClass
                 }
                 catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
                 {
+                    LogWriteLine($"Logs:\n{string.Join("\n", outputCompilation.GetDiagnostics())}\n");
                     OutputSource(outputCompilation.SyntaxTrees);
                     throw;
                 }
@@ -638,9 +641,9 @@ partial class TestClass
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertDiagnostics(diagnostics, outputCompilation);
+        AssertNoErrors(diagnostics, outputCompilation);
         Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
-        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
     }
 
     [TestMethod]
@@ -656,9 +659,9 @@ partial class TestClass
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertDiagnostics(diagnostics, outputCompilation);
+        AssertNoErrors(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
     }
 
     [TestMethod]
@@ -676,9 +679,9 @@ partial class TestClass
         }
         """";
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertDiagnostics(diagnostics, outputCompilation);
+        AssertNoErrors(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
     }
 
     [TestMethod]
@@ -699,9 +702,9 @@ partial class TestClass
         """;
 
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertDiagnostics(diagnostics, outputCompilation);
+        AssertNoErrors(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
 
         var generatedTrees = outputCompilation.SyntaxTrees
             .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
@@ -835,9 +838,9 @@ partial class TestClass
         """;
 
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertDiagnostics(diagnostics, outputCompilation);
+        AssertNoErrors(diagnostics, outputCompilation);
         Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertDiagnostics(outputCompilation.GetDiagnostics(), outputCompilation);
+        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
 
         var generatedTree = outputCompilation.SyntaxTrees
             .Single(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal));
@@ -917,7 +920,7 @@ partial class TestClass
         """;
 
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
-        AssertDiagnostics(diagnostics, outputCompilation);
+        AssertNoErrors(diagnostics, outputCompilation);
 
         var generatedTrees = outputCompilation.SyntaxTrees
             .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
@@ -986,7 +989,7 @@ partial class TestClass
             """;
 
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, languageVersion: LanguageVersion.CSharp12, cancellationToken: CancellationToken);
-        AssertDiagnostics(diagnostics, outputCompilation);
+        AssertNoErrors(diagnostics, outputCompilation);
 
         var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
         await Task.Factory.StartNew(() =>
@@ -1015,9 +1018,7 @@ partial class TestClass
                 }
                 catch
                 {
-                    TestContext.WriteLine($"Logs:\n{string.Join("\n", logs)}\n");
-                    OutputSource(outputCompilation.SyntaxTrees);
-                    throw;
+                    LogWriteLine(e.ToString());
                 }
             }
         }, CancellationToken);
