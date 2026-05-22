@@ -68,34 +68,7 @@ public class MethodGeneratorTests
 
     GeneratorDriver RunGeneratorsAndUpdateCompilation(string source, out Compilation outputCompilation, out ImmutableArray<Diagnostic> diagnostics, LanguageVersion languageVersion = LanguageVersion.CSharp11, CancellationToken cancellationToken = default)
     {
-        string[] preprocessorSymbols = [
-#if NETCOREAPP3_0_OR_GREATER
-            "NETCOREAPP3_0_OR_GREATER",
-#endif
-#if NETSTANDARD2_1
-            "NETSTANDARD2_1",
-#endif
-#if NETSTANDARD2_1_OR_GREATER
-            "NETSTANDARD2_1_OR_GREATER",
-#endif
-#if NET5_0_OR_GREATER
-            "NET5_0_OR_GREATER",
-#endif
-#if NET7_0_OR_GREATER
-            "NET7_0_OR_GREATER",
-#endif
-#if NET8_0_OR_GREATER
-            "NET8_0_OR_GREATER",
-#endif
-#if NET9_0_OR_GREATER
-            "NET9_0_OR_GREATER",
-#endif
-#if NET10_0_OR_GREATER
-            "NET10_0_OR_GREATER",
-#endif
-        ];
-
-        var parseOptions = new CSharpParseOptions(languageVersion, preprocessorSymbols: preprocessorSymbols);
+        var parseOptions = new CSharpParseOptions(languageVersion);
 
         GeneratorDriver driver;
         {
@@ -804,10 +777,8 @@ public class MethodGeneratorTests
             [GenerateBrainfuckMethod("+")]
             public static partial IEnumerable<byte> EnumerableMethod();
 
-            #if NETCOREAPP3_0_OR_GREATER
             [GenerateBrainfuckMethod("+")]
             public static partial IAsyncEnumerable<byte> AsyncEnumerableMethod();
-            #endif
 
             [GenerateBrainfuckMethod("+")]
             public static partial Task PipeWriterMethod(PipeWriter output, CancellationToken cancellationToken = default);
@@ -847,19 +818,18 @@ public class MethodGeneratorTests
                 TestContext.WriteLine("ValueTask await completed");
 
                 TestContext.WriteLine("=== EnumerableMethod ===");
-                var enumerable = (IEnumerable<byte>)testClassType.GetMethod("EnumerableMethod")!.Invoke(null, Array.Empty<object?>())!;
+                var enumerable = (IEnumerable<byte>)testClassType.GetMethod("EnumerableMethod")!.Invoke(null, [])!;
                 CollectionAssert.AreEqual(Array.Empty<byte>(), enumerable.ToArray());
 
-#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER
                 TestContext.WriteLine("=== AsyncEnumerableMethod ===");
-                var asyncEnumerable = (IAsyncEnumerable<byte>)testClassType.GetMethod("AsyncEnumerableMethod")!.Invoke(null, Array.Empty<object?>())!;
+                var asyncEnumerable = testClassType.GetMethod("AsyncEnumerableMethod")?.Invoke(null, []) as IAsyncEnumerable<byte>;
+                Assert.IsNotNull(asyncEnumerable);
                 var asyncBytes = new List<byte>();
                 await foreach (var item in asyncEnumerable)
                 {
                     asyncBytes.Add(item);
                 }
                 CollectionAssert.AreEqual(Array.Empty<byte>(), asyncBytes.ToArray());
-#endif
 
                 TestContext.WriteLine("=== PipeWriterMethod ===");
                 // Skip the complex PipeWriter test to avoid deadlock
