@@ -935,19 +935,20 @@ partial class TestClass
                 Assert.IsNotNull(fakeLoggerType);
                 var loggerInstance = Activator.CreateInstance(fakeLoggerType);
                 Assert.IsNotNull(loggerInstance);
-
-                var sampleMethod = testClassType.GetMethod("SampleMethod");
-                Assert.IsNotNull(sampleMethod);
-                sampleMethod.Invoke(null, [loggerInstance]);
                 var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
                 Assert.IsNotNull(logs);
+
                 try
                 {
+                    var sampleMethod = testClassType.GetMethod("SampleMethod");
+                    Assert.IsNotNull(sampleMethod);
+                    sampleMethod.Invoke(null, [loggerInstance]);
                     Assert.IsNotEmpty(logs);
-                    Assert.Contains("Executing command at index 0, value 1", logs);
+                    Assert.Contains("IP 0: '+' [Pointer: 0, Value: 1]", logs);
                 }
                 catch
                 {
+                    TestContext.WriteLine($"Logs:\n{string.Join("\n", logs)}\n");
                     OutputSource(outputCompilation.SyntaxTrees);
                     throw;
                 }
@@ -998,22 +999,23 @@ partial class TestClass
                 Assert.IsNotNull(fakeLoggerType);
                 var loggerInstance = Activator.CreateInstance(fakeLoggerType);
                 Assert.IsNotNull(loggerInstance);
+                var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
+                Assert.IsNotNull(logs);
                 var instance = Activator.CreateInstance(testClassType, loggerInstance);
                 Assert.IsNotNull(instance);
 
-                var sampleMethod = testClassType.GetMethod("SampleMethod");
-                Assert.IsNotNull(sampleMethod);
-                sampleMethod.Invoke(instance, null);
-                var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
-                Assert.IsNotNull(logs);
-
                 try
                 {
+                    var sampleMethod = testClassType.GetMethod("SampleMethod");
+                    Assert.IsNotNull(sampleMethod);
+                    sampleMethod.Invoke(instance, null);
+                
                     Assert.IsNotEmpty(logs);
-                    Assert.Contains("Executing command at index 0, value 1", logs);
+                    Assert.Contains("IP 0: '+' [Pointer: 0, Value: 1]", logs);
                 }
                 catch
                 {
+                    TestContext.WriteLine($"Logs:\n{string.Join("\n", logs)}\n");
                     OutputSource(outputCompilation.SyntaxTrees);
                     throw;
                 }

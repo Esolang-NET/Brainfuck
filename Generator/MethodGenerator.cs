@@ -112,14 +112,17 @@ public partial class MethodGenerator : IIncrementalGenerator
             [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
             internal static class LoggerUtilities
             {
-                private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, int, byte, global::System.Exception?> ExecutingCommand =
-                    global::Microsoft.Extensions.Logging.LoggerMessage.Define<int, byte>(global::Microsoft.Extensions.Logging.LogLevel.Trace, 0, "Executing command at index {Index}, value {Value}");
+                private static readonly global::System.Action<global::Microsoft.Extensions.Logging.ILogger, int, char, int, byte, global::System.Exception?> ExecutingCommand =
+                    global::Microsoft.Extensions.Logging.LoggerMessage.Define<int, char, int, byte>(
+                        global::Microsoft.Extensions.Logging.LogLevel.Trace,
+                        new global::Microsoft.Extensions.Logging.EventId(1, "ExecutingCommand"),
+                        "IP {IP}: '{Command}' [Pointer: {Pointer}, Value: {Value}]");
 
                 [global::System.ComponentModel.EditorBrowsable(global::System.ComponentModel.EditorBrowsableState.Never)]
-                public static void LogExecuting(global::Microsoft.Extensions.Logging.ILogger? logger, int index, byte value)
+                public static void LogInstruction(global::Microsoft.Extensions.Logging.ILogger? logger, int ip, char command, int pointer, byte value)
                 {
                     if (logger is null || !logger.IsEnabled(global::Microsoft.Extensions.Logging.LogLevel.Trace)) return;
-                    ExecutingCommand(logger, index, value, null);
+                    ExecutingCommand(logger, ip, command, pointer, value, null);
                 }
             }
         }

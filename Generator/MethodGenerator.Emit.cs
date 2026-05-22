@@ -543,73 +543,88 @@ public partial class MethodGenerator
             {
                 if (simple is { Value: Begin or End })
                 {
-                    WriteComment(indent, Comment, simple.Syntax, builder);
+                    WriteComment(indent, simple.Index, Comment, simple.Syntax, builder);
                     continue;
                 }
-                WriteSequence(indent, simple.Value, simple.Syntax, builder, ref options, status);
+                WriteSequence(indent, simple.Index, simple.Value, simple.Syntax, builder, ref options, status);
                 continue;
             }
             if (sequence is NestableSequence nested)
             {
                 var begin = nested.Begin;
-                WriteSequence(indent, begin.Value, begin.Syntax, builder, ref options, status);
+                WriteSequence(indent, begin.Index, begin.Value, begin.Syntax, builder, ref options, status);
                 WriteNest(indent + 1, nested.Nest, builder, ref options, status);
                 var end = nested.End;
-                WriteSequence(indent, end.Value, end.Syntax, builder, ref options, status);
+                WriteSequence(indent, end.Index, end.Value, end.Syntax, builder, ref options, status);
                 continue;
             }
         }
     }
-    static void WriteSequence(int indent, BrainfuckSequence sequence, ReadOnlyMemory<char> syntax, StringBuilder builder, ref InternalOptions options, in Status status)
+    static void WriteSequence(int indent, int id, BrainfuckSequence sequence, ReadOnlyMemory<char> syntax, StringBuilder builder, ref InternalOptions options, in Status status)
     {
-        WriteComment(indent, sequence, syntax, builder);
+        WriteComment(indent, id, sequence, syntax, builder);
         var space = string.Join("", Enumerable.Range(0, indent).Select(v => SPACE));
         var withCancel = options.HasCancellationTokenParameter ? ", " + options.VariableCancellationToken : string.Empty;
 
+        var variableLogger = options.HasLoggerParameter ? options.VariableLogger : null;
+        var variableStackIndex = options.VariableStackIndex;
+        var variableStack = options.VariableStack;
+        Func<BrainfuckSequence, string, string> logCall = variableLogger is not null
+            ? (seq, s) =>
+                $"{s}global::Esolang.Brainfuck.__Generated.LoggerUtilities.LogInstruction({variableLogger}, {id}, '{seq switch { IncrementPointer => '>', DecrementPointer => '<', IncrementCurrent => '+', DecrementCurrent => '-', Output => '.', Input => ',', Begin => '[', End => ']', _ => '?' }}', {variableStackIndex}, {variableStack}[{variableStackIndex}]);\n"
+            : (_1, _2) => string.Empty;
+
         if (sequence switch
         {
-            IncrementPointer => $"""
-                {space}{options.VariableStackIndex}++;
-                {space}if ({options.VariableStack}.Count >= {options.VariableStackIndex}) {options.VariableStack}.Add(0);
+            IncrementPointer => $$"""
+                {{space}}{{options.VariableStackIndex}}++;
+                {{space}}if ({{options.VariableStack}}.Count <= {{options.VariableStackIndex}}) {{options.VariableStack}}.Add(0);
+                {{logCall(IncrementPointer, space)}}
                 """,
-            DecrementPointer => $"""
-                {space}if ({options.VariableStackIndex} > 0){options.VariableStackIndex}--;
+            DecrementPointer => $$"""
+                {{space}}if ({{options.VariableStackIndex}} > 0){{options.VariableStackIndex}}--;
+                {{logCall(DecrementPointer, space)}}
                 """,
             IncrementCurrent => $$"""
                 {{space}}{
                 {{space}}{{SPACE}}var value = {{options.VariableStack}}[{{options.VariableStackIndex}}];
                 {{space}}{{SPACE}}{{options.VariableStack}}[{{options.VariableStackIndex}}] = unchecked((byte)(value + 1));
-                {{(options.HasLoggerParameter ? $$"""
-                {{space}}{{SPACE}}global::Esolang.Brainfuck.__Generated.LoggerUtilities.LogExecuting({{options.VariableLogger}}, {{options.VariableStackIndex}}, {{options.VariableStack}}[{{options.VariableStackIndex}}]);
-                """ : "")}}
+                {{logCall(IncrementCurrent, space + SPACE)}}
                 {{space}}}
                 """,
             DecrementCurrent => $$"""
                 {{space}}{
                 {{space}}{{SPACE}}var value = {{options.VariableStack}}[{{options.VariableStackIndex}}];
                 {{space}}{{SPACE}}{{options.VariableStack}}[{{options.VariableStackIndex}}] = unchecked((byte)(value - 1));
-                {{(options.HasLoggerParameter ? $$"""
-                {{space}}{{SPACE}}global::Esolang.Brainfuck.__Generated.LoggerUtilities.LogExecuting({{options.VariableLogger}}, {{options.VariableStackIndex}}, {{options.VariableStack}}[{{options.VariableStackIndex}}]);
-                """ : "")}}
+                {{logCall(DecrementCurrent, space + SPACE)}}
                 {{space}}}
                 """,
             Begin => $$"""
+                {{logCall(Begin, space)}}
                 {{space}}while({{options.VariableStack}}[{{options.VariableStackIndex}}] is not 0) {
                 """,
             End => $$"""
+                {{logCall(End, space + SPACE)}}
                 {{space}}}
                 """,
-            Input => SimpleInput(ref options, status),
+            Input => $$"""
+                {{SimpleInput(ref options, status)}}
+                {{logCall(Input, space)}}
+                """,
             Output => status switch
             {
-                { ReturnKind: ReturnKind.EnumerableByte or ReturnKind.AsyncEnumerableByte } => $"""
-                {space}yield return {options.VariableStack}[{options.VariableStackIndex}];
+                { ReturnKind: ReturnKind.EnumerableByte or ReturnKind.AsyncEnumerableByte } => $$"""
+                {{space}}yield return {{options.VariableStack}}[{{options.VariableStackIndex}}];
+                {{logCall(Output, space)}}
                 """,
-                _ => SimpleOutput(ref options, status),
+                _ => $$"""
+                {{SimpleOutput(ref options, status)}}
+                {{logCall(Output, space)}}
+                """,
             },
             _ => null,
         } is { } text1)
-            builder.AppendLine(text1);
+            builder.AppendLine(text1.TrimEnd('\r', '\n'));
         string SimpleInput(ref InternalOptions options, in Status status)
         {
             options = options with
@@ -666,11 +681,11 @@ public partial class MethodGenerator
                 """;
         }
     }
-    static void WriteComment(int indent, BrainfuckSequence sequence, ReadOnlyMemory<char> syntax, StringBuilder builder)
+    static void WriteComment(int indent, int index, BrainfuckSequence sequence, ReadOnlyMemory<char> syntax, StringBuilder builder)
     {
         var space = string.Join("", Enumerable.Range(0, indent).Select(v => SPACE));
         var comment = syntax.ToString().Replace("\r", "\\r").Replace("\n", "\\n");
-        builder.AppendLine($"{space}// {sequence}:{comment}");
+        builder.AppendLine($"{space}// {index} {sequence}:{comment}");
     }
 
     readonly struct Status
