@@ -4,7 +4,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Logging;
 using System.Collections.Immutable;
 using System.IO.Pipelines;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 
@@ -138,36 +137,45 @@ public class MethodGeneratorTests
             throw;
         }
     }
-    void OutputSource(IEnumerable<SyntaxTree> syntaxTrees)
+
+    void LogSource(IEnumerable<SyntaxTree> syntaxTrees)
     {
         foreach (var tree in syntaxTrees)
         {
             LogWriteLine($"FilePath:{tree.FilePath}\r\nsource:↓\r\n{tree}");
         }
     }
-    void OutputDiagnostics(ImmutableArray<Diagnostic> diagnostics)
+
+    void LogSource(Compilation compilation) => LogSource(compilation.SyntaxTrees);
+
+    void LogDiagnostics(ImmutableArray<Diagnostic> diagnostics)
     {
+        if (diagnostics.IsEmpty) return;
         foreach (var diagnostic in diagnostics)
             LogWriteLine($"{diagnostic}");
     }
+
+    void LogDiagnostics(Compilation compilation) => LogDiagnostics(compilation.GetDiagnostics(CancellationToken));
+
+    void LogDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
+    {
+        LogDiagnostics(diagnostics);
+        LogDiagnostics(compilation);
+        LogSource(compilation);
+    }
+
     void AssertNoErrors(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
     {
-        if (!diagnostics.IsEmpty)
-        {
-            OutputDiagnostics(diagnostics);
-            OutputSource(compilation.SyntaxTrees);
-        }
         Assert.IsTrue(diagnostics.IsEmpty);
+        var diagnostics2 = compilation.GetDiagnostics(CancellationToken);
+        Assert.IsTrue(diagnostics2.IsEmpty);
     }
     void AssertNonHiddenDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
     {
         var significant = diagnostics.Where(d => d.Severity > DiagnosticSeverity.Hidden).ToImmutableArray();
-        if (!significant.IsEmpty)
-        {
-            OutputDiagnostics(significant);
-            OutputSource(compilation.SyntaxTrees);
-        }
         Assert.IsTrue(significant.IsEmpty);
+        var diagnostics2 = compilation.GetDiagnostics(CancellationToken).Where(d => d.Severity > DiagnosticSeverity.Hidden).ToImmutableArray();
+        Assert.IsTrue(diagnostics2.IsEmpty);
     }
     static IEnumerable<object?[]> SourceGeneratorTest1Data
     {
@@ -181,48 +189,54 @@ public class MethodGeneratorTests
     }
     [TestMethod]
     [DynamicData(nameof(SourceGeneratorTest1Data))]
+    [Timeout(30000, CooperativeCancellation = true)]
     public async Task SourceGeneratorTest(string source, string? expected)
     {
-        TestContext.CancellationTokenSource.CancelAfter(TimeSpan.FromSeconds(30));
-        var cancellationToken = TestContext.CancellationTokenSource.Token;
-        source =
-$$"""
-using Esolang.Brainfuck;
-namespace TestProject;
-#nullable enable
-partial class TestClass
-{
-    [GenerateBrainfuckMethod("{{source}}")]
-    public static partial string? SampleMethod();
-}
-""";
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertNoErrors(diagnostics, outputCompilation);
-        Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
-        var (context, assembly) = Emit(outputCompilation, cancellationToken: cancellationToken);
-        cancellationToken.ThrowIfCancellationRequested();
-        using (context)
+        source = $$"""
+        using Esolang.Brainfuck;
+        namespace TestProject;
+        #nullable enable
+        partial class TestClass
         {
-            await Task.Factory.StartNew(() =>
+            [GenerateBrainfuckMethod("{{source}}")]
+            public static partial string? SampleMethod();
+        }
+        """;
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
+        try
+        {
+
+            AssertNoErrors(diagnostics, outputCompilation);
+            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
+            CancellationToken.ThrowIfCancellationRequested();
+            using (context)
             {
-                var testClassType = assembly.GetType("TestProject.TestClass");
-                Assert.IsNotNull(testClassType);
-                var sampleMethod = testClassType.GetMethod("SampleMethod");
-                Assert.IsNotNull(sampleMethod);
-                try
+                await Task.Factory.StartNew(() =>
                 {
-                    var actual = (string?)sampleMethod.Invoke(null, Array.Empty<object?>());
-                    Assert.AreEqual(expected, actual);
-                }
-                catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
-                {
-                    LogWriteLine($"Logs:\n{string.Join("\n", outputCompilation.GetDiagnostics())}\n");
-                    OutputSource(outputCompilation.SyntaxTrees);
-                    throw;
-                }
-            }, cancellationToken, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
-            cancellationToken.ThrowIfCancellationRequested();
+                    var testClassType = assembly.GetType("TestProject.TestClass");
+                    Assert.IsNotNull(testClassType);
+                    var sampleMethod = testClassType.GetMethod("SampleMethod");
+                    Assert.IsNotNull(sampleMethod);
+                    try
+                    {
+                        var actual = (string?)sampleMethod.Invoke(null, Array.Empty<object?>());
+                        Assert.AreEqual(expected, actual);
+                    }
+                    catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+                    {
+                        LogWriteLine($"Logs:\n{string.Join("\n", outputCompilation.GetDiagnostics())}\n");
+                        throw;
+                    }
+                }, CancellationToken, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
+                CancellationToken.ThrowIfCancellationRequested();
+            }
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
         }
     }
     static IEnumerable<object?[]> ReturnTypeAndParameterPatternsTestData
@@ -432,10 +446,18 @@ partial class TestClass
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        // BF0009 (Hidden) may be reported for unused input parameters; allow Hidden.
-        AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
-        Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertDiagnostics(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
+        try
+        {
+            // BF0009 (Hidden) may be reported for unused input parameters; allow Hidden.
+            AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
+            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+            AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
+        }
     }
     static IEnumerable<object?[]> DiagnoticsTestData
     {
@@ -549,18 +571,17 @@ partial class TestClass
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        Assert.IsFalse(diagnostics.IsEmpty, $"diagnostics is empty required {expected}");
         try
         {
+            Assert.IsFalse(diagnostics.IsEmpty, $"diagnostics is empty required {expected}");
             CollectionAssert.AreEqual(new[] { expected }, diagnostics.Select(v => v.Id).ToArray());
+            Assert.HasCount(sourceCount, outputCompilation.SyntaxTrees);
         }
-        catch (AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
         {
-            foreach (var diagnostic in diagnostics)
-                TestContext.WriteLine($"{diagnostic}");
+            LogDiagnostics(diagnostics, outputCompilation);
             throw;
         }
-        Assert.HasCount(sourceCount, outputCompilation.SyntaxTrees);
     }
     [TestMethod]
     public void DiagnoticsTest_NoArgumentConstructor()
@@ -575,18 +596,17 @@ partial class TestClass
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
-        Assert.IsFalse(diagnostics.IsEmpty);
         try
         {
+            Assert.IsFalse(diagnostics.IsEmpty);
             CollectionAssert.AreEqual(new[] { "BF0001" }, diagnostics.Select(v => v.Id).ToArray());
+            Assert.HasCount(3, outputCompilation.SyntaxTrees);
         }
-        catch (AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
         {
-            foreach (var diagnostic in diagnostics)
-                TestContext.WriteLine($"{diagnostic}");
+            LogDiagnostics(diagnostics, outputCompilation);
             throw;
         }
-        Assert.HasCount(3, outputCompilation.SyntaxTrees);
     }
 
     [TestMethod]
@@ -607,10 +627,17 @@ partial class TestClass
             out var diagnostics,
             LanguageVersion.CSharp7_3,
             CancellationToken);
-
-        Assert.IsTrue(diagnostics.Any(v => v.Id == "BF0010" && v.Severity == DiagnosticSeverity.Warning));
-        Assert.IsFalse(diagnostics.Any(v => v.Severity == DiagnosticSeverity.Error));
-        Assert.HasCount(3, outputCompilation.SyntaxTrees);
+        try
+        {
+            Assert.IsTrue(diagnostics.Any(v => v.Id == "BF0010" && v.Severity == DiagnosticSeverity.Warning));
+            Assert.IsFalse(diagnostics.Any(v => v.Severity == DiagnosticSeverity.Error));
+            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
+        }
     }
 
     static IEnumerable<object?[]> ModuleSignatureTestData
@@ -641,9 +668,17 @@ partial class TestClass
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertNoErrors(diagnostics, outputCompilation);
-        Assert.AreEqual(3, outputCompilation.SyntaxTrees.Count());
-        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+        try
+        {
+            AssertNoErrors(diagnostics, outputCompilation);
+            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
+        }
     }
 
     [TestMethod]
@@ -659,9 +694,17 @@ partial class TestClass
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertNoErrors(diagnostics, outputCompilation);
-        Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+        try
+        {
+            AssertNoErrors(diagnostics, outputCompilation);
+            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
+        }
     }
 
     [TestMethod]
@@ -679,9 +722,17 @@ partial class TestClass
         }
         """";
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertNoErrors(diagnostics, outputCompilation);
-        Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+        try
+        {
+            AssertNoErrors(diagnostics, outputCompilation);
+            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
+        }
     }
 
     [TestMethod]
@@ -702,21 +753,29 @@ partial class TestClass
         """;
 
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertNoErrors(diagnostics, outputCompilation);
-        Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+        try
+        {
+            AssertNoErrors(diagnostics, outputCompilation);
+            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
 
-        var generatedTrees = outputCompilation.SyntaxTrees
-            .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
-            .ToArray();
-        Assert.HasCount(1, generatedTrees);
+            var generatedTrees = outputCompilation.SyntaxTrees
+                .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
+                .ToArray();
+            Assert.HasCount(1, generatedTrees);
 
-        var generatedSource = generatedTrees[0].ToString();
-        Assert.AreEqual(1, generatedSource.Split([MethodGenerator.CommentAutoGenerated], StringSplitOptions.None).Length - 1);
-        Assert.AreEqual(1, generatedSource.Split(["#pragma warning disable CS0219"], StringSplitOptions.None).Length - 1);
-        Assert.AreEqual(1, generatedSource.Split(["#pragma warning disable CS1998"], StringSplitOptions.None).Length - 1);
-        Assert.Contains("SampleMethod1()", generatedSource);
-        Assert.Contains("SampleMethod2()", generatedSource);
+            var generatedSource = generatedTrees[0].ToString();
+            Assert.AreEqual(1, generatedSource.Split([MethodGenerator.CommentAutoGenerated], StringSplitOptions.None).Length - 1);
+            Assert.AreEqual(1, generatedSource.Split(["#pragma warning disable CS0219"], StringSplitOptions.None).Length - 1);
+            Assert.AreEqual(1, generatedSource.Split(["#pragma warning disable CS1998"], StringSplitOptions.None).Length - 1);
+            Assert.Contains("SampleMethod1()", generatedSource);
+            Assert.Contains("SampleMethod2()", generatedSource);
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
+        }
     }
 
     [TestMethod]
@@ -761,62 +820,70 @@ partial class TestClass
         }
         """;
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        // BF0009 (Hidden) may be reported; allow Hidden diagnostics.
-        AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
-        // OutputSource(outputCompilation.SyntaxTrees);  // Temporarily disabled for debugging
-        AssertDiagnostics(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
-
-        var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
-        using (context)
+        try
         {
-            var testClassType = assembly.GetType("TestProject.TestClass");
-            Assert.IsNotNull(testClassType);
+            // BF0009 (Hidden) may be reported; allow Hidden diagnostics.
+            AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
+            // OutputSource(outputCompilation.SyntaxTrees);  // Temporarily disabled for debugging
+            AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
 
-            TestContext.WriteLine("=== StringMethod ===");
-            Assert.IsNull(testClassType.GetMethod("StringMethod")!.Invoke(null, Array.Empty<object?>()));
+            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
+            using (context)
+            {
+                var testClassType = assembly.GetType("TestProject.TestClass");
+                Assert.IsNotNull(testClassType);
 
-            TestContext.WriteLine("=== ValueTaskStringMethod ===");
-            var valueTaskMethod = testClassType.GetMethod("ValueTaskStringMethod");
-            Assert.IsNotNull(valueTaskMethod, "ValueTaskStringMethod not found in assembly");
-            var valueTaskResult = valueTaskMethod.Invoke(null, Array.Empty<object?>());
-            TestContext.WriteLine($"ValueTaskStringMethod result: {valueTaskResult?.GetType().Name} = {valueTaskResult}");
-            Assert.IsNotNull(valueTaskResult, "ValueTaskStringMethod Invoke returned null");
-            TestContext.WriteLine("About to await ValueTask...");
-            Assert.IsNull(await (ValueTask<string?>)valueTaskResult);
-            TestContext.WriteLine("ValueTask await completed");
+                TestContext.WriteLine("=== StringMethod ===");
+                Assert.IsNull(testClassType.GetMethod("StringMethod")!.Invoke(null, Array.Empty<object?>()));
 
-            TestContext.WriteLine("=== EnumerableMethod ===");
-            var enumerable = (IEnumerable<byte>)testClassType.GetMethod("EnumerableMethod")!.Invoke(null, Array.Empty<object?>())!;
-            CollectionAssert.AreEqual(Array.Empty<byte>(), enumerable.ToArray());
+                TestContext.WriteLine("=== ValueTaskStringMethod ===");
+                var valueTaskMethod = testClassType.GetMethod("ValueTaskStringMethod");
+                Assert.IsNotNull(valueTaskMethod, "ValueTaskStringMethod not found in assembly");
+                var valueTaskResult = valueTaskMethod.Invoke(null, Array.Empty<object?>());
+                TestContext.WriteLine($"ValueTaskStringMethod result: {valueTaskResult?.GetType().Name} = {valueTaskResult}");
+                Assert.IsNotNull(valueTaskResult, "ValueTaskStringMethod Invoke returned null");
+                TestContext.WriteLine("About to await ValueTask...");
+                Assert.IsNull(await (ValueTask<string?>)valueTaskResult);
+                TestContext.WriteLine("ValueTask await completed");
+
+                TestContext.WriteLine("=== EnumerableMethod ===");
+                var enumerable = (IEnumerable<byte>)testClassType.GetMethod("EnumerableMethod")!.Invoke(null, Array.Empty<object?>())!;
+                CollectionAssert.AreEqual(Array.Empty<byte>(), enumerable.ToArray());
 
 #if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER
-            TestContext.WriteLine("=== AsyncEnumerableMethod ===");
-            var asyncEnumerable = (IAsyncEnumerable<byte>)testClassType.GetMethod("AsyncEnumerableMethod")!.Invoke(null, Array.Empty<object?>())!;
-            var asyncBytes = new List<byte>();
-            await foreach (var item in asyncEnumerable)
-            {
-                asyncBytes.Add(item);
-            }
-            CollectionAssert.AreEqual(Array.Empty<byte>(), asyncBytes.ToArray());
+                TestContext.WriteLine("=== AsyncEnumerableMethod ===");
+                var asyncEnumerable = (IAsyncEnumerable<byte>)testClassType.GetMethod("AsyncEnumerableMethod")!.Invoke(null, Array.Empty<object?>())!;
+                var asyncBytes = new List<byte>();
+                await foreach (var item in asyncEnumerable)
+                {
+                    asyncBytes.Add(item);
+                }
+                CollectionAssert.AreEqual(Array.Empty<byte>(), asyncBytes.ToArray());
 #endif
 
-            TestContext.WriteLine("=== PipeWriterMethod ===");
-            // Skip the complex PipeWriter test to avoid deadlock
-            // Just verify the method exists and can be invoked
-            var pipeWriterMethod = testClassType.GetMethod("PipeWriterMethod");
-            Assert.IsNotNull(pipeWriterMethod);
+                TestContext.WriteLine("=== PipeWriterMethod ===");
+                // Skip the complex PipeWriter test to avoid deadlock
+                // Just verify the method exists and can be invoked
+                var pipeWriterMethod = testClassType.GetMethod("PipeWriterMethod");
+                Assert.IsNotNull(pipeWriterMethod);
 
-            // Unused input parameters: methods run normally, input is simply ignored.
-            TestContext.WriteLine("=== UnusedStringInputMethod ===");
-            testClassType.GetMethod("UnusedStringInputMethod")!.Invoke(null, ["ignored"]);
+                // Unused input parameters: methods run normally, input is simply ignored.
+                TestContext.WriteLine("=== UnusedStringInputMethod ===");
+                testClassType.GetMethod("UnusedStringInputMethod")!.Invoke(null, ["ignored"]);
 
-            TestContext.WriteLine("=== UnusedPipeReaderInputMethod ===");
-            var unusedPipe = new Pipe();
-            await unusedPipe.Writer.CompleteAsync();
-            testClassType.GetMethod("UnusedPipeReaderInputMethod")!.Invoke(null, [unusedPipe.Reader]);
-            await unusedPipe.Reader.CompleteAsync();
+                TestContext.WriteLine("=== UnusedPipeReaderInputMethod ===");
+                var unusedPipe = new Pipe();
+                await unusedPipe.Writer.CompleteAsync();
+                testClassType.GetMethod("UnusedPipeReaderInputMethod")!.Invoke(null, [unusedPipe.Reader]);
+                await unusedPipe.Reader.CompleteAsync();
 
-            TestContext.WriteLine("=== Test completed ===");
+                TestContext.WriteLine("=== Test completed ===");
+            }
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
         }
     }
 
@@ -838,14 +905,22 @@ partial class TestClass
         """;
 
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertNoErrors(diagnostics, outputCompilation);
-        Assert.HasCount(3, outputCompilation.SyntaxTrees);
-        AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+        try
+        {
+            AssertNoErrors(diagnostics, outputCompilation);
+            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
 
-        var generatedTree = outputCompilation.SyntaxTrees
-            .Single(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal));
-        var generatedSource = generatedTree.ToString();
-        Assert.Contains("internal static class ListDummyHelper", generatedSource);
+            var generatedTree = outputCompilation.SyntaxTrees
+                .Single(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal));
+            var generatedSource = generatedTree.ToString();
+            Assert.Contains("internal static class ListDummyHelper", generatedSource);
+        }
+        catch (AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
+        }
     }
 
     [TestMethod]
@@ -869,23 +944,31 @@ partial class TestClass
         """;
 
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
-        AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
-        AssertDiagnostics(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
-
-        var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
-        using (context)
+        try
         {
-            var testClassType = assembly.GetType("TestProject.TestClass");
-            Assert.IsNotNull(testClassType);
+            AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
 
-            var intResult = (int?)testClassType!.GetMethod("IntMethod")!.Invoke(null, Array.Empty<object?>());
-            Assert.AreEqual(0, intResult);
+            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
+            using (context)
+            {
+                var testClassType = assembly.GetType("TestProject.TestClass");
+                Assert.IsNotNull(testClassType);
 
-            var taskInt = (Task<int>)testClassType.GetMethod("TaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
-            Assert.AreEqual(0, await taskInt);
+                var intResult = (int?)testClassType!.GetMethod("IntMethod")!.Invoke(null, Array.Empty<object?>());
+                Assert.AreEqual(0, intResult);
 
-            var valueTaskInt = (ValueTask<int>)testClassType.GetMethod("ValueTaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
-            Assert.AreEqual(0, await valueTaskInt);
+                var taskInt = (Task<int>)testClassType.GetMethod("TaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
+                Assert.AreEqual(0, await taskInt);
+
+                var valueTaskInt = (ValueTask<int>)testClassType.GetMethod("ValueTaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
+                Assert.AreEqual(0, await valueTaskInt);
+            }
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
         }
     }
 
@@ -898,7 +981,7 @@ partial class TestClass
         using Microsoft.Extensions.Logging;
         using System;
         using System.Collections.Generic;
-
+        #nullable enable
         namespace TestProject;
 
         public class FakeLogger : ILogger
@@ -920,43 +1003,50 @@ partial class TestClass
         """;
 
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
-        AssertNoErrors(diagnostics, outputCompilation);
-
-        var generatedTrees = outputCompilation.SyntaxTrees
-            .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
-            .ToArray();
-        Assert.HasCount(1, generatedTrees);
-
-        var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
-        await Task.Factory.StartNew(() =>
+        try
         {
-            using (context)
-            {
-                var testClassType = assembly.GetType("TestProject.TestClass");
-                Assert.IsNotNull(testClassType);
-                var fakeLoggerType = assembly.GetType("TestProject.FakeLogger")!;
-                Assert.IsNotNull(fakeLoggerType);
-                var loggerInstance = Activator.CreateInstance(fakeLoggerType);
-                Assert.IsNotNull(loggerInstance);
-                var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
-                Assert.IsNotNull(logs);
+            AssertNoErrors(diagnostics, outputCompilation);
 
-                try
+            var generatedTrees = outputCompilation.SyntaxTrees
+                .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
+                .ToArray();
+            Assert.HasCount(1, generatedTrees);
+
+            var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
+            await Task.Factory.StartNew(() =>
+            {
+                using (context)
                 {
-                    var sampleMethod = testClassType.GetMethod("SampleMethod");
-                    Assert.IsNotNull(sampleMethod);
-                    sampleMethod.Invoke(null, [loggerInstance]);
-                    Assert.IsNotEmpty(logs);
-                    Assert.Contains("IP 0: '+' [Pointer: 0, Value: 1]", logs);
+                    var testClassType = assembly.GetType("TestProject.TestClass");
+                    Assert.IsNotNull(testClassType);
+                    var fakeLoggerType = assembly.GetType("TestProject.FakeLogger")!;
+                    Assert.IsNotNull(fakeLoggerType);
+                    var loggerInstance = Activator.CreateInstance(fakeLoggerType);
+                    Assert.IsNotNull(loggerInstance);
+                    var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
+                    Assert.IsNotNull(logs);
+
+                    try
+                    {
+                        var sampleMethod = testClassType.GetMethod("SampleMethod");
+                        Assert.IsNotNull(sampleMethod);
+                        sampleMethod.Invoke(null, [loggerInstance]);
+                        Assert.IsNotEmpty(logs);
+                        Assert.Contains("IP 0: '+' [Pointer: 0, Value: 1]", logs);
+                    }
+                    catch
+                    {
+                        LogDiagnostics(diagnostics, outputCompilation);
+                        throw;
+                    }
                 }
-                catch
-                {
-                    TestContext.WriteLine($"Logs:\n{string.Join("\n", logs)}\n");
-                    OutputSource(outputCompilation.SyntaxTrees);
-                    throw;
-                }
-            }
-        }, CancellationToken);
+            }, CancellationToken);
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
+        }
     }
 
     [TestMethod]
@@ -967,7 +1057,7 @@ partial class TestClass
             using Microsoft.Extensions.Logging;
             using System;
             using System.Collections.Generic;
-
+            #nullable enable
             namespace TestProject;
 
             public class FakeLogger : ILogger<string>
@@ -989,38 +1079,39 @@ partial class TestClass
             """;
 
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, languageVersion: LanguageVersion.CSharp12, cancellationToken: CancellationToken);
-        AssertNoErrors(diagnostics, outputCompilation);
-
-        var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
-        await Task.Factory.StartNew(() =>
+        try
         {
-            using (context)
-            {
-                var testClassType = assembly.GetType("TestProject.TestClass");
-                Assert.IsNotNull(testClassType);
-                var fakeLoggerType = assembly.GetType("TestProject.FakeLogger")!;
-                Assert.IsNotNull(fakeLoggerType);
-                var loggerInstance = Activator.CreateInstance(fakeLoggerType);
-                Assert.IsNotNull(loggerInstance);
-                var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
-                Assert.IsNotNull(logs);
-                var instance = Activator.CreateInstance(testClassType, loggerInstance);
-                Assert.IsNotNull(instance);
+            AssertNoErrors(diagnostics, outputCompilation);
 
-                try
+            var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
+            await Task.Factory.StartNew(() =>
+            {
+                using (context)
                 {
+                    var testClassType = assembly.GetType("TestProject.TestClass");
+                    Assert.IsNotNull(testClassType);
+                    var fakeLoggerType = assembly.GetType("TestProject.FakeLogger")!;
+                    Assert.IsNotNull(fakeLoggerType);
+                    var loggerInstance = Activator.CreateInstance(fakeLoggerType);
+                    Assert.IsNotNull(loggerInstance);
+                    var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
+                    Assert.IsNotNull(logs);
+                    var instance = Activator.CreateInstance(testClassType, loggerInstance);
+                    Assert.IsNotNull(instance);
+
                     var sampleMethod = testClassType.GetMethod("SampleMethod");
                     Assert.IsNotNull(sampleMethod);
                     sampleMethod.Invoke(instance, null);
-                
+
                     Assert.IsNotEmpty(logs);
                     Assert.Contains("IP 0: '+' [Pointer: 0, Value: 1]", logs);
                 }
-                catch
-                {
-                    LogWriteLine(e.ToString());
-                }
-            }
-        }, CancellationToken);
+            }, CancellationToken);
+        }
+        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, outputCompilation);
+            throw;
+        }
     }
 }
