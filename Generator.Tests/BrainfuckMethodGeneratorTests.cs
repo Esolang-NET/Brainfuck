@@ -629,8 +629,8 @@ public class MethodGeneratorTests
             CancellationToken);
         try
         {
-            Assert.IsTrue(diagnostics.Any(v => v.Id == "BF0010" && v.Severity == DiagnosticSeverity.Warning));
-            Assert.IsFalse(diagnostics.Any(v => v.Severity == DiagnosticSeverity.Error));
+            Assert.Contains(v => v.Id == "BF0010" && v.Severity == DiagnosticSeverity.Warning, diagnostics);
+            Assert.DoesNotContain(v => v.Severity == DiagnosticSeverity.Error, diagnostics);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
         }
         catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
