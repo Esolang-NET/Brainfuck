@@ -6,6 +6,10 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Added
+- `Esolang.Brainfuck.Generator`: Implement logging support for runtime instructions and events (instruction execution).
+- `Esolang.Brainfuck.Generator.Tests`: Standardized test utility methods and improved diagnostic logging for test failures.
+
 ### Improved
 - **Generator**: Refactored the Brainfuck source generator to simplify and unify type analysis logic.
   - Introduced `KnownTypes` struct to cache and centralize type symbol resolution during compilation.
