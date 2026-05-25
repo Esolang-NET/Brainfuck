@@ -103,6 +103,14 @@ public class GeneratorTests
         Assert.IsEmpty(diagnostics2);
     }
 
+    void AssertNonHiddenDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
+    {
+        var significant = diagnostics.Where(d => d.Severity > DiagnosticSeverity.Hidden).ToImmutableArray();
+        Assert.IsEmpty(significant);
+        var diagnostics2 = compilation.GetDiagnostics(CancellationToken).Where(d => d.Severity > DiagnosticSeverity.Hidden).ToImmutableArray();
+        Assert.IsEmpty(diagnostics2);
+    }
+
     (TestShared.AssemblyLoadContext Context, Assembly Assembly) Emit(Compilation compilation, TestShared.AssemblyLoadContext? context = null, CancellationToken cancellationToken = default)
     {
         using var stream = new MemoryStream();
@@ -201,13 +209,22 @@ public class GeneratorTests
         driver = driver.RunGeneratorsAndUpdateCompilation(inputCompilation, out var compilation, out var diagnostics, cancellationToken: CancellationToken) as VisualBasicGeneratorDriver;
         Assert.IsNotNull(driver);
         try {
-            AssertNoErrors(diagnostics, compilation);
+            AssertNonHiddenDiagnostics(diagnostics, compilation);
 
             var runResult = driver.GetRunResult();
 
         
-            AssertNoErrors(runResult.Diagnostics, compilation);
+            AssertNonHiddenDiagnostics(runResult.Diagnostics, compilation);
             Assert.IsNotEmpty(runResult.GeneratedTrees);
+
+            var (context, asm) = Emit(compilation, cancellationToken: CancellationToken);
+            using (context)
+            {
+                var classType = asm.GetType("TestClass");
+                Assert.IsNotNull(classType);
+                var method = classType.GetMethod("SampleMethod");
+                Assert.IsNotNull(method);
+            }
 
         } catch (AssertFailedException)
         {
