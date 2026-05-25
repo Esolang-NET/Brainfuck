@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 
 namespace Esolang.Brainfuck.Generator;
 
@@ -18,7 +18,8 @@ public static class DiagnosticDescriptors
         messageFormat: "The value parameter of the attribute on the method '{0}' must not be null",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0001.md");
 
     /// <summary>
     /// BF0002: Unsupported return type.
@@ -29,7 +30,8 @@ public static class DiagnosticDescriptors
         messageFormat: "The method return type '{0}' is not supported for Brainfuck code generation",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0002.md");
 
     /// <summary>
     /// BF0003: Unsupported parameter type.
@@ -40,7 +42,8 @@ public static class DiagnosticDescriptors
         messageFormat: "The parameter '{0}' of the method has an unsupported type",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0003.md");
 
     /// <summary>
     /// BF0004: Duplicate parameter type.
@@ -51,7 +54,8 @@ public static class DiagnosticDescriptors
         messageFormat: "The parameter type '{0}' is duplicated and not supported",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0004.md");
 
     /// <summary>
     /// BF0005: Unsupported parameter pattern.
@@ -62,7 +66,8 @@ public static class DiagnosticDescriptors
         messageFormat: "Input parameters use an unsupported combination (allowed: one of 'string', 'PipeReader', or 'TextReader')",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0005.md");
 
     /// <summary>
     /// BF0006: Return type and output parameter conflict.
@@ -73,7 +78,8 @@ public static class DiagnosticDescriptors
         messageFormat: "The output parameter type '{0}' cannot be combined with return type '{1}'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0006.md");
 
     /// <summary>
     /// BF0007: Required output interface not provided.
@@ -84,7 +90,8 @@ public static class DiagnosticDescriptors
         messageFormat: "The Brainfuck source requires output, but the method does not provide an output mechanism",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Hidden,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0007.md");
 
     /// <summary>
     /// BF0008: Required input interface not provided.
@@ -95,7 +102,8 @@ public static class DiagnosticDescriptors
         messageFormat: "The Brainfuck source requires input, but the method does not provide an input mechanism",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Hidden,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0008.md");
 
     /// <summary>
     /// BF0009: Input interface provided but not required.
@@ -106,7 +114,8 @@ public static class DiagnosticDescriptors
         messageFormat: "The Brainfuck source does not require input, but the method provides input parameter '{0}'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Hidden,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0009.md");
 
     /// <summary>
     /// BF0010: Language version may be too low for generated code.
@@ -117,7 +126,8 @@ public static class DiagnosticDescriptors
         messageFormat: "The method '{0}' may require C# 8.0 or later, but the current language version is '{1}'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0010.md");
 
     /// <summary>
     /// BF0011: Method must be partial.
@@ -128,5 +138,6 @@ public static class DiagnosticDescriptors
         messageFormat: "The method '{0}' must be declared as 'partial'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
-        isEnabledByDefault: true);
+        isEnabledByDefault: true,
+        helpLinkUri: "https://github.com/Esolang-NET/Brainfuck/blob/main/Generator/Rules/BF0011.md");
 }

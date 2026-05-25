@@ -1,4 +1,11 @@
 <Solution>
+  <Folder Name="/Generator.VisualBasic.Tests/">
+    <Project Path="Generator.VisualBasic.Tests/Esolang.Brainfuck.Generator.VisualBasic.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Generator.VisualBasic/">
+    <Project Path="Generator.VisualBasic/Esolang.Brainfuck.Generator.VisualBasic.csproj" />
+  </Folder>
+  <Folder Name="/Parser/" />
   <Folder Name="/samples/" />
   <Project Path="samples/Generator.UseConsole/Esolang.Brainfuck.Generator.UseConsole.csproj" />
   <Folder Name="/Solution Items/">

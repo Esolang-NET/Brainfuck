@@ -17,6 +17,14 @@
 			"path": "samples/Generator.UseConsole"
 		},
 		{
+			"path": "Generator.VisualBasic",
+			"name": "Esolang.Brainfuck.Generator.VisualBasic"
+		},
+		{
+			"path": "Generator.VisualBasic.Tests",
+			"name": "Esolang.Brainfuck.Generator.VisualBasic.Tests"
+		},
+		{
 			"path": "Interpreter",
 			"name": "Esolang.Brainfuck.Interpreter"
 		},
@@ -60,6 +68,8 @@
 			"Generator": true,
 			"Generator.Tests": true,
 			"Generator.UseConsole": true,
+			"Generator.VisualBasic": true,
+			"Generator.VisualBasic.Tests": true,
 			"Interpreter": true,
 			"Interpreter.Tests": true,
 			"Parser": true,

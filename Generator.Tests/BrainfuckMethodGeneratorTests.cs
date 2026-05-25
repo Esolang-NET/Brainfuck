@@ -181,7 +181,7 @@ public class MethodGeneratorTests
 
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
             var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
             CancellationToken.ThrowIfCancellationRequested();
             using (context)
@@ -199,7 +199,7 @@ public class MethodGeneratorTests
                     }
                     catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
                     {
-                        LogWriteLine($"Logs:\n{string.Join("\n", outputCompilation.GetDiagnostics())}\n");
+                        LogWriteLine($"Logs:\n{string.Join("\n", outputCompilation.GetDiagnostics(CancellationToken))}\n");
                         throw;
                     }
                 }, CancellationToken, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);

@@ -26,3 +26,15 @@ To generate an HTML coverage report using ReportGenerator:
 dotnet reportgenerator "-reports:**/*.cobertura.xml" "-targetdir:coveragereport" -reporttypes:Html
 ```
 The report will be generated in the `coveragereport` directory.
+
+---
+
+## Visual Basic Generator Implementation Plan
+
+1.  **Project Setup**: Initialize `Esolang.Brainfuck.Generator.VisualBasic` and `Esolang.Brainfuck.Generator.VisualBasic.Tests` projects. (Completed)
+2.  **Infrastructure**: Define `BrainfuckMethodAttribute` and basic `BrainfuckGenerator` registration. (Completed)
+3.  **Testing**: Resolve MTP-based test discovery issues for VB.NET.
+4.  **Core Logic**: 
+    - Implement `MethodGenerator` logic (VB.NET syntax emitter).
+    - Port or adapt `Parser` and `Processor` logic where necessary.
+5.  **Verification**: Implement functional tests for attribute detection and code generation correctness.
