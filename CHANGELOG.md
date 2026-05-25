@@ -6,6 +6,8 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-05-25
+
 ### Added
 - `Esolang.Brainfuck.Generator`: Implement logging support for runtime instructions and events (instruction execution).
 - `Esolang.Brainfuck.Generator.Tests`: Standardized test utility methods and improved diagnostic logging for test failures.
@@ -18,7 +20,8 @@ The format is based on Keep a Changelog.
 - Refactored `MethodGenerator.Initialize` to use tuple deconstruction for cleaner input processing.
 - Increased robustness of diagnostic reporting by ensuring proper parameter and return type validation.
 
-## [1.1.2]
+
+## [1.1.2] - 2026-05-09
 
 ### Changed
 
@@ -95,7 +98,8 @@ The format is based on Keep a Changelog.
 - Parser: README output text typo corrections.
 - Processor: README sample updated to use `BrainfuckProcessor`.
 
-[Unreleased]: https://github.com/Esolang-NET/Brainfuck/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/Esolang-NET/Brainfuck/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.3
 [1.1.2]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.2
 [1.1.1]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.1
 [1.1.0]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.0
