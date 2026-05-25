@@ -78,15 +78,29 @@ public class GeneratorTests
     void LogDiagnostics(ImmutableArray<Diagnostic> diagnostics)
     {
         if (diagnostics.IsEmpty) return;
-        foreach (var diagnostic in diagnostics)
-            LogWriteLine($"{diagnostic}");
+        LogWriteLine($"diagnostics:\n{string.Join("\n", diagnostics)}");
     }
+    void LogDiagnostics(Compilation compilation)
+    {
+        var diagnostics = compilation.GetDiagnostics(CancellationToken);
+        LogWriteLine($"compilation-diagnostics:\n{string.Join("\n", diagnostics)}");
+    }
+
+    void LogDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
+    {
+        LogDiagnostics(diagnostics);
+        LogDiagnostics(compilation);
+        LogSource(compilation);
+    }
+
+    void LogSource(Compilation compilation) => LogSource(compilation.SyntaxTrees);
+    void LogSource(IEnumerable<SyntaxTree> trees) => LogWriteLine($"source: \n{string.Join("\n", trees.Select(tree => $"// {tree.FilePath}\n{tree}"))}");
 
     void AssertNoErrors(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
     {
-        Assert.IsTrue(diagnostics.IsEmpty);
+        Assert.IsEmpty(diagnostics);
         var diagnostics2 = compilation.GetDiagnostics(CancellationToken);
-        Assert.IsTrue(diagnostics2.IsEmpty);
+        Assert.IsEmpty(diagnostics2);
     }
 
     (TestShared.AssemblyLoadContext Context, Assembly Assembly) Emit(Compilation compilation, TestShared.AssemblyLoadContext? context = null, CancellationToken cancellationToken = default)
@@ -120,29 +134,36 @@ public class GeneratorTests
     public void Generator_GeneratesAttribute()
     {
         var inputCompilation = VisualBasicCompilation.Create("TestAssembly",
-            references: [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)]);
+            references: [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)],
+            options: new(OutputKind.DynamicallyLinkedLibrary));
             
+        VisualBasicParseOptions parseOptions = new(LanguageVersion.VisualBasic12);
         var generator = new BrainfuckGenerator();
-        var driver = VisualBasicGeneratorDriver.Create([generator.AsSourceGenerator()]);
+        var driver = VisualBasicGeneratorDriver.Create(
+            generators:[generator.AsSourceGenerator()],    
+            driverOptions: new(default, trackIncrementalGeneratorSteps:true)
+        ).WithUpdatedParseOptions(parseOptions);
 
-        driver = (VisualBasicGeneratorDriver)driver.RunGenerators(inputCompilation);
-
-        var runResult = driver.GetRunResult();
-
+        driver = driver.RunGeneratorsAndUpdateCompilation(inputCompilation, out var compilation, out var diagnostics, cancellationToken: CancellationToken) as VisualBasicGeneratorDriver;
+        Assert.IsNotNull(driver);
         try
         {
-            AssertNoErrors(runResult.Diagnostics, inputCompilation);
+            AssertNoErrors(diagnostics, compilation);
+            var runResult = driver.GetRunResult();
+            AssertNoErrors(runResult.Diagnostics, compilation);
             Assert.HasCount(1, runResult.GeneratedTrees);
             Assert.Contains(v => v.ToString().Contains("GenerateBrainfuckMethodAttribute"), runResult.GeneratedTrees);
+            var (context, asm) = Emit(compilation, cancellationToken: CancellationToken);
+            using (context)
+            {
+                var attrType = asm.GetType("Esolang.Brainfuck.GenerateBrainfuckMethodAttribute");
+                Assert.IsNotNull(attrType);
+            }
+            LogDiagnostics(diagnostics, compilation);
         }
         catch (AssertFailedException)
         {
-            LogDiagnostics(runResult.Diagnostics);
-            foreach (var tree in runResult.GeneratedTrees)
-            {
-                LogWriteLine($"FilePath: {tree.FilePath}");
-                LogWriteLine(tree.ToString());
-            }
+            LogDiagnostics(diagnostics, compilation);
             throw;
         }
     }
@@ -151,30 +172,47 @@ public class GeneratorTests
     public async Task Generator_EmitsValidCode_WithIOParameters()
     {
         var source = """
-    Imports Esolang.Brainfuck
     Imports System.IO
 
-    Public Class TestClass
-        <GenerateBrainfuckMethod("+")>
-        Public Shared Partial Sub SampleMethod(output As TextWriter, input As TextReader)
+    Public Partial Class TestClass
+        <Esolang.Brainfuck.GenerateBrainfuckMethod("+")>
+        Public Partial Sub SampleMethod(output As TextWriter, input As TextReader)
         End Sub
     End Class
     """;
         var inputCompilation = VisualBasicCompilation.Create("TestAssembly",
-            syntaxTrees: [VisualBasicSyntaxTree.ParseText(source)],
             references: [
                 MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(System.IO.TextReader).Assembly.Location)
-            ]);
+                MetadataReference.CreateFromFile(typeof(TextReader).Assembly.Location)
+            ],
+            options: new(OutputKind.DynamicallyLinkedLibrary)
+        );
+
+        inputCompilation = inputCompilation.AddSyntaxTrees(
+            VisualBasicSyntaxTree.ParseText(source, path:"direct.vb", cancellationToken: CancellationToken)
+        );
 
         var generator = new BrainfuckGenerator();
-        var driver = VisualBasicGeneratorDriver.Create([generator.AsSourceGenerator()]);
+        var driver = VisualBasicGeneratorDriver.Create(
+            generators: [generator.AsSourceGenerator()], 
+            driverOptions: new(default, trackIncrementalGeneratorSteps:true)
+        );
 
-        driver = (VisualBasicGeneratorDriver)driver.RunGenerators(inputCompilation);
+        driver = driver.RunGeneratorsAndUpdateCompilation(inputCompilation, out var compilation, out var diagnostics, cancellationToken: CancellationToken) as VisualBasicGeneratorDriver;
+        Assert.IsNotNull(driver);
+        try {
+            AssertNoErrors(diagnostics, compilation);
 
-        var runResult = driver.GetRunResult();
+            var runResult = driver.GetRunResult();
 
-        AssertNoErrors(runResult.Diagnostics, inputCompilation);
-        Assert.IsTrue(runResult.GeneratedTrees.Length > 0);
+        
+            AssertNoErrors(runResult.Diagnostics, compilation);
+            Assert.IsNotEmpty(runResult.GeneratedTrees);
+
+        } catch (AssertFailedException)
+        {
+            LogDiagnostics(diagnostics, compilation);
+            throw;
+        }
     }
 }
