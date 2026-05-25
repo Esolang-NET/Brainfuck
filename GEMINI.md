@@ -33,12 +33,9 @@ The report will be generated in the `coveragereport` directory.
 
 ---
 
-## Visual Basic Generator Implementation Plan
+## Remaining Tasks for Visual Basic Generator
 
-1.  **Project Setup**: Initialize `Esolang.Brainfuck.Generator.VisualBasic` and `Esolang.Brainfuck.Generator.VisualBasic.Tests` projects. (Completed)
-2.  **Infrastructure**: Define `BrainfuckMethodAttribute` and basic `BrainfuckGenerator` registration. (Completed)
-3.  **Testing**: Resolve MTP-based test discovery issues for VB.NET.
-4.  **Core Logic**: 
-    - Implement `MethodGenerator` logic (VB.NET syntax emitter).
-    - Port or adapt `Parser` and `Processor` logic where necessary.
-5.  **Verification**: Implement functional tests for attribute detection and code generation correctness.
+1.  **Parameter Validation Logic**: Implement the full suite of diagnostic validations (BF0001, BF0003-BF0010) in `BrainfuckGenerator.cs` to match the C# generator's behavior.
+2.  **Core Code Emission**: Complete the `VisualBasicEmitter` implementation for all Brainfuck instructions (`Output`, `Input`, `Begin`, `End`), translating them into valid VB.NET syntax.
+3.  **Functional Testing**: Add functional integration tests for the generated VB.NET code, verifying output with `TextWriter`/`TextReader` and execution behavior.
+4.  **Style Compliance**: Ensure generated code follows VB.NET coding standards and `dotnet format`.
