@@ -68,7 +68,7 @@ public class GeneratorTests
         var generator = new BrainfuckGenerator();
         var driver = VisualBasicGeneratorDriver.Create([generator.AsSourceGenerator()]);
 
-        var compilation = baseCompilation.AddSyntaxTrees(VisualBasicSyntaxTree.ParseText(source, path: "direct.vb"));
+        var compilation = baseCompilation.AddSyntaxTrees(VisualBasicSyntaxTree.ParseText(source, path: "direct.vb", encoding: System.Text.Encoding.UTF8));
 
         return driver.RunGeneratorsAndUpdateCompilation(compilation, out outputCompilation, out diagnostics, cancellationToken);
     }
@@ -184,7 +184,7 @@ public class GeneratorTests
 
     Public Partial Class TestClass
         <Esolang.Brainfuck.GenerateBrainfuckMethod("+")>
-        Public Partial Sub SampleMethod(output As TextWriter, input As TextReader)
+        Private Partial Sub SampleMethod(output As TextWriter, input As TextReader)
         End Sub
     End Class
     """;
@@ -197,7 +197,7 @@ public class GeneratorTests
         );
 
         inputCompilation = inputCompilation.AddSyntaxTrees(
-            VisualBasicSyntaxTree.ParseText(source, path:"direct.vb", cancellationToken: CancellationToken)
+            VisualBasicSyntaxTree.ParseText(source, path:"direct.vb", encoding: System.Text.Encoding.UTF8, cancellationToken: CancellationToken)
         );
 
         var generator = new BrainfuckGenerator();
@@ -222,9 +222,10 @@ public class GeneratorTests
             {
                 var classType = asm.GetType("TestClass");
                 Assert.IsNotNull(classType);
-                var method = classType.GetMethod("SampleMethod");
+                var method = classType.GetMethod("SampleMethod", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public | BindingFlags.Static);
                 Assert.IsNotNull(method);
             }
+            LogDiagnostics(diagnostics, compilation);
 
         } catch (AssertFailedException)
         {

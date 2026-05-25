@@ -37,50 +37,156 @@ public class BrainfuckGenerator : IIncrementalGenerator
             End Namespace
             """));
 
-        var provider = context.SyntaxProvider.CreateSyntaxProvider(
+        var provider = context.SyntaxProvider.ForAttributeWithMetadataName(
+            "Esolang.Brainfuck.GenerateBrainfuckMethodAttribute",
             predicate: (node, _) => node is Microsoft.CodeAnalysis.VisualBasic.Syntax.MethodStatementSyntax,
-            transform: (ctx, ct) =>
-            {
-                var methodSymbol = ctx.SemanticModel.GetDeclaredSymbol((Microsoft.CodeAnalysis.VisualBasic.Syntax.MethodStatementSyntax)ctx.Node, cancellationToken: ct);
-                if (methodSymbol is null) return (default(ISymbol), default(AttributeData));
-                var attribute = methodSymbol.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "GenerateBrainfuckMethodAttribute");
-                return (methodSymbol, attribute);
-            })
-            .Where(x => x.Item1 != null && x.Item2 != null);
+            transform: (ctx, ct) => ctx);
 
-        context.RegisterSourceOutput(provider.Combine(context.CompilationProvider), (c, data) =>
+        var compilationProvider = context.CompilationProvider;
+        var knownTypesProvider = compilationProvider.Select((c, _) => new KnownTypes(c));
+
+        var combined = provider.Combine(knownTypesProvider);
+
+        context.RegisterSourceOutput(combined, (c, data) =>
         {
-            var (pair, compilation) = data;
-            var (methodSymbol, attribute) = pair;
-            if (methodSymbol is not IMethodSymbol method) return;
+            var (ctx, types) = data;
+            var methodSymbol = (IMethodSymbol)ctx.TargetSymbol;
+            var attribute = ctx.Attributes.FirstOrDefault();
+
+            if (!methodSymbol.IsPartialDefinition)
+            {
+                c.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.MethodMustBePartial, methodSymbol.Locations[0], methodSymbol.Name));
+                return;
+            }
 
             var source = attribute?.ConstructorArguments.FirstOrDefault().Value?.ToString();
             if (string.IsNullOrEmpty(source))
             {
-                var body = VisualBasicEmitter.EmitError("Attribute source is empty", 3);
-                EmitSource(c, method, body);
+                c.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.InvalidValueParameter, methodSymbol.Locations[0], methodSymbol.Name));
                 return;
             }
 
             var sequence = new BrainfuckSequenceEnumerable(source!).ToArray();
-            var bodyText = VisualBasicEmitter.Emit(sequence, 3);
-            EmitSource(c, method, bodyText);
+            var enumerable = new BrainfuckSequenceEnumerable(source!);
+            
+            if (methodSymbol.ReturnsVoid == false)
+            {
+                c.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.InvalidReturnType, methodSymbol.Locations[0], methodSymbol.ReturnType.ToDisplayString()));
+                return;
+            }
+
+            if (!TryGetParameterOptions(c, methodSymbol, types, enumerable, out var options))
+            {
+                return;
+            }
+
+            // BF0007: Required output interface not provided.
+            if (enumerable.RequiredOutput && options.VariableTextWriter == null)
+            {
+                c.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.RequiredOutputInterface, methodSymbol.Locations[0]));
+            }
+
+            // BF0008: Required input interface not provided.
+            if (enumerable.RequiredInput && options.VariableTextReader == null)
+            {
+                c.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.RequiredInputInterface, methodSymbol.Locations[0]));
+            }
+
+            var bodyText = VisualBasicEmitter.Emit(sequence, 3, options.VariableTextWriter, options.VariableTextReader);
+            EmitSource(c, methodSymbol, options, bodyText);
         });
     }
 
-    private static void EmitSource(SourceProductionContext c, IMethodSymbol method, string body)
+    private readonly record struct ParameterOptions(
+        string? VariableTextWriter,
+        string? VariableTextReader
+    );
+
+    private static bool TryGetParameterOptions(SourceProductionContext context, IMethodSymbol methodSymbol, KnownTypes types, BrainfuckSequenceEnumerable enumerable, out ParameterOptions options)
+    {
+        options = default;
+        var hasError = false;
+
+        string? variableTextWriter = null;
+        string? variableTextReader = null;
+
+        foreach (var param in methodSymbol.Parameters)
+        {
+            if (SymbolEqualityComparer.Default.Equals(param.Type, types.TextWriter))
+            {
+                if (variableTextWriter != null)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.DuplicateParameter, param.Locations[0], param.Type.ToDisplayString()));
+                    hasError = true;
+                }
+                variableTextWriter = param.Name;
+            }
+            else if (SymbolEqualityComparer.Default.Equals(param.Type, types.TextReader))
+            {
+                if (variableTextReader != null)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.DuplicateParameter, param.Locations[0], param.Type.ToDisplayString()));
+                    hasError = true;
+                }
+                variableTextReader = param.Name;
+
+                // BF0009: Input interface provided but not required.
+                if (!enumerable.RequiredInput)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.UnusedInputParameter, param.Locations[0], param.Name));
+                }
+            }
+            else
+            {
+                context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.InvalidParameter, param.Locations[0], param.Name));
+                hasError = true;
+            }
+        }
+
+        options = new ParameterOptions(variableTextWriter, variableTextReader);
+        return !hasError;
+    }
+
+    private static void EmitSource(SourceProductionContext c, IMethodSymbol method, ParameterOptions options, string body)
     {
         var sb = new System.Text.StringBuilder();
-        var namespaceName = method.ContainingNamespace?.ToDisplayString() ?? "Global";
-        sb.AppendLine("Namespace " + namespaceName);
-        sb.AppendLine("    Partial Class " + method.ContainingType.Name);
-        sb.AppendLine("        Public Shared Partial Sub " + method.Name + "(output As System.IO.TextWriter, input As System.IO.TextReader)");
-        sb.AppendLine("            Dim memory As Byte() = New Byte(30000) {}");
-        sb.AppendLine("            Dim pointer As Integer = 0");
-        sb.Append(body);
-        sb.AppendLine("        End Sub");
-        sb.AppendLine("    End Class");
-        sb.AppendLine("End Namespace");
+        var hasNamespace = method.ContainingNamespace?.IsGlobalNamespace == false;
+        var namespaceName = hasNamespace ? method.ContainingNamespace!.ToDisplayString() : null;
+        
+        // In VB.NET, partial methods MUST be Private.
+        var accessibility = "Private";
+        var staticModifier = method.IsStatic ? " Shared" : "";
+
+        var parameters = new System.Collections.Generic.List<string>();
+        if (options.VariableTextWriter != null) parameters.Add($"{options.VariableTextWriter} As System.IO.TextWriter");
+        if (options.VariableTextReader != null) parameters.Add($"{options.VariableTextReader} As System.IO.TextReader");
+        var parameterList = string.Join(", ", parameters);
+
+        var indent = "";
+        if (hasNamespace)
+        {
+            sb.AppendLine("Namespace " + namespaceName);
+            indent = "    ";
+        }
+
+        sb.AppendLine($$"""
+        {{indent}}Partial Class {{method.ContainingType.Name}}
+        """);
+        sb.AppendLine($$"""
+        {{indent}}    {{accessibility}}{{staticModifier}} Sub {{method.Name}}({{parameterList}})
+        """);
+        sb.AppendLine($$"""
+        {{indent}}        Dim memory As Byte() = New Byte(30000) {}
+        {{indent}}        Dim pointer As Integer = 0
+        {{body}}
+        {{indent}}    End Sub
+        {{indent}}End Class
+        """);
+
+        if (hasNamespace)
+        {
+            sb.AppendLine("End Namespace");
+        }
 
         c.AddSource($"{method.Name}.g.vb", sb.ToString());
     }

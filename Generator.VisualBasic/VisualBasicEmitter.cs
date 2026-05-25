@@ -12,7 +12,7 @@ internal static class VisualBasicEmitter
         return $"{indentString}' Error: {message}{newLine}{indentString}Throw New System.InvalidOperationException(\"{message}\")";
     }
 
-    public static string Emit(IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)> sequence, int indent)
+    public static string Emit(IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)> sequence, int indent, string? outputVar, string? inputVar)
     {
         var sb = new StringBuilder();
         var indentString = new string(' ', indent * 4);
@@ -38,10 +38,26 @@ internal static class VisualBasicEmitter
                     sb.AppendLine($"{indentString}memory(pointer) -= 1");
                     break;
                 case BrainfuckSequence.Output:
-                    sb.AppendLine($"{indentString}output.Write(ChrW(memory(pointer)))");
+                    if (outputVar != null)
+                        sb.AppendLine($"{indentString}{outputVar}.Write(ChrW(memory(pointer)))");
+                    else
+                        sb.AppendLine(EmitError("Output requested but no output variable provided", indent));
                     break;
                 case BrainfuckSequence.Input:
-                    sb.AppendLine($"{indentString}memory(pointer) = CByte(input.Read())");
+                    if (inputVar != null)
+                        sb.AppendLine($"{indentString}memory(pointer) = CByte({inputVar}.Read())");
+                    else
+                        sb.AppendLine(EmitError("Input requested but no input variable provided", indent));
+                    break;
+                case BrainfuckSequence.Begin:
+                    sb.AppendLine($"{indentString}While memory(pointer) <> 0");
+                    indent++;
+                    indentString = new string(' ', indent * 4);
+                    break;
+                case BrainfuckSequence.End:
+                    indent--;
+                    indentString = new string(' ', indent * 4);
+                    sb.AppendLine($"{indentString}End While");
                     break;
             }
             index++;
