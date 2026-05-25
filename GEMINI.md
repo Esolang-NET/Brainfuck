@@ -33,9 +33,3 @@ The report will be generated in the `coveragereport` directory.
 
 ---
 
-## Remaining Tasks for Visual Basic Generator
-
-1.  **Parameter Validation Logic**: Implement the full suite of diagnostic validations (BF0001, BF0003-BF0010) in `BrainfuckGenerator.cs` to match the C# generator's behavior.
-2.  **Core Code Emission**: Complete the `VisualBasicEmitter` implementation for all Brainfuck instructions (`Output`, `Input`, `Begin`, `End`), translating them into valid VB.NET syntax.
-3.  **Functional Testing**: Add functional integration tests for the generated VB.NET code, verifying output with `TextWriter`/`TextReader` and execution behavior.
-4.  **Style Compliance**: Ensure generated code follows VB.NET coding standards and `dotnet format`.
