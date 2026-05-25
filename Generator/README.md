@@ -212,6 +212,25 @@ SampleMethod5: 0123456789
 ## See also
 
 - [The official Brainfuck page](https://www.muppetlabs.com/~breadbox/bf/)
+## Logger Support
+
+The generator automatically detects and injects logging support if an `ILogger` or `ILogger<T>` is available. It searches in the following order:
+
+1. **Method Parameters**: If a parameter of type `ILogger` or `ILogger<T>` is declared, it is used directly.
+2. **Primary Constructor Parameters**: If a primary constructor parameter of type `ILogger` or `ILogger<T>` is present in the class, it is used.
+3. **Class Fields**: If no parameter or constructor argument is provided, the generator searches for a field of type `ILogger` or `ILogger<T>` within the containing class (including accessible fields in base classes).
+
+When a logger is detected, the generated code will emit `Trace` level logs for each Brainfuck command execution, including the instruction pointer (IP), command, data pointer, and the value at the data pointer.
+
+**Example:**
+```csharp
+public partial class MyBrainfuck(ILogger<MyBrainfuck> logger)
+{
+    [GenerateBrainfuckMethod("+++")]
+    public partial void Run(); // 'logger' from primary constructor will be used
+}
+```
+
 ## Diagnostics
 
 | ID | Meaning |

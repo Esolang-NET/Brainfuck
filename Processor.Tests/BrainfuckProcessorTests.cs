@@ -140,4 +140,40 @@ public class BrainfuckProcessorTests
         Assert.AreEqual(0, exitCode);
         Assert.AreEqual("A", text);
     }
+
+    [TestMethod]
+    public async Task RunToEndAsync_TextIo_ReturnsZeroAndWritesOutput()
+    {
+        var runner = new BrainfuckProcessor("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.");
+        using var input = new StringReader("");
+        using var output = new StringWriter();
+
+        var exitCode = await runner.RunToEndAsync(input: input, output: output, cancellationToken: TestContext.CancellationTokenSource.Token);
+
+        Assert.AreEqual(0, exitCode);
+        Assert.AreEqual("A", output.ToString());
+    }
+
+    [TestMethod]
+    public void RunToEnd_PipeIo_ReturnsZeroAndWritesOutput()
+    {
+        var runner = new BrainfuckProcessor("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.");
+        var input = PipeReader.Create(Stream.Null);
+        var output = new Pipe();
+
+        var exitCode = runner.RunToEnd(input, output.Writer, TestContext.CancellationTokenSource.Token);
+        output.Writer.Complete();
+
+        if (output.Reader.TryRead(out var result))
+        {
+            var text = Encoding.UTF8.GetString(result.Buffer.First.Span.ToArray());
+            Assert.AreEqual("A", text);
+            output.Reader.AdvanceTo(result.Buffer.End);
+        }
+        else
+        {
+            Assert.Fail("Output was not produced");
+        }
+        Assert.AreEqual(0, exitCode);
+    }
 }

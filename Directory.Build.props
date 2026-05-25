@@ -3,9 +3,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>14</LangVersion>
-    <AssemblyVersion>1.1.2.106</AssemblyVersion>
-    <FileVersion>1.1.2.106</FileVersion>
-    <Version>1.1.2</Version>
+    <AssemblyVersion>1.1.3.107</AssemblyVersion>
+    <FileVersion>1.1.3.107</FileVersion>
+    <Version>1.1.3</Version>
     <PackageProjectUrl>https://github.com/Esolang-NET/Brainfuck/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Esolang-NET/Brainfuck.git</RepositoryUrl>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -24,7 +24,7 @@
     
     <!-- There is no direct "make path relative" switch; instead map repository paths to a fixed virtual root. -->
     <DeterministicSourceRoot>/_/</DeterministicSourceRoot>
-    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\..\'))</RepoRoot>
+    <RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))</RepoRoot>
     
     <!-- Path remapping configuration used for deterministic source paths. -->
     <PathMap>$(RepoRoot)=$(DeterministicSourceRoot)</PathMap>
@@ -39,8 +39,15 @@
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
+  <ItemGroup Condition="'$(IsPackable)' == 'true' and Exists('$(MSBuildThisFileDirectory)icon.png')">
+    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" Visible="false" Link="icon.png" />
+  </ItemGroup>
+
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests')) == 'True'">
     <TestResultsFolderPath>$(MSBuildProjectDirectory)\TestResults</TestResultsFolderPath>
     <NoWarn>$(NoWarn);RS1035</NoWarn>
+    <OutputType>Exe</OutputType>
+    <EnableMSTestRunner>true</EnableMSTestRunner>
+    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
 </Project>
