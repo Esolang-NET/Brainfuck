@@ -1084,4 +1084,20 @@ public class MethodGeneratorTests
             throw;
         }
     }
+
+    [TestMethod]
+    public void NonPartialMethod_ReportsError()
+    {
+        var source = """
+            using Esolang.Brainfuck;
+            namespace TestProject;
+            public class TestClass
+            {
+                [GenerateBrainfuckMethod("+")]
+                public static void SampleMethod();
+            }
+            """;
+        RunGeneratorsAndUpdateCompilation(source, out _, out var diagnostics);
+        Assert.IsTrue(diagnostics.Any(d => d.Id == "BF0011"), "Expected BF0011 diagnostic");
+    }
 }

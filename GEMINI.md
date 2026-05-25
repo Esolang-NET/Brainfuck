@@ -27,6 +27,10 @@ dotnet reportgenerator "-reports:**/*.cobertura.xml" "-targetdir:coveragereport"
 ```
 The report will be generated in the `coveragereport` directory.
 
+## Coding Standards
+
+- **Raw String Literals**: Always use C# 11+ raw string literals (`""" ... """`) for multi-line string definitions, including source code snippets in tests and generated code templates. This improves readability by eliminating the need to escape double quotes and improves handling of indentation.
+
 ---
 
 ## Visual Basic Generator Implementation Plan
