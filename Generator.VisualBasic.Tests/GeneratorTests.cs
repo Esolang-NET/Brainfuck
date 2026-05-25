@@ -60,15 +60,15 @@ public class GeneratorTests
     [TestMethod]
     public void Generator_ReportsErrorForNonPartialMethod()
     {
-        var source = @"
+        var source = """
     Imports Esolang.Brainfuck
 
     Public Class TestClass
-        <GenerateBrainfuckMethod(""+"")>
+        <GenerateBrainfuckMethod("+")>
         Public Shared Sub NonPartialMethod()
         End Sub
     End Class
-    ";
+    """;
         var inputCompilation = VisualBasicCompilation.Create("TestAssembly",
             syntaxTrees: [VisualBasicSyntaxTree.ParseText(source)],
             references: [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)]);
