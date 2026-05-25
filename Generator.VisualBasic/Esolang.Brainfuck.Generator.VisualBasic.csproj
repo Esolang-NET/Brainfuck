@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Parser\Esolang.Brainfuck.Parser.csproj" />
+    <ProjectReference Include="..\Processor\Esolang.Brainfuck.Processor.csproj" />
   </ItemGroup>
 
   <ItemGroup>

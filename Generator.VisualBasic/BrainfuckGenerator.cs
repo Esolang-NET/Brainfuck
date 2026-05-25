@@ -52,31 +52,37 @@ public class BrainfuckGenerator : IIncrementalGenerator
         context.RegisterSourceOutput(provider.Combine(context.CompilationProvider), (c, data) =>
         {
             var (pair, compilation) = data;
-            var (methodSymbol, _) = pair;
+            var (methodSymbol, attribute) = pair;
             if (methodSymbol is not IMethodSymbol method) return;
 
-            var knownTypes = new KnownTypes(compilation);
-
-            // Simple validation: check if return type is supported
-            if (method.ReturnType.SpecialType != SpecialType.System_Void &&
-                !SymbolEqualityComparer.Default.Equals(method.ReturnType, knownTypes.String) &&
-                !SymbolEqualityComparer.Default.Equals(method.ReturnType, knownTypes.Task) &&
-                !SymbolEqualityComparer.Default.Equals(method.ReturnType, knownTypes.TaskInt) &&
-                !SymbolEqualityComparer.Default.Equals(method.ReturnType, knownTypes.TaskString) &&
-                !SymbolEqualityComparer.Default.Equals(method.ReturnType, knownTypes.ValueTask) &&
-                !SymbolEqualityComparer.Default.Equals(method.ReturnType, knownTypes.ValueTaskInt) &&
-                !SymbolEqualityComparer.Default.Equals(method.ReturnType, knownTypes.ValueTaskString) &&
-                !SymbolEqualityComparer.Default.Equals(method.ReturnType, knownTypes.IEnumerableByte) &&
-                !SymbolEqualityComparer.Default.Equals(method.ReturnType, knownTypes.IAsyncEnumerableByte))
+            var source = attribute?.ConstructorArguments.FirstOrDefault().Value?.ToString();
+            if (string.IsNullOrEmpty(source))
             {
-                c.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.InvalidReturnType, method.Locations[0], method.ReturnType.ToDisplayString()));
+                var body = VisualBasicEmitter.EmitError("Attribute source is empty", 3);
+                EmitSource(c, method, body);
+                return;
             }
 
-            // BF0011: Method must be partial
-            if (!method.IsPartialDefinition)
-            {
-                c.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.MethodMustBePartial, method.Locations[0], method.Name));
-            }
+            var sequence = new BrainfuckSequenceEnumerable(source!).ToArray();
+            var bodyText = VisualBasicEmitter.Emit(sequence, 3);
+            EmitSource(c, method, bodyText);
         });
+    }
+
+    private static void EmitSource(SourceProductionContext c, IMethodSymbol method, string body)
+    {
+        var sb = new System.Text.StringBuilder();
+        var namespaceName = method.ContainingNamespace?.ToDisplayString() ?? "Global";
+        sb.AppendLine("Namespace " + namespaceName);
+        sb.AppendLine("    Partial Class " + method.ContainingType.Name);
+        sb.AppendLine("        Public Shared Partial Sub " + method.Name + "(output As System.IO.TextWriter, input As System.IO.TextReader)");
+        sb.AppendLine("            Dim memory As Byte() = New Byte(30000) {}");
+        sb.AppendLine("            Dim pointer As Integer = 0");
+        sb.Append(body);
+        sb.AppendLine("        End Sub");
+        sb.AppendLine("    End Class");
+        sb.AppendLine("End Namespace");
+
+        c.AddSource($"{method.Name}.g.vb", sb.ToString());
     }
 }
