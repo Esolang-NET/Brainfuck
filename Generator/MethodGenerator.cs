@@ -205,6 +205,13 @@ public partial class MethodGenerator : IIncrementalGenerator
             var features = RuntimeFacadeFeatures.None;
             foreach (var source in sources)
             {
+                var methodSymbol = (IMethodSymbol)source.TargetSymbol;
+                if (!methodSymbol.IsPartialDefinition)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.MethodMustBePartial, methodSymbol.Locations[0], methodSymbol.Name));
+                    continue;
+                }
+
                 var generated = Emit(context, source, currentLanguageVersion, compilation, types);
                 if (generated is not { } method)
                     continue;

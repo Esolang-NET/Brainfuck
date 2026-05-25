@@ -58,18 +58,17 @@ public class GeneratorTests
     }
 
     [TestMethod]
-    public void Generator_ReportsErrorForInvalidReturnType()
+    public void Generator_ReportsErrorForNonPartialMethod()
     {
-        var source = """
+        var source = @"
     Imports Esolang.Brainfuck
 
     Public Class TestClass
-        <GenerateBrainfuckMethod("+")>
-        Public Shared Function InvalidReturnType() As Double
-            Return 0.0
-        End Function
+        <GenerateBrainfuckMethod(""+"")>
+        Public Shared Sub NonPartialMethod()
+        End Sub
     End Class
-    """;
+    ";
         var inputCompilation = VisualBasicCompilation.Create("TestAssembly",
             syntaxTrees: [VisualBasicSyntaxTree.ParseText(source)],
             references: [MetadataReference.CreateFromFile(typeof(object).Assembly.Location)]);
@@ -81,7 +80,7 @@ public class GeneratorTests
 
         var runResult = driver.GetRunResult();
 
-        Assert.IsTrue(runResult.Diagnostics.Any(d => d.Id == "BF0002"), "Expected BF0002 diagnostic");
+        Assert.IsTrue(runResult.Diagnostics.Any(d => d.Id == "BF0011"), "Expected BF0011 diagnostic");
     }
-}
+    }
 

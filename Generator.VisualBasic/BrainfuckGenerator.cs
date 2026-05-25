@@ -71,6 +71,12 @@ public class BrainfuckGenerator : IIncrementalGenerator
             {
                 c.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.InvalidReturnType, method.Locations[0], method.ReturnType.ToDisplayString()));
             }
+
+            // BF0011: Method must be partial
+            if (!method.IsPartialDefinition)
+            {
+                c.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.MethodMustBePartial, method.Locations[0], method.Name));
+            }
         });
     }
 }
