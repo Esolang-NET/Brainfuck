@@ -229,18 +229,18 @@ public partial class MyBrainfuck(ILogger<MyBrainfuck> logger)
     [GenerateBrainfuckMethod("+++")]
     public partial void Run(); // 'logger' from primary constructor will be used
 }
-```
-
 ## Diagnostics
 
 | ID | Meaning |
 | --- | --- |
-| BF0001 | Invalid value parameter on attribute. |
-| BF0002 | Unsupported return type. |
-| BF0003 | Unsupported parameter type. |
-| BF0004 | Duplicate unsupported parameter pattern. |
-| BF0005 | Unsupported input parameter combination (`string` / `PipeReader` / `TextReader` mixed use). |
-| BF0006 | Unsupported parameter and return type combination. |
-| BF0007 | Source requires output interface (`string`/`Task<string>`/`ValueTask<string>`/byte sequence return or `PipeWriter`/`TextWriter` parameter). |
-| BF0008 | Source requires input interface (`string`/`PipeReader`/`TextReader` parameter). |
-| BF0009 | Input parameter provided but source does not contain the input command (Hidden). |
+| [BF0001](Rules/BF0001.md) | Invalid value parameter on attribute. |
+| [BF0002](Rules/BF0002.md) | Unsupported return type. |
+| [BF0003](Rules/BF0003.md) | Unsupported parameter type. |
+| [BF0004](Rules/BF0004.md) | Duplicate unsupported parameter pattern. |
+| [BF0005](Rules/BF0005.md) | Unsupported input parameter combination (`string` / `PipeReader` / `TextReader` mixed use). |
+| [BF0006](Rules/BF0006.md) | Unsupported parameter and return type combination. |
+| [BF0007](Rules/BF0007.md) | Source requires output interface (`string`/`Task<string>`/`ValueTask<string>`/byte sequence return or `PipeWriter`/`TextWriter` parameter). |
+| [BF0008](Rules/BF0008.md) | Source requires input interface (`string`/`PipeReader`/`TextReader` parameter). |
+| [BF0009](Rules/BF0009.md) | Input parameter provided but source does not contain the input command (Hidden). |
+| [BF0010](Rules/BF0010.md) | Language version too low. |
+| [BF0011](Rules/BF0011.md) | Method must be partial. |
