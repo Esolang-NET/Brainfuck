@@ -1094,10 +1094,10 @@ public class MethodGeneratorTests
             public class TestClass
             {
                 [GenerateBrainfuckMethod("+")]
-                public static void SampleMethod();
+                public static void SampleMethod() {}
             }
             """;
-        RunGeneratorsAndUpdateCompilation(source, out _, out var diagnostics);
-        Assert.IsTrue(diagnostics.Any(d => d.Id == "BF0011"), "Expected BF0011 diagnostic");
+        RunGeneratorsAndUpdateCompilation(source, out _, out var diagnostics, cancellationToken: CancellationToken);
+        Assert.Contains(d => d.Id == "BF0011", diagnostics, "Expected BF0011 diagnostic");
     }
 }
