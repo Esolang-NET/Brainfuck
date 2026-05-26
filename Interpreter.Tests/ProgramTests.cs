@@ -8,7 +8,7 @@ public class ProgramTests
     [TestMethod]
     public void RunAsync_ParseCommand_ReturnsZero()
     {
-        var entryPoint = typeof(BrainfuckOptionBinder).Assembly.EntryPoint!;
+        var entryPoint = typeof(Program).Assembly.EntryPoint!;
 
         object?[] parmaeters = [new string[] { "parse", "++" }];
         var result = entryPoint.Invoke(null, parmaeters) as int?;
@@ -20,7 +20,7 @@ public class ProgramTests
     [TestMethod]
     public void RunAsync_DefaultCommand_ReturnsZero()
     {
-        var entryPoint = typeof(BrainfuckOptionBinder).Assembly.EntryPoint!;
+        var entryPoint = typeof(Program).Assembly.EntryPoint!;
         object?[] parmaeters = [new string[] { "++++" }];
         var result = entryPoint.Invoke(null, parmaeters) as int?;
         Assert.IsNotNull(result);

@@ -43,6 +43,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Processor\Esolang.Brainfuck.Processor.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <InternalsVisibleTo Include ="Esolang.Brainfuck.Interpreter.Tests"/>
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="./README.md" Pack="true" PackagePath="\" />
