@@ -6,6 +6,9 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Added
+- `Esolang.Brainfuck.Generator`: Added BF0011 diagnostic for enforcing partial method declaration.
+
 ## [1.1.3] - 2026-05-25
 
 ### Added
