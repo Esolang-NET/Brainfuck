@@ -6,16 +6,25 @@ namespace Esolang.Brainfuck.Interpreter.Tests;
 public class ProgramTests
 {
     [TestMethod]
-    public async Task RunAsync_ParseCommand_ReturnsZero()
+    public void RunAsync_ParseCommand_ReturnsZero()
     {
-        var exitCode = await Program.RunAsync(["parse", "++"]);
+        var entryPoint = typeof(BrainfuckOptionBinder).Assembly.EntryPoint!;
+
+        object?[] parmaeters = [new string[] { "parse", "++" }];
+        var result = entryPoint.Invoke(null, parmaeters) as int?;
+        Assert.IsNotNull(result);
+        var exitCode = result.Value;
         Assert.AreEqual(0, exitCode);
     }
 
     [TestMethod]
-    public async Task RunAsync_DefaultCommand_ReturnsZero()
+    public void RunAsync_DefaultCommand_ReturnsZero()
     {
-        var exitCode = await Program.RunAsync(["++++"]);
+        var entryPoint = typeof(BrainfuckOptionBinder).Assembly.EntryPoint!;
+        object?[] parmaeters = [new string[] { "++++" }];
+        var result = entryPoint.Invoke(null, parmaeters) as int?;
+        Assert.IsNotNull(result);
+        var exitCode = result.Value;
         Assert.AreEqual(0, exitCode);
     }
 }
