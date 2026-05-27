@@ -22,7 +22,7 @@ public sealed partial class BrainfuckProcessor : IEventProcessor
         {
             // BrainfuckSequenceCommand自体を直接判定する
             
-            if (command is InputCommand inputCommand)
+            if (command is InputCommand)
             {
                 var inputEvent = new InputCharEventImpl();
                 yield return inputEvent;
@@ -33,11 +33,12 @@ public sealed partial class BrainfuckProcessor : IEventProcessor
                     SequencesIndex = context.SequencesIndex + 1
                 };
             }
-            else if (command is OutputCommand outputCommand)
+            else if (command is OutputCommand)
             {
                 yield return new OutputCharEvent((char)context.Stack[context.StackIndex]);
-                // command自体がOutputCommandであることを利用する
-                context = await command.ExecuteAsync(cancellationToken);
+                context = context with {
+                    SequencesIndex = context.SequencesIndex + 1
+                };
             }
             else
             {
