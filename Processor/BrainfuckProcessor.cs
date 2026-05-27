@@ -1,4 +1,4 @@
-﻿using Esolang.Brainfuck.Processor.SequenceCommands;
+using Esolang.Brainfuck.Processor.SequenceCommands;
 using System.Buffers;
 using System.Diagnostics;
 using System.IO.Pipelines;
