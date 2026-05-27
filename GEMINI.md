@@ -1,35 +1,25 @@
-# Development Guide
+# Project Status: Brainfuck Processor IEventProcessor Migration
 
-## Testing
+## Status
+- **Phase**: BrainfuckProcessor refactoring to `IEventProcessor`.
+- **Commit**: `a4adc30` (Last known stable build).
+- **Current State**: Clean build, tests passing on stable code.
 
-This project uses the Microsoft Testing Platform (MTP).
+## Completed Tasks
+- Implemented `Esolang.Generator.Abstractions` with `KnownTypes` and `TypeResolutionExtensions` for standardized type resolution in source generators.
+- Integrated `KnownTypes` into `Esolang.Brainfuck.Generator` by copying sources to ensure repository independence.
+- Established `BrainfuckProcessor` as a partial class implementing `IEventProcessor`.
 
-### Running Tests
+## Known Issues & Next Steps
+1. **RunAsyncEnumerable Implementation**:
+   - The implementation of `RunAsyncEnumerable` in `BrainfuckProcessor.IEventProcessor.cs` is incomplete and currently reverted to a stable stub/buildable state.
+   - The challenge is correctly mapping sequential Brainfuck commands to `IOEvent` streams while maintaining `BrainfuckContext` (specifically `Input` and `Output` streams) across `yield return` points.
+   - Current implementation attempts cause `InvalidOperationException: required context.Output.` during testing.
 
-To run all tests in the solution:
+2. **Refactoring Strategy**:
+   - Refactor `RunAsyncEnumerable` to properly manage `BrainfuckContext` when yielding events.
+   - Ensure that `InputCommand` and `OutputCommand` execution preserves the `Input`/`Output` streams in the updated context.
 
-```bash
-dotnet test
-```
-
-### Collecting Code Coverage
-
-To run tests and collect code coverage:
-
-```bash
-dotnet test --coverage --coverage-output-format cobertura
-```
-
-To generate an HTML coverage report using ReportGenerator:
-
-```bash
-dotnet reportgenerator "-reports:**/*.cobertura.xml" "-targetdir:coveragereport" -reporttypes:Html
-```
-The report will be generated in the `coveragereport` directory.
-
-## Coding Standards
-
-- **Raw String Literals**: Always use C# 11+ raw string literals (`""" ... """`) for multi-line string definitions, including source code snippets in tests and generated code templates. This improves readability by eliminating the need to escape double quotes and improves handling of indentation.
-
----
-
+3. **Testing**:
+   - Once implementation is stable, fix and pass `BrainfuckProcessorEventTests` (`RunAsyncEnumerable_ProducesOutputEvents`, `RunAsyncEnumerable_HandlesInputEvent`).
+   - Afterward, adapt `Interpreter` and remaining tests to the new `IEventProcessor` model.
