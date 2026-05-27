@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO.Pipelines;
 using System.Text;
+using Esolang.Processor;
 
 namespace Esolang.Brainfuck.Processor.Tests;
 
@@ -114,7 +115,9 @@ public class BrainfuckProcessorTests
         var runner = new BrainfuckProcessor("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.");
         using var output = new StringWriter();
 
+#pragma warning disable CS0618
         var exitCode = runner.RunToEnd(output: output, cancellationToken: TestContext.CancellationTokenSource.Token);
+#pragma warning restore CS0618
 
         Assert.AreEqual(0, exitCode);
         Assert.AreEqual("A", output.ToString());
