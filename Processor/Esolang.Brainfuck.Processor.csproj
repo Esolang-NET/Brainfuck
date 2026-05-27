@@ -37,7 +37,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Parser\Esolang.Brainfuck.Parser.csproj" />
-    <ProjectReference Include="..\..\Esolang.Abstractions\Processor.Abstractions\Esolang.Processor.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
