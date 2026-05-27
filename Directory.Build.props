@@ -45,6 +45,9 @@
 
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests')) == 'True'">
     <TestResultsFolderPath>$(MSBuildProjectDirectory)\TestResults</TestResultsFolderPath>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <IsPublishable>false</IsPublishable>
     <NoWarn>$(NoWarn);RS1035</NoWarn>
     <OutputType>Exe</OutputType>
     <EnableMSTestRunner>true</EnableMSTestRunner>
