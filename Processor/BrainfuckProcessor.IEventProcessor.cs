@@ -20,6 +20,8 @@ public sealed partial class BrainfuckProcessor : IEventProcessor
         
         while (BrainfuckSequenceCommand.TryGetCommand(context, out var command))
         {
+            // command 自体が BrainfuckSequenceCommand なので、これを直接パターンマッチングする
+            
             if (command is InputCommand inputCommand)
             {
                 var inputEvent = new InputCharEventImpl();
