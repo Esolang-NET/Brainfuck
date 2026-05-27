@@ -20,7 +20,7 @@ public sealed partial class BrainfuckProcessor : IEventProcessor
         
         while (BrainfuckSequenceCommand.TryGetCommand(context, out var command))
         {
-            // command 自体が BrainfuckSequenceCommand なので、これを直接パターンマッチングする
+            // BrainfuckSequenceCommand自体を直接判定する
             
             if (command is InputCommand inputCommand)
             {
@@ -36,7 +36,8 @@ public sealed partial class BrainfuckProcessor : IEventProcessor
             else if (command is OutputCommand outputCommand)
             {
                 yield return new OutputCharEvent((char)context.Stack[context.StackIndex]);
-                context = await outputCommand.ExecuteAsync(cancellationToken);
+                // command自体がOutputCommandであることを利用する
+                context = await command.ExecuteAsync(cancellationToken);
             }
             else
             {
