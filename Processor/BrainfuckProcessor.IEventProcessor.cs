@@ -20,9 +20,7 @@ public sealed partial class BrainfuckProcessor : IEventProcessor
         
         while (BrainfuckSequenceCommand.TryGetCommand(context, out var command))
         {
-            // command 自体が BrainfuckSequenceCommand なので、これを直接使う
-            
-            if (command is InputCommand)
+            if (command is InputCommand inputCommand)
             {
                 var inputEvent = new InputCharEventImpl();
                 yield return inputEvent;
@@ -32,18 +30,17 @@ public sealed partial class BrainfuckProcessor : IEventProcessor
                     Stack = context.Stack.SetItem(context.StackIndex, (byte)inputChar),
                     SequencesIndex = context.SequencesIndex + 1
                 };
-                continue;
             }
-            
-            if (command is OutputCommand outputCommand)
+            else if (command is OutputCommand outputCommand)
             {
                 yield return new OutputCharEvent((char)context.Stack[context.StackIndex]);
                 context = await outputCommand.ExecuteAsync(cancellationToken);
-                continue;
             }
-
-            // その他の命令は既存の Execute ロジックで実行
-            context = await command.ExecuteAsync(cancellationToken);
+            else
+            {
+                // その他の命令は既存の Execute ロジックで実行
+                context = await command.ExecuteAsync(cancellationToken);
+            }
         }
         
         yield return new EndEvent(0);
