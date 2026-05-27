@@ -6,9 +6,11 @@ using Esolang.Processor;
 namespace Esolang.Brainfuck.Processor.Tests;
 
 [TestClass]
-public class BrainfuckProcessorTests
+public class BrainfuckProcessorTests(TestContext TestContext)
 {
-    public TestContext TestContext { get; set; } = default!;
+#pragma warning disable MSTEST0054 // TestContext.CancellationTokenSource.Token の代わりに TestContext.CancellationToken を使用する
+    CancellationToken CancellationToken => TestContext.CancellationTokenSource.Token;
+#pragma warning restore MSTEST0054 // TestContext.CancellationTokenSource.Token の代わりに TestContext.CancellationToken を使用する
     static IEnumerable<object?[]> RunAndOutputStringTestData
     {
         get
@@ -42,15 +44,14 @@ public class BrainfuckProcessorTests
     [DynamicData(nameof(RunAndOutputStringTestData))]
     public async Task RunAndOutputStringAsyncTest(string source, string? input, string? expected = default)
     {
-        var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
         var enumerable = new BrainfuckSequenceEnumerable(source);
         var sequences = enumerable.Select(v => v.Sequence).ToArray().AsMemory();
         var runner = new BrainfuckProcessor(sequences, input: pipe.Reader);
-        var awaiter = runner.RunAndOutputStringAsync(token);
+        var awaiter = runner.RunAndOutputStringAsync(CancellationToken);
         if (!string.IsNullOrEmpty(input))
         {
-            await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes(input), token);
+            await pipe.Writer.WriteAsync(Encoding.UTF8.GetBytes(input), CancellationToken);
             await pipe.Writer.CompleteAsync();
         }
         var actual = await awaiter;
@@ -60,12 +61,11 @@ public class BrainfuckProcessorTests
     [DynamicData(nameof(RunAndOutputStringTestData))]
     public async Task RunAndOutputStringTest(string source, string? input, string? expected = default)
     {
-        var token = TestContext.CancellationTokenSource.Token;
         var pipe = new Pipe();
         var enumerable = new BrainfuckSequenceEnumerable(source.AsMemory());
         var sequences = enumerable.Select(v => v.Sequence).ToArray().AsMemory();
         var runner = new BrainfuckProcessor(sequences, input: pipe.Reader);
-        var awaiter = Task<string?>.Factory.StartNew(() => runner.RunAndOutputString(), token, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
+        var awaiter = Task<string?>.Factory.StartNew(() => runner.RunAndOutputString(), CancellationToken, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
         WriteIsNotNullOrEmpty(input, pipe);
         var actual = await awaiter;
         Assert.AreEqual(expected, actual);
@@ -116,7 +116,7 @@ public class BrainfuckProcessorTests
         using var output = new StringWriter();
 
 #pragma warning disable CS0618
-        var exitCode = runner.RunToEnd(output: output, cancellationToken: TestContext.CancellationTokenSource.Token);
+        var exitCode = runner.RunToEnd(null, output, CancellationToken);
 #pragma warning restore CS0618
 
         Assert.AreEqual(0, exitCode);
@@ -129,10 +129,10 @@ public class BrainfuckProcessorTests
         var runner = new BrainfuckProcessor("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.");
         var output = new Pipe();
 
-        var exitCode = await runner.RunToEndAsync(PipeReader.Create(Stream.Null), output.Writer, TestContext.CancellationTokenSource.Token);
+        var exitCode = await runner.RunToEndAsync(PipeReader.Create(Stream.Null), output.Writer, CancellationToken);
         await output.Writer.CompleteAsync();
 
-        var result = await output.Reader.ReadAsync(TestContext.CancellationTokenSource.Token);
+        var result = await output.Reader.ReadAsync(CancellationToken);
         using var buffer = new MemoryStream();
         foreach (var segment in result.Buffer)
             buffer.Write(segment.ToArray(), 0, segment.Length);
@@ -151,7 +151,7 @@ public class BrainfuckProcessorTests
         using var input = new StringReader("");
         using var output = new StringWriter();
 
-        var exitCode = await runner.RunToEndAsync(input: input, output: output, cancellationToken: TestContext.CancellationTokenSource.Token);
+        var exitCode = await runner.RunToEndAsync(input: input, output: output, cancellationToken: CancellationToken);
 
         Assert.AreEqual(0, exitCode);
         Assert.AreEqual("A", output.ToString());
@@ -164,7 +164,9 @@ public class BrainfuckProcessorTests
         var input = PipeReader.Create(Stream.Null);
         var output = new Pipe();
 
-        var exitCode = runner.RunToEnd(input, output.Writer, TestContext.CancellationTokenSource.Token);
+#pragma warning disable CS0618
+        var exitCode = runner.RunToEnd(input, output.Writer, CancellationToken);
+#pragma warning restore CS0618
         output.Writer.Complete();
 
         if (output.Reader.TryRead(out var result))
