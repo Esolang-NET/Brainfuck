@@ -1,5 +1,8 @@
 using Microsoft.CodeAnalysis;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Esolang.Generator;
 
@@ -18,6 +21,7 @@ namespace Esolang.Generator;
 /// <param name="UnhandledParameters">Parameters that were not handled by the common binding logic.</param>
 /// <param name="ErrorId">The diagnostic error ID if the binding failed.</param>
 /// <param name="Location">The location associated with the error.</param>
+[DebuggerDisplay("{ToString(),nq}")]
 public record struct MethodSignatureBinding(
     bool IsValid,
     MethodReturnKind ReturnKind,
@@ -52,4 +56,41 @@ public record struct MethodSignatureBinding(
 
     /// <summary>Gets a value indicating whether the method returns an async enumerable.</summary>
     public readonly bool IsAsyncEnumerable => ReturnKind == MethodReturnKind.IAsyncEnumerableByte;
+
+    [ExcludeFromCodeCoverage]
+    readonly bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append(nameof(IsValid)).Append('=').Append(IsValid).Append(", ");
+        builder.Append(nameof(ReturnKind)).Append('=').Append(ReturnKind).Append(", ");
+        builder.Append(nameof(InputKind)).Append('=').Append(InputKind).Append(", ");
+        builder.Append(nameof(OutputKind)).Append('=').Append(OutputKind).Append(", ");
+        builder.Append(nameof(InputExpression)).Append('=').Append(InputExpression).Append(", ");
+        builder.Append(nameof(OutputExpression)).Append('=').Append(OutputExpression).Append(", ");
+        builder.Append(nameof(CancellationTokenName)).Append('=').Append(CancellationTokenName).Append(", ");
+        builder.Append(nameof(LoggerExpression)).Append('=').Append(LoggerExpression).Append(", ");
+        builder.Append(nameof(IsLoggerFromParameter)).Append('=').Append(IsLoggerFromParameter).Append(", ");
+        builder.Append(nameof(UnhandledParameters)).Append("=[");
+        for (var i = 0; i < UnhandledParameters.Count; i++)
+        {
+            if (i > 0) builder.Append(", ");
+            builder.Append(UnhandledParameters[i].ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat));
+        }
+        builder.Append(']');
+        return true;
+    }
+
+    /// <inheritdoc />
+    [ExcludeFromCodeCoverage]
+    public override readonly string ToString()
+    {
+        var builder = new StringBuilder();
+        builder.Append(nameof(MethodSignatureBinding)).Append(" {");
+        if (!PrintMembers(builder))
+        {
+            builder.Append(' ');
+        }
+        builder.Append('}');
+        return builder.ToString();
+    }
+
 }
