@@ -41,6 +41,10 @@
 			"name": "Esolang.Brainfuck.Processor.Tests"
 		},
 		{
+			"path": "McpServer",
+			"name": "Esolang.Brainfuck.McpServer"
+		},
+		{
 			"path": "Shared"
 		},
 		{
@@ -66,6 +70,7 @@
 			"Parser.Tests": true,
 			"Processor": true,
 			"Processor.Tests": true,
+			"McpServer": true,
 			"Shared": true,
 			"TestShared": true,
 			"samples": true,
