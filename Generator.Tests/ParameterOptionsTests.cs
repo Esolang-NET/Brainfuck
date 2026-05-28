@@ -17,7 +17,8 @@ public class ParameterOptionsTests
             VariablePipeReader: "reader",
             VariableTextReader: null,
             VariableInputString: "input",
-            VariableLogger: null
+            VariableLogger: null,
+            IsLoggerFromParameter: false
         );
 
         Assert.IsTrue(options.HasPipeWriterParameter);

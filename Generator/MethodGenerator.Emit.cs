@@ -1,4 +1,5 @@
 ﻿using Esolang.Brainfuck.Generator.Sequences;
+using Esolang.Generator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -58,8 +59,8 @@ public partial class MethodGenerator
             {{methodBodyCode}}
             {{SPACE}}}
             {{codeForClosingDefinition}}
-
             """;
+
         var features = RuntimeFacadeFeatures.None;
         if (writeOption.UseListAsMemory) features |= RuntimeFacadeFeatures.UseListAsMemory;
         if (writeOption.HasLoggerParameter) features |= RuntimeFacadeFeatures.UseLogger;
@@ -83,7 +84,7 @@ public partial class MethodGenerator
         {{openingDefinitionCode}}
         """);
 
-        var accessibility = $"{SyntaxFacts.GetText(methodSymbol.DeclaredAccessibility)}{(methodSymbol.IsStatic ? " static" : string.Empty)} partial";
+        var accessibility = $"{SyntaxFacts.GetText(methodSymbol.DeclaredAccessibility)}{(methodSymbol.IsStatic ? " static" : string.Empty)}";
         var returnType = methodSymbol.ReturnType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
         var parameters = string.Join(", ", methodSymbol.Parameters.Select(FormatParameter));
 
@@ -125,8 +126,8 @@ public partial class MethodGenerator
         var innerType = returnType_.TypeArguments.First();
         var annoation = returnType_.TypeArgumentNullableAnnotations.First();
         var builder = new StringBuilder();
-        var isTask = status.ReturnKind is ReturnKind.TaskNullableString or ReturnKind.TaskString;
-        var isNullable = status.ReturnKind is ReturnKind.TaskNullableString or ReturnKind.ValueTaskNullableString;
+        var isTask = status.ReturnKind is MethodReturnKind.TaskNullableString or MethodReturnKind.TaskString;
+        var isNullable = status.ReturnKind is MethodReturnKind.TaskNullableString or MethodReturnKind.ValueTaskNullableString;
 
         if (isNullable)
         {
@@ -150,7 +151,7 @@ public partial class MethodGenerator
     static string GenerateStringReturnCode(string space, in Status status)
     {
         var builder = new StringBuilder();
-        var returnVal = status.ReturnKind == ReturnKind.NullableString ? "null!" : "string.Empty";
+        var returnVal = status.ReturnKind == MethodReturnKind.NullableString ? "null!" : "string.Empty";
         builder.AppendLine($"{space}return {returnVal};");
         return builder.ToString();
     }
@@ -188,7 +189,7 @@ public partial class MethodGenerator
                     {space}var {options.VariablePipeWriter} = outputPipe.Writer;
                     """);
                 break;
-            case ({ IsOutputRequired: true, ReturnKind: ReturnKind.String or ReturnKind.NullableString or ReturnKind.TaskString or ReturnKind.TaskNullableString or ReturnKind.ValueTaskString or ReturnKind.ValueTaskNullableString }, { HasPipeWriterParameter: false }):
+            case ({ IsOutputRequired: true, ReturnKind: MethodReturnKind.String or MethodReturnKind.NullableString or MethodReturnKind.TaskString or MethodReturnKind.TaskNullableString or MethodReturnKind.ValueTaskString or MethodReturnKind.ValueTaskNullableString }, { HasPipeWriterParameter: false }):
                 options = options with
                 {
                     VariablePipeWriter = "pipeWriter",
@@ -293,32 +294,32 @@ public partial class MethodGenerator
         #region Return statement generation
         switch (status, options)
         {
-            case ({ ReturnKind: ReturnKind.ValueTaskString or ReturnKind.ValueTaskNullableString } and not { IsOutputRequired: true }, { UseAwait: false }):
-            case ({ ReturnKind: ReturnKind.TaskString or ReturnKind.TaskNullableString } and not { IsOutputRequired: true }, { UseAwait: false }):
+            case ({ ReturnKind: MethodReturnKind.ValueTaskString or MethodReturnKind.ValueTaskNullableString } and not { IsOutputRequired: true }, { UseAwait: false }):
+            case ({ ReturnKind: MethodReturnKind.TaskString or MethodReturnKind.TaskNullableString } and not { IsOutputRequired: true }, { UseAwait: false }):
                 {
                     builder.Append(GenerateAsyncReturnCode(space, status, methodSymbol));
                 }
                 break;
 
-            case ({ ReturnKind: ReturnKind.NullableString } and not { IsOutputRequired: true }, _)
+            case ({ ReturnKind: MethodReturnKind.NullableString } and not { IsOutputRequired: true }, _)
                 or (
                 {
-                    ReturnKind: ReturnKind.TaskNullableString
-                        or ReturnKind.ValueTaskNullableString
+                    ReturnKind: MethodReturnKind.TaskNullableString
+                        or MethodReturnKind.ValueTaskNullableString
                 } and not { IsOutputRequired: true }, { UseAwait: true }):
                 {
                     builder.Append(GenerateStringReturnCode(space, status));
                 }
                 break;
 
-            case ({ ReturnKind: ReturnKind.String } and not { IsOutputRequired: true }, _)
-                or ({ ReturnKind: ReturnKind.TaskString or ReturnKind.ValueTaskString } and not { IsOutputRequired: true }, { UseAwait: true }):
+            case ({ ReturnKind: MethodReturnKind.String } and not { IsOutputRequired: true }, _)
+                or ({ ReturnKind: MethodReturnKind.TaskString or MethodReturnKind.ValueTaskString } and not { IsOutputRequired: true }, { UseAwait: true }):
                 {
                     builder.Append(GenerateStringReturnCode(space, status));
                 }
                 break;
 
-            case ({ ReturnKind: ReturnKind.TaskString or ReturnKind.ValueTaskString, IsOutputRequired: true }, _):
+            case ({ ReturnKind: MethodReturnKind.TaskString or MethodReturnKind.ValueTaskString, IsOutputRequired: true }, _):
                 {
                     builder.AppendLine($$"""
                         {{space}}{
@@ -346,7 +347,7 @@ public partial class MethodGenerator
                 break;
 
 
-            case ({ ReturnKind: ReturnKind.TaskNullableString or ReturnKind.ValueTaskNullableString, IsOutputRequired: true }, _):
+            case ({ ReturnKind: MethodReturnKind.TaskNullableString or MethodReturnKind.ValueTaskNullableString, IsOutputRequired: true }, _):
                 {
                     builder.AppendLine($$"""
                         {{space}}{
@@ -373,7 +374,7 @@ public partial class MethodGenerator
                 }
                 break;
 
-            case ({ ReturnKind: ReturnKind.String, IsOutputRequired: true }, _):
+            case ({ ReturnKind: MethodReturnKind.String, IsOutputRequired: true }, _):
                 {
                     builder.AppendLine($$"""
                         {{space}}{
@@ -392,7 +393,7 @@ public partial class MethodGenerator
                 }
                 break;
 
-            case ({ ReturnKind: ReturnKind.NullableString, IsOutputRequired: true }, _):
+            case ({ ReturnKind: MethodReturnKind.NullableString, IsOutputRequired: true }, _):
                 {
                     builder.AppendLine($$"""
                         {{space}}{
@@ -411,7 +412,7 @@ public partial class MethodGenerator
                 }
                 break;
 
-            case ({ ReturnKind: ReturnKind.AsyncEnumerableByte }, { UseAwait: false }):
+            case ({ ReturnKind: MethodReturnKind.IAsyncEnumerableByte }, { UseAwait: false }):
                 options = options with
                 {
                     UseAwait = true,
@@ -426,7 +427,7 @@ public partial class MethodGenerator
                     """);
                 break;
 
-            case ({ ReturnKind: ReturnKind.EnumerableByte or ReturnKind.AsyncEnumerableByte }, _):
+            case ({ ReturnKind: MethodReturnKind.IEnumerableByte or MethodReturnKind.IAsyncEnumerableByte }, _):
                 builder.AppendLine($$"""
                     {{space}}yield break;
 
@@ -477,42 +478,42 @@ public partial class MethodGenerator
                     """);
                 break;
 
-            case ({ ReturnKind: ReturnKind.TaskInt }, { UseAwait: false }):
+            case ({ ReturnKind: MethodReturnKind.TaskInt32 }, { UseAwait: false }):
                 builder.AppendLine($$"""
                     {{space}}return global::System.Threading.Tasks.Task.FromResult(0);
 
                     """);
                 break;
 
-            case ({ ReturnKind: ReturnKind.Task }, { UseAwait: false }):
+            case ({ ReturnKind: MethodReturnKind.Task }, { UseAwait: false }):
                 builder.AppendLine($$"""
                     {{space}}return global::System.Threading.Tasks.Task.CompletedTask;
 
                     """);
                 break;
 
-            case ({ ReturnKind: ReturnKind.ValueTaskInt }, { UseAwait: false }):
+            case ({ ReturnKind: MethodReturnKind.ValueTaskInt32 }, { UseAwait: false }):
                 builder.AppendLine($$"""
                     {{space}}return new global::System.Threading.Tasks.ValueTask<int>(0);
 
                     """);
                 break;
 
-            case ({ ReturnKind: ReturnKind.Int or ReturnKind.TaskInt or ReturnKind.ValueTaskInt }, { UseAwait: false }):
+            case ({ ReturnKind: MethodReturnKind.Int32 or MethodReturnKind.TaskInt32 or MethodReturnKind.ValueTaskInt32 }, { UseAwait: false }):
                 builder.AppendLine($$"""
                     {{space}}return 0;
 
                     """);
                 break;
 
-            case ({ ReturnKind: ReturnKind.ValueTask }, { UseAwait: false }):
+            case ({ ReturnKind: MethodReturnKind.ValueTask }, { UseAwait: false }):
                 builder.AppendLine($$"""
                     {{space}}return default;
 
                     """);
                 break;
 
-            case ({ ReturnKind: ReturnKind.TaskInt or ReturnKind.ValueTaskInt }, { UseAwait: true }):
+            case ({ ReturnKind: MethodReturnKind.TaskInt32 or MethodReturnKind.ValueTaskInt32 }, { UseAwait: true }):
                 builder.AppendLine($$"""
                     {{space}}return 0;
 
@@ -613,7 +614,7 @@ public partial class MethodGenerator
                 """,
             Output => status switch
             {
-                { ReturnKind: ReturnKind.EnumerableByte or ReturnKind.AsyncEnumerableByte } => $$"""
+                { ReturnKind: MethodReturnKind.IEnumerableByte or MethodReturnKind.IAsyncEnumerableByte } => $$"""
                 {{space}}yield return {{options.VariableStack}}[{{options.VariableStackIndex}}];
                 {{logCall(Output, space)}}
                 """,
@@ -698,7 +699,7 @@ public partial class MethodGenerator
         [MemberNotNullWhen(true, nameof(Error))]
         public readonly bool InvalidValueParameter { get; }
 
-        public readonly ReturnKind ReturnKind { get; } = default!;
+        public readonly MethodReturnKind ReturnKind { get; } = default!;
 
         [MemberNotNullWhen(false, nameof(ReturnKind))]
         [MemberNotNullWhen(true, nameof(Error))]
@@ -726,11 +727,11 @@ public partial class MethodGenerator
         public readonly bool IsInputRequired => Sequences.RequiredInput;
 
         public readonly bool IsAsyncMethod => ReturnKind
-             is ReturnKind.Task or ReturnKind.ValueTask
-             or ReturnKind.TaskInt or ReturnKind.TaskString
-             or ReturnKind.TaskNullableString or ReturnKind.ValueTaskNullableString
-             or ReturnKind.ValueTaskInt or ReturnKind.ValueTaskString
-             or ReturnKind.AsyncEnumerableByte;
+             is MethodReturnKind.Task or MethodReturnKind.ValueTask
+             or MethodReturnKind.TaskInt32 or MethodReturnKind.TaskString
+             or MethodReturnKind.TaskNullableString or MethodReturnKind.ValueTaskNullableString
+             or MethodReturnKind.ValueTaskInt32 or MethodReturnKind.ValueTaskString
+             or MethodReturnKind.IAsyncEnumerableByte;
 
         public readonly IMethodSymbol MethodSymbol { get; }
         public readonly Compilation Compilation { get; }
@@ -783,18 +784,17 @@ public partial class MethodGenerator
                 return;
             }
             ReturnKind = returnKind;
-            if (!TryGetParameterOptions(methodSymbol, returnKind, methodSymbol.ReturnType.ToString(), sequences, context, methodDeclarationSyntax, types, out var parameterOptions, out var dest))
-
+            if (!TryGetParameterOptions(methodSymbol, methodSymbol.ReturnType.ToString(), sequences, context, methodDeclarationSyntax, types, out var parameterOptions, out var dest))
             {
                 InvalidParameterOptions = true;
-                Error = dest;
+                Error = dest.Value;
                 return;
             }
             ParameterOptions = parameterOptions;
             ;
             if (sequences.RequiredOutput
-                && (returnKind is not (ReturnKind.Void or ReturnKind.Task or ReturnKind.ValueTask
-                         or ReturnKind.ValueTaskInt or ReturnKind.TaskInt or ReturnKind.Int) ? 1 : 0)
+                && (returnKind is not (MethodReturnKind.Void or MethodReturnKind.Task or MethodReturnKind.ValueTask
+                         or MethodReturnKind.ValueTaskInt32 or MethodReturnKind.TaskInt32 or MethodReturnKind.Int32) ? 1 : 0)
                 + (string.IsNullOrEmpty(parameterOptions.VariablePipeWriter) ? 0 : 1)
                 + (string.IsNullOrEmpty(parameterOptions.VariableTextWriter) ? 0 : 1) != 1
             )
@@ -883,377 +883,104 @@ public partial class MethodGenerator
         static bool TryGetReturnKind(
             ITypeSymbol returnType,
             KnownTypes types,
-            [NotNullWhen(true)] out ReturnKind returnKindResult)
+            [NotNullWhen(true)] out MethodReturnKind returnKindResult)
         {
-            returnKindResult = default!;
-
-            if (SymbolEqualityComparer.Default.Equals(returnType, types.TaskInt)) returnKindResult = ReturnKind.TaskInt;
-            else if (SymbolEqualityComparer.Default.Equals(returnType, types.Task)) returnKindResult = ReturnKind.Task;
-            else if (SymbolEqualityComparer.Default.Equals(returnType, types.TaskString))
-            {
-                var named = (INamedTypeSymbol)returnType;
-                var isNullable = named.TypeArguments.FirstOrDefault()?.NullableAnnotation == NullableAnnotation.Annotated;
-                returnKindResult = isNullable ? ReturnKind.TaskNullableString : ReturnKind.TaskString;
-            }
-            else if (SymbolEqualityComparer.Default.Equals(returnType, types.ValueTaskInt)) returnKindResult = ReturnKind.ValueTaskInt;
-            else if (SymbolEqualityComparer.Default.Equals(returnType, types.ValueTask)) returnKindResult = ReturnKind.ValueTask;
-            else if (SymbolEqualityComparer.Default.Equals(returnType, types.ValueTaskString))
-            {
-                var named = (INamedTypeSymbol)returnType;
-                var isNullable = named.TypeArguments.FirstOrDefault()?.NullableAnnotation == NullableAnnotation.Annotated;
-                returnKindResult = isNullable ? ReturnKind.ValueTaskNullableString : ReturnKind.ValueTaskString;
-            }
-            else if (SymbolEqualityComparer.Default.Equals(returnType, types.IEnumerableByte)) returnKindResult = ReturnKind.EnumerableByte;
-            else if (SymbolEqualityComparer.Default.Equals(returnType, types.IAsyncEnumerableByte)) returnKindResult = ReturnKind.AsyncEnumerableByte;
-            else if (SymbolEqualityComparer.Default.Equals(returnType, types.String))
-            {
-                var isNullable = returnType.NullableAnnotation == NullableAnnotation.Annotated;
-                returnKindResult = isNullable ? ReturnKind.NullableString : ReturnKind.String;
-            }
-            else if (returnType.SpecialType == SpecialType.System_Void) returnKindResult = ReturnKind.Void;
-            else if (returnType.SpecialType == SpecialType.System_Int32) returnKindResult = ReturnKind.Int;
-            else return false;
-
-            return true;
+            returnKindResult = MethodSignatureBinder.BindReturnKind(returnType, types);
+            return returnKindResult is not MethodReturnKind.Invalid;
         }
         static bool TryGetParameterOptions(
             IMethodSymbol methodSymbol,
-            ReturnKind returnKind,
             string returnTypeName,
             BrainfuckSequenceEnumerable sequences,
             SourceProductionContext context,
             MethodDeclarationSyntax methodDeclarationSyntax,
             KnownTypes types,
             [NotNullWhen(true)] out ParameterOptions parameterOptions,
-            [NotNullWhen(false)] out (DiagnosticDescriptor Descriptor, string Message) dest)
+            [NotNullWhen(false)]out (DiagnosticDescriptor Descriptor, string Message)? dest)
         {
+            dest = null;
             parameterOptions = default!;
-            dest = default;
-            var variableCancellation = string.Empty;
-            var variablePipeWriter = string.Empty;
-            var variablePipeReder = string.Empty;
-            var variableTextWriter = string.Empty;
-            var variableTextReader = string.Empty;
-            var variableInputString = string.Empty;
-            var variableLogger = string.Empty;
-            List<string>? builder = null;
-            foreach (var param in methodSymbol.Parameters)
-            {
-                var type = param.Type;
 
-                if (SymbolEqualityComparer.Default.Equals(type, types.CancellationToken))
+            var binding = MethodSignatureBinder.Bind(
+                methodSymbol,
+                types,
+                invalidReturnTypeErrorId: DiagnosticDescriptors.InvalidReturnType.Id,
+                invalidParameterErrorId: DiagnosticDescriptors.NotSupportParameterPattern.Id,
+                duplicateParameterErrorId: DiagnosticDescriptors.DuplicateParameter.Id,
+                returnOutputConflictErrorId: DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern.Id
+            );
+            if (binding is { IsValid: true, UnhandledParameters.Count: > 0 })
+            {
+                foreach (var parameter in binding.UnhandledParameters)
                 {
-                    if (!string.IsNullOrEmpty(variableCancellation))
-                    {
-                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
-                        return false;
-                    }
-                    variableCancellation = param.Name;
-                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableCancellation}");
-                    continue;
-                }
-                if (IsLoggerType(type, types))
-                {
-                    if (!string.IsNullOrEmpty(variableLogger))
-                    {
-                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
-                        return false;
-                    }
-                    variableLogger = param.Name;
-                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableLogger}");
-                    continue;
-                }
-                if (SymbolEqualityComparer.Default.Equals(type, types.String))
-                {
-                    if (!sequences.RequiredInput)
-                    {
-                        var diagnostic = DiagnosticDescriptors.UnusedInputParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                    }
-                    if (!string.IsNullOrEmpty(variablePipeReder) || !string.IsNullOrEmpty(variableTextReader))
-                    {
-                        var diagnostic = DiagnosticDescriptors.NotSupportParameterPattern;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation())
-                        );
-                        dest = (diagnostic, diagnostic.MessageFormat.ToString());
-                        return false;
-                    }
-                    if (!string.IsNullOrEmpty(variableInputString))
-                    {
-                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
-                        return false;
-                    }
-                    variableInputString = param.Name;
-                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableInputString}");
-                    continue;
-                }
-                if (SymbolEqualityComparer.Default.Equals(type, types.PipeReader))
-                {
-                    if (!sequences.RequiredInput)
-                    {
-                        var diagnostic = DiagnosticDescriptors.UnusedInputParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                    }
-                    if (!string.IsNullOrEmpty(variableInputString) || !string.IsNullOrEmpty(variableTextReader))
-                    {
-                        var diagnostic = DiagnosticDescriptors.NotSupportParameterPattern;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation())
-                        );
-                        dest = (diagnostic, diagnostic.MessageFormat.ToString());
-                        return false;
-                    }
-                    if (!string.IsNullOrEmpty(variablePipeReder))
-                    {
-                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
-                        return false;
-                    }
-                    variablePipeReder = param.Name;
-                    (builder ??= []).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeReder}");
-                    continue;
-                }
-                if (SymbolEqualityComparer.Default.Equals(type, types.TextReader))
-                {
-                    if (!sequences.RequiredInput)
-                    {
-                        var diagnostic = DiagnosticDescriptors.UnusedInputParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                    }
-                    if (!string.IsNullOrEmpty(variableInputString) || !string.IsNullOrEmpty(variablePipeReder))
-                    {
-                        var diagnostic = DiagnosticDescriptors.NotSupportParameterPattern;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation())
-                        );
-                        dest = (diagnostic, diagnostic.MessageFormat.ToString());
-                        return false;
-                    }
-                    if (!string.IsNullOrEmpty(variableTextReader))
-                    {
-                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
-                        return false;
-                    }
-                    variableTextReader = param.Name;
-                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextReader}");
-                    continue;
-                }
-                if (SymbolEqualityComparer.Default.Equals(type, types.PipeWriter))
-                {
-                    if (returnKind is not (ReturnKind.Void or ReturnKind.Task or ReturnKind.ValueTask
-                         or ReturnKind.ValueTaskInt or ReturnKind.TaskInt or ReturnKind.Int))
-                    {
-                        var diagnostic = DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString(),
-                                returnTypeName)
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString(), returnTypeName));
-                        return false;
-                    }
-                    if (!string.IsNullOrEmpty(variablePipeWriter))
-                    {
-                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
-                        return false;
-                    }
-                    if (!string.IsNullOrEmpty(variableTextWriter))
-                    {
-                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
-                        return false;
-                    }
-                    variablePipeWriter = param.Name;
-                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variablePipeWriter}");
-                    continue;
-                }
-                if (SymbolEqualityComparer.Default.Equals(type, types.TextWriter))
-                {
-                    if (returnKind is not (ReturnKind.Void or ReturnKind.Task or ReturnKind.ValueTask
-                         or ReturnKind.ValueTaskInt or ReturnKind.TaskInt or ReturnKind.Int))
-                    {
-                        var diagnostic = DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString(),
-                                returnTypeName)
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString(), returnTypeName));
-                        return false;
-                    }
-                    if (!string.IsNullOrEmpty(variableTextWriter) || !string.IsNullOrEmpty(variablePipeWriter))
-                    {
-                        var diagnostic = DiagnosticDescriptors.DuplicateParameter;
-                        context.ReportDiagnostic(
-                            Diagnostic.Create(
-                                diagnostic,
-                                methodDeclarationSyntax.GetLocation(),
-                                type.ToDisplayString())
-                        );
-                        dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
-                        return false;
-                    }
-                    variableTextWriter = param.Name;
-                    (builder ??= new()).Add($"{type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {variableTextWriter}");
-                    continue;
-                }
-                {
-                    var diagnostic = DiagnosticDescriptors.InvalidParameter;
-                    context.ReportDiagnostic(
-                        Diagnostic.Create(
-                            diagnostic,
-                            methodDeclarationSyntax.GetLocation(),
-                            type.ToDisplayString())
-                    );
-                    dest = (diagnostic, string.Format(diagnostic.MessageFormat.ToString(), type.ToDisplayString()));
+                    var descriptor = DiagnosticDescriptors.InvalidParameter;
+                    var diagnostic = Diagnostic.Create(descriptor, parameter.Locations[0], parameter.Type.ToDisplayString());
+                    context.ReportDiagnostic(diagnostic);
+                    dest = (descriptor, string.Format(descriptor.MessageFormat.ToString(), parameter.Type.ToDisplayString()));
                     return false;
                 }
             }
+            if (!binding.IsValid)
+            {
+                var descriptor = binding.ErrorId switch
+                {
+                    "BF0002" => DiagnosticDescriptors.InvalidReturnType,
+                    "BF0005" => DiagnosticDescriptors.NotSupportParameterPattern,
+                    "BF0004" => DiagnosticDescriptors.DuplicateParameter,
+                    "BF0006" => DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
+                    _ => DiagnosticDescriptors.NotSupportParameterPattern
+                };
+                
+                var location = binding.Location ?? methodDeclarationSyntax.Identifier.GetLocation();
+                var messageArgs = descriptor == DiagnosticDescriptors.InvalidReturnType ? [methodSymbol.ReturnType.ToDisplayString()]
+                                : descriptor == DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern ? ["parameter", returnTypeName]
+                                : descriptor == DiagnosticDescriptors.DuplicateParameter ? ["parameter"]
+                                : Array.Empty<object>();
 
-            if (string.IsNullOrEmpty(variableLogger))
-                variableLogger = FindLoggerField(methodSymbol.ContainingType, methodSymbol.IsStatic, types, out var _) ?? string.Empty;
+                var diagnostic = Diagnostic.Create(descriptor, location, messageArgs);
+                context.ReportDiagnostic(diagnostic);
+                dest = (descriptor, diagnostic.ToString());
+                return false;
+            }
+
+            // Preservation of UnusedInputParameter diagnostic
+            if (!sequences.RequiredInput && binding.HasExplicitInput)
+            {
+                var typeName = binding.InputKind switch
+                {
+                    MethodInputKind.String => "string",
+                    MethodInputKind.TextReader => "System.IO.TextReader",
+                    MethodInputKind.PipeReader => "System.IO.Pipelines.PipeReader",
+                    _ => ""
+                };
+                context.ReportDiagnostic(Diagnostic.Create(DiagnosticDescriptors.UnusedInputParameter, methodDeclarationSyntax.GetLocation(), typeName));
+            }
+
+            var variableCancellation = binding.CancellationTokenName ?? string.Empty;
+            var variablePipeWriter = binding.OutputKind == MethodOutputKind.PipeWriter ? binding.OutputExpression : string.Empty;
+            var variableTextWriter = binding.OutputKind == MethodOutputKind.TextWriter ? binding.OutputExpression : string.Empty;
+            var variablePipeReader = binding.InputKind == MethodInputKind.PipeReader ? binding.InputExpression : string.Empty;
+            var variableTextReader = binding.InputKind == MethodInputKind.TextReader ? binding.InputExpression : string.Empty;
+            var variableInputString = binding.InputKind == MethodInputKind.String ? binding.InputExpression : string.Empty;
+            var variableLogger = binding.LoggerExpression ?? string.Empty;
 
             parameterOptions = new(
-                ParameterSymbols: builder?.Count > 0 ? string.Join(", ", builder) : string.Empty,
+                ParameterSymbols: string.Join(", ", methodSymbol.Parameters.Select(p => $"{p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {p.Name}")),
                 VariableCancellation: variableCancellation,
                 VariablePipeWriter: variablePipeWriter,
                 VariableTextWriter: variableTextWriter,
-                VariablePipeReader: variablePipeReder,
+                VariablePipeReader: variablePipeReader,
                 VariableTextReader: variableTextReader,
                 VariableInputString: variableInputString,
-                VariableLogger: variableLogger
+                VariableLogger: variableLogger,
+                IsLoggerFromParameter: binding.IsLoggerFromParameter
             );
+
             return true;
         }
 
     }
 
-
-    static bool IsLoggerType(ITypeSymbol? type, KnownTypes types)
-    {
-        if (type is null) return false;
-        if (IsLoggerSymbol(type, types)) return true;
-        foreach (var iface in type.AllInterfaces)
-        {
-            if (IsLoggerSymbol(iface, types)) return true;
-        }
-        return false;
-    }
-
-    static bool IsLoggerSymbol(ITypeSymbol symbol, KnownTypes types)
-     => SymbolEqualityComparer.Default.Equals(symbol, types.ILogger)
-      || (symbol is INamedTypeSymbol named && named.IsGenericType && SymbolEqualityComparer.Default.Equals(named.ConstructedFrom, types.ILoggerT));
-
-    static string? FindLoggerField(ITypeSymbol? type, bool isStatic, KnownTypes types, out bool isField)
-    {
-        isField = false;
-        var currentType = type;
-        var shadowedNames = new System.Collections.Generic.HashSet<string>(System.StringComparer.Ordinal);
-        while (currentType != null)
-        {
-            foreach (var field in currentType.GetMembers().OfType<IFieldSymbol>())
-            {
-                if (isStatic && !field.IsStatic) continue;
-
-                if (IsLoggerType(field.Type, types))
-                {
-                    isField = true;
-                    return field.Name;
-                }
-                shadowedNames.Add(field.Name);
-            }
-            currentType = currentType.BaseType;
-        }
-
-        if (type is INamedTypeSymbol namedType)
-        {
-            foreach (var constructor in namedType.InstanceConstructors)
-            {
-                foreach (var parameter in constructor.Parameters)
-                {
-                    if (IsLoggerType(parameter.Type, types) && !shadowedNames.Contains(parameter.Name))
-                    {
-                        isField = false;
-                        return parameter.Name;
-                    }
-                }
-            }
-        }
-        return null;
-    }
 }
 internal readonly record struct InternalOptions(
     string Space,
@@ -1295,7 +1022,8 @@ internal readonly record struct ParameterOptions(
     string? VariablePipeReader,
     string? VariableTextReader,
     string? VariableInputString,
-    string? VariableLogger
+    string? VariableLogger,
+    bool IsLoggerFromParameter
 )
 {
 
@@ -1321,67 +1049,4 @@ internal enum ParameterType
     ByteArray,
     ReadOnlyMemoryChar,
 
-}
-
-/// <summary>
-/// The kind of return type of the generated method, which determines how the method body is generated and what features are used.
-/// </summary>
-internal enum ReturnKind
-{
-    /// <summary>
-    /// The method returns void, and the generated method body writes output using the provided PipeWriter or TextWriter parameter.
-    /// </summary>
-    Void,
-    /// <summary>
-    /// The method returns int, and the generated method body writes output by returning an int value. The int value is typically used to represent a byte value (0-255) for output, but it can also be used for other purposes as needed.
-    /// </summary>
-    Int,
-    /// <summary>
-    /// The method returns string, and the generated method body writes output by returning a string value. The string value is typically used to represent the entire output of the Brainfuck program, but it can also be used for other purposes as needed. If the return type is string, the method can only be used for Brainfuck programs that do not require input, since there is no way to provide input to the method.
-    /// </summary>
-    NullableString,
-    /// <summary>
-    /// The method returns string, and the generated method body writes output by returning a string value. The string value is typically used to represent the entire output of the Brainfuck program, but it can also be used for other purposes as needed. If the return type is string, the method can only be used for Brainfuck programs that do not require input, since there is no way to provide input to the method.
-    /// </summary>
-    String,
-    /// <summary>
-    /// The method returns Task, and the generated method body writes output using the provided PipeWriter or TextWriter parameter. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
-    /// </summary>
-    Task,
-    /// <summary>
-    /// The method returns <see langword="Task&lt;int&gt;"/>, and the generated method body writes output by returning an int value. The int value is typically used to represent a byte value (0-255) for output, but it can also be used for other purposes as needed. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
-    /// </summary>
-    TaskInt,
-    /// <summary>
-    /// The method returns <see langword="Task&lt;string&gt;"/>, and the generated method body writes output by returning a string value. The string value is typically used to represent the entire output of the Brainfuck program, but it can also be used for other purposes as needed. If the return type is <see langword="Task&lt;string&gt;"/>, the method can only be used for Brainfuck programs that do not require input, since there is no way to provide input to the method. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
-    /// </summary>
-    TaskNullableString,
-    /// <summary>
-    /// The method returns <see langword="Task&lt;string&gt;"/>, and the generated method body writes output by returning a string value. The string value is typically used to represent the entire output of the Brainfuck program, but it can also be used for other purposes as needed. If the return type is <see langword="Task&lt;string&gt;"/>, the method can only be used for Brainfuck programs that do not require input, since there is no way to provide input to the method. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
-    /// </summary>
-    TaskString,
-    /// <summary>
-    /// The method returns <see langword="ValueTask"/>, and the generated method body writes output using the provided PipeWriter or TextWriter parameter. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
-    /// </summary>
-    ValueTask,
-    /// <summary>
-    /// The method returns <see langword="ValueTask&lt;int&gt;"/>, and the generated method body writes output by returning an int value. The int value is typically used to represent a byte value (0-255) for output, but it can also be used for other purposes as needed. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
-    /// </summary>
-    ValueTaskInt,
-    /// <summary>
-    /// The method returns <see langword="ValueTask&lt;string&gt;"/>, and the generated method body writes output by returning a string value. The string value is typically used to represent the entire output of the Brainfuck program, but it can also be used for other purposes as needed. If the return type is <see langword="ValueTask&lt;string&gt;"/>, the method can only be used for Brainfuck programs that do not require input, since there is no way to provide input to the method. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
-    /// </summary>
-    ValueTaskNullableString,
-    /// <summary>
-    /// The method returns <see langword="ValueTask&lt;string&gt;"/>, and the generated method body writes output by returning a string value. The string value is typically used to represent the entire output of the Brainfuck program, but it can also be used for other purposes as needed. If the return type is <see langword="ValueTask&lt;string&gt;"/>, the method can only be used for Brainfuck programs that do not require input, since there is no way to provide input to the method. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
-    /// </summary>
-    ValueTaskString,
-    /// <summary>
-    /// The method returns <see langword="IEnumerable&lt;byte&gt;"/>, and the generated method body writes output by yielding byte values. The byte values are typically used to represent byte output of the Brainfuck program, but they can also be used for other purposes as needed. If the return type is <see langword="IEnumerable&lt;byte&gt;"/>, the method can only be used for Brainfuck programs that do not require input, since there is no way to provide input to the method. The method can use features such as yield return for output.
-    /// </summary>
-    EnumerableByte,
-    /// <summary>
-    /// The method returns <see langword="IAsyncEnumerable&lt;byte&gt;"/>, and the generated method body writes output by yielding byte values. The byte values are typically used to represent byte output of the Brainfuck program, but they can also be used for other purposes as needed. If the return type is <see langword="IAsyncEnumerable&lt;byte&gt;"/>, the method can only be used for Brainfuck programs that do not require input, since there is no way to provide input to the method. The method is asynchronous and can use async features such as await and IAsyncEnumerable for output.
-    /// </summary>
-    AsyncEnumerableByte,
 }

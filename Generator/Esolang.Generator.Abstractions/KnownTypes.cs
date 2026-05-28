@@ -74,8 +74,13 @@ public readonly struct KnownTypes
     /// <summary>Gets a value indicating whether the type is <c>string</c>.</summary>
     /// <param name="type">The type to check.</param>
     /// <param name="isNullable">Optional: Whether to check for nullability.</param>
-    public bool IsString(ITypeSymbol? type, bool? isNullable = null) =>
-        type != null && SymbolEqualityComparer.Default.Equals(type, String) && (isNullable == null || type.NullableAnnotation == (isNullable.Value ? NullableAnnotation.Annotated : NullableAnnotation.NotAnnotated));
+    public bool IsString(ITypeSymbol? type, bool? isNullable = null)
+    {
+        if (type is not INamedTypeSymbol named || !SymbolEqualityComparer.Default.Equals(named, String)) return false;
+        if (isNullable == null) return true;
+        if (isNullable.Value) return type.NullableAnnotation == NullableAnnotation.Annotated;
+        return type.NullableAnnotation is NullableAnnotation.NotAnnotated or NullableAnnotation.None;
+    }
 
     /// <summary>Gets a value indicating whether the type is <c>byte</c>.</summary>
     public bool IsByte(ITypeSymbol? type) => EqualsType(type, Byte);
@@ -88,7 +93,9 @@ public readonly struct KnownTypes
     public bool IsTaskT(ITypeSymbol? type, bool? isNullable = null)
     {
         if (type is not INamedTypeSymbol named || !EqualsDefinition(named, TaskT)) return false;
-        return isNullable == null || named.TypeArguments[0].NullableAnnotation == (isNullable.Value ? NullableAnnotation.Annotated : NullableAnnotation.NotAnnotated);
+        if (isNullable == null) return true;
+        var annotation = named.TypeArguments[0].NullableAnnotation;
+        return isNullable.Value ? annotation == NullableAnnotation.Annotated : annotation is NullableAnnotation.NotAnnotated or NullableAnnotation.None;
     }
     /// <summary>Gets a value indicating whether the type is <c>System.Threading.Tasks.ValueTask</c>.</summary>
     public bool IsValueTask(ITypeSymbol? type) => EqualsType(type, ValueTask);
@@ -96,7 +103,9 @@ public readonly struct KnownTypes
     public bool IsValueTaskT(ITypeSymbol? type, bool? isNullable = null)
     {
         if (type is not INamedTypeSymbol named || !EqualsDefinition(named, ValueTaskT)) return false;
-        return isNullable == null || named.TypeArguments[0].NullableAnnotation == (isNullable.Value ? NullableAnnotation.Annotated : NullableAnnotation.NotAnnotated);
+        if (isNullable == null) return true;
+        var annotation = named.TypeArguments[0].NullableAnnotation;
+        return isNullable.Value ? annotation == NullableAnnotation.Annotated : annotation is NullableAnnotation.NotAnnotated or NullableAnnotation.None;
     }
     /// <summary>Gets a value indicating whether the type is <c>System.Collections.Generic.IEnumerable{T}</c>.</summary>
     public bool IsIEnumerableT(ITypeSymbol? type) => EqualsDefinition(type, IEnumerableT);

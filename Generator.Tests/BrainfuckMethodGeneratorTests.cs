@@ -437,101 +437,101 @@ public class MethodGeneratorTests
         get
         {
             // BF0001: GenerateBrainfuckMethod required first parameter.
-            yield return DiagnoticsTest("BF0001", "", "void");
+            yield return DiagnoticsTest(["BF0001"], "", "void");
             // BF0002: not support return type double.
-            yield return DiagnoticsTest("BF0002", "2_1", "double");
+            yield return DiagnoticsTest(["BF0002"], "2_1", "double");
             // BF0003: not support parameter type int.
-            yield return DiagnoticsTest("BF0003", "3_1", "void", "int param1");
+            yield return DiagnoticsTest(["BF0003"], "3_1", "void", "int param1");
             // BF0009: unused input parameter string (source no input)
-            yield return DiagnoticsTest("BF0009", "3_2", "void", "string input");
+            yield return DiagnoticsTest(["BF0009"], "3_2", "void", "string input");
             // BF0009: unused input parameter PipeReader (source no input)
-            yield return DiagnoticsTest("BF0009", "3_3", "void", "System.IO.Pipelines.PipeReader input");
+            yield return DiagnoticsTest(["BF0009"], "3_3", "void", "System.IO.Pipelines.PipeReader input");
             // BF0009: unused input parameter TextReader (source no input)
-            yield return DiagnoticsTest("BF0009", "3_4", "void", "System.IO.TextReader input");
+            yield return DiagnoticsTest(["BF0009"], "3_4", "void", "System.IO.TextReader input");
             // BF0004: duplicate parameter CancellationToken
-            yield return DiagnoticsTest("BF0004", "4_1.", "string", "System.Threading.CancellationToken token1, System.Threading.CancellationToken token2");
+            yield return DiagnoticsTest(["BF0004"], "4_1.", "string", "System.Threading.CancellationToken token1, System.Threading.CancellationToken token2");
             // BF0004: duplicate parameter string
-            yield return DiagnoticsTest("BF0004", "4_2,", "void", "string input1, string input2");
+            yield return DiagnoticsTest(["BF0004"], "4_2,", "void", "string input1, string input2");
             // BF0004: duplicate parameter System.IO.Pipelines.PipeReader
-            yield return DiagnoticsTest("BF0004", "4_3,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.Pipelines.PipeReader input2");
+            yield return DiagnoticsTest(["BF0004"], "4_3,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.Pipelines.PipeReader input2");
             // BF0004: duplicate parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0004", "4_4.", "void", "System.IO.Pipelines.PipeWriter output1, System.IO.Pipelines.PipeWriter output2");
+            yield return DiagnoticsTest(["BF0004"], "4_4.", "void", "System.IO.Pipelines.PipeWriter output1, System.IO.Pipelines.PipeWriter output2");
             // BF0004: duplicate parameter System.IO.TextReader
-            yield return DiagnoticsTest("BF0004", "4_5,", "void", "System.IO.TextReader input1, System.IO.TextReader input2");
+            yield return DiagnoticsTest(["BF0004"], "4_5,", "void", "System.IO.TextReader input1, System.IO.TextReader input2");
             // BF0004: duplicate parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0004", "4_6.", "void", "System.IO.TextWriter output1, System.IO.TextWriter output2");
+            yield return DiagnoticsTest(["BF0004"], "4_6.", "void", "System.IO.TextWriter output1, System.IO.TextWriter output2");
             // BF0005: duplicate parameter System.IO.Pipelines.PipeReader and string
-            yield return DiagnoticsTest("BF0005", "5_1,", "void", "System.IO.Pipelines.PipeReader input1, string input2");
+            yield return DiagnoticsTest(["BF0005"], "5_1,", "void", "System.IO.Pipelines.PipeReader input1, string input2");
             // BF0005: duplicate parameter string and System.IO.Pipelines.PipeReader
-            yield return DiagnoticsTest("BF0005", "5_2,", "void", "string input1, System.IO.Pipelines.PipeReader input2");
+            yield return DiagnoticsTest(["BF0005"], "5_2,", "void", "string input1, System.IO.Pipelines.PipeReader input2");
             // BF0005: duplicate parameter TextReader and string
-            yield return DiagnoticsTest("BF0005", "5_3,", "void", "System.IO.TextReader input1, string input2");
+            yield return DiagnoticsTest(["BF0005"], "5_3,", "void", "System.IO.TextReader input1, string input2");
             // BF0005: duplicate parameter string and TextReader
-            yield return DiagnoticsTest("BF0005", "5_4,", "void", "string input1, System.IO.TextReader input2");
+            yield return DiagnoticsTest(["BF0005"], "5_4,", "void", "string input1, System.IO.TextReader input2");
             // BF0005: duplicate parameter PipeReader and TextReader
-            yield return DiagnoticsTest("BF0005", "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
+            yield return DiagnoticsTest(["BF0005"], "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
             // BF0006: duplicate return string and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_1.", "string", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_1.", "string", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_2.", "System.Threading.Tasks.Task<string>", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_2.", "System.Threading.Tasks.Task<string>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return ValueTask<string> and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_3.", "System.Threading.Tasks.ValueTask<string>", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_3.", "System.Threading.Tasks.ValueTask<string>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_4.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_4.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return string and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_6.", "string", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_6.", "string", "System.IO.TextWriter output");
             // BF0006: duplicate return Task<string> and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_7.", "System.Threading.Tasks.Task<string>", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_7.", "System.Threading.Tasks.Task<string>", "System.IO.TextWriter output");
             // BF0006: duplicate return ValueTask<string> and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_8.", "System.Threading.Tasks.ValueTask<string>", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_8.", "System.Threading.Tasks.ValueTask<string>", "System.IO.TextWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_9.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_9.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.TextWriter output");
 #if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER  //netframework not support IAsyncEnumerable<>
             // BF0006: duplicate return IAsyncEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_5.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_5.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IAsyncEnumerable<byte> and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_A.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_A.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.TextWriter output");
 #endif
             // BF0007: no outuput
-            yield return DiagnoticsTest("BF0007", "7_1.", "void");
+            yield return DiagnoticsTest(["BF0007"], "7_1.", "void");
             // BF0007: no outuput
-            yield return DiagnoticsTest("BF0007", "7_2.", "System.Threading.Tasks.Task");
+            yield return DiagnoticsTest(["BF0007"], "7_2.", "System.Threading.Tasks.Task");
             // BF0007: no outuput
-            yield return DiagnoticsTest("BF0007", "7_3.", "System.Threading.Tasks.ValueTask");
+            yield return DiagnoticsTest(["BF0007"], "7_3.", "System.Threading.Tasks.ValueTask");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_1,", "void");
+            yield return DiagnoticsTest(["BF0008"], "8_1,", "void");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_2,", "System.Threading.Tasks.Task");
+            yield return DiagnoticsTest(["BF0008"], "8_2,", "System.Threading.Tasks.Task");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_3,", "System.Threading.Tasks.ValueTask");
+            yield return DiagnoticsTest(["BF0008"], "8_3,", "System.Threading.Tasks.ValueTask");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_4,", "string", options: "#nullable disable");
+            yield return DiagnoticsTest(["BF0008"], "8_4,", "string", options: "#nullable disable");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_5,", "System.Threading.Tasks.Task<string>", options: "#nullable disable");
+            yield return DiagnoticsTest(["BF0008"], "8_5,", "System.Threading.Tasks.Task<string>", options: "#nullable disable");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_6,", "System.Threading.Tasks.ValueTask<string>", options: "#nullable disable");
+            yield return DiagnoticsTest(["BF0008"], "8_6,", "System.Threading.Tasks.ValueTask<string>", options: "#nullable disable");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_7,", "void", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0008"], "8_7,", "void", "System.IO.Pipelines.PipeWriter output");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_8,", "void", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0008"], "8_8,", "void", "System.IO.TextWriter output");
             // BF0007: required output interface missing
-            yield return DiagnoticsTest("BF0007", "1+.", "void");
+            yield return DiagnoticsTest(["BF0007"], "1+.", "void");
             // BF0008: required input interface missing
-            yield return DiagnoticsTest("BF0008", "1,", "void");
+            yield return DiagnoticsTest(["BF0008"], "1,", "void");
             // BF0005: duplicate parameter PipeReader and TextReader
-            yield return DiagnoticsTest("BF0005", "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
+            yield return DiagnoticsTest(["BF0005"], "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
             // BF0006: duplicate return string and parameter TextWriter
-            yield return DiagnoticsTest("BF0006", "6_6.", "string", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_6.", "string", "System.IO.TextWriter output");
             // BF0003: Invalid parameter (e.g., int - unsupported)
-            yield return DiagnoticsTest("BF0003", "1+", "void", "int invalidParam");
-            static object?[] DiagnoticsTest(string expected, string source, string returnType, string parameters = "", string options = "", int sourceCount = 3)
+            yield return DiagnoticsTest(["BF0003"], "1+", "void", "int invalidParam");
+            static object?[] DiagnoticsTest(string[] expected, string source, string returnType, string parameters = "", string options = "", int sourceCount = 3)
                 => [expected, source, returnType, parameters, options, sourceCount];
         }
     }
     [TestMethod]
     [DynamicData(nameof(DiagnoticsTestData))]
     [Timeout(50000, CooperativeCancellation = true)]
-    public void DiagnoticsTest(string expected, string source, string returnType, string parameters, string options, int sourceCount)
+    public void DiagnoticsTest(string[] expected, string source, string returnType, string parameters, string options, int sourceCount)
     {
         source = $$"""
         using Esolang.Brainfuck;
@@ -546,8 +546,8 @@ public class MethodGeneratorTests
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
         try
         {
-            Assert.IsFalse(diagnostics.IsEmpty, $"diagnostics is empty required {expected}");
-            CollectionAssert.AreEqual(new[] { expected }, diagnostics.Select(v => v.Id).ToArray());
+            Assert.IsNotEmpty(diagnostics, $"diagnostics is empty required {string.Join(", ", expected)}");
+            CollectionAssert.AreEqual(expected, diagnostics.Select(v => v.Id).ToArray());
             Assert.HasCount(sourceCount, outputCompilation.SyntaxTrees);
         }
         catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
