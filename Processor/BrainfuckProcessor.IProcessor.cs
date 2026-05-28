@@ -1,5 +1,5 @@
-using Esolang.Processor;
 using Esolang.Brainfuck.Processor.SequenceCommands;
+using Esolang.Processor;
 using System.Collections.Immutable;
 
 namespace Esolang.Brainfuck.Processor;

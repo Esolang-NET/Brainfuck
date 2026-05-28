@@ -896,7 +896,7 @@ public partial class MethodGenerator
             MethodDeclarationSyntax methodDeclarationSyntax,
             KnownTypes types,
             [NotNullWhen(true)] out ParameterOptions parameterOptions,
-            [NotNullWhen(false)]out (DiagnosticDescriptor Descriptor, string Message)? dest)
+            [NotNullWhen(false)] out (DiagnosticDescriptor Descriptor, string Message)? dest)
         {
             dest = null;
             parameterOptions = default!;
@@ -930,7 +930,7 @@ public partial class MethodGenerator
                     "BF0006" => DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
                     _ => DiagnosticDescriptors.NotSupportParameterPattern
                 };
-                
+
                 var location = binding.Location ?? methodDeclarationSyntax.Identifier.GetLocation();
                 var messageArgs = descriptor == DiagnosticDescriptors.InvalidReturnType ? [methodSymbol.ReturnType.ToDisplayString()]
                                 : descriptor == DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern ? ["parameter", returnTypeName]

@@ -1,7 +1,7 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Esolang.Processor;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.IO.Pipelines;
 using System.Text;
-using Esolang.Processor;
 
 namespace Esolang.Brainfuck.Processor.Tests;
 

@@ -94,49 +94,42 @@ public static class BrainfuckInterpreterExtensions
         rootCommand.SetAction(async (result, cancellationToken) =>
         {
             var source = result.GetRequiredValue(sourceArgument);
-            var console = Console.In;
             var o = option.GetValue(result);
-            var sequence = new BrainfuckSequenceEnumerable(source, o).Select(v => v.Sequence).ToArray().AsMemory();
-            var input = new Pipe();
-            var output = new Pipe();
+
+            var processor = new BrainfuckProcessor(source: source, sourceOptions: o);
 
             var encoding = Encoding.UTF8;
-            var runner = new BrainfuckProcessor(source: source, sourceOptions: o, output: output.Writer, input: input.Reader);
-            foreach (var command in runner.StepCommands())
+
+            await foreach (var ioEvent in processor.RunAsyncEnumerable(cancellationToken))
             {
-                if (command.RequiredInput)
+                switch (ioEvent)
                 {
-                    var kc = await ConsoleReadAsync(console, cancellationToken);
-                    var bytes = encoding.GetBytes(new[] { kc });
-                    var flush = await input.Writer.WriteAsync(bytes, cancellationToken);
-                    await input.Writer.FlushAsync(cancellationToken);
-
-                }
-                await command.ExecuteAsync(cancellationToken);
-                if (command.RequiredOutput)
-                {
-                    var reader = await output.Reader.ReadAsync(cancellationToken);
-                    var buffer = reader.Buffer;
-                    if (buffer.Length > 0)
-                    {
-                        var sequence2 = buffer.Slice(buffer.Start, buffer.End);
-                        if (encoding.GetString(sequence2.FirstSpan) is string chars && !string.IsNullOrEmpty(chars))
-                        {
-                            if (!Console.IsOutputRedirected && chars == "\r") chars = Environment.NewLine;
-                            result.InvocationConfiguration.Output.Write(chars);
-                        }
-
-                        output.Reader.AdvanceTo(buffer.End);
-                    }
+                    case Esolang.Processor.InputCharEvent inputEvent:
+                        var c = await ConsoleReadAsync(Console.In, cancellationToken);
+                        inputEvent.Write(c);
+                        break;
+                    case Esolang.Processor.OutputCharEvent outputEvent:
+                        var chars = outputEvent.Output.ToString();
+                        if (!Console.IsOutputRedirected && chars == "\r") chars = Environment.NewLine;
+                        Console.Write(chars);
+                        break;
+                    case Esolang.Processor.EndEvent:
+                        return 0;
                 }
             }
+
             return 0;
+
             static async ValueTask<char> ConsoleReadAsync(TextReader console, CancellationToken cancellationToken)
             {
                 if (Console.IsInputRedirected)
                     return Convert.ToChar(System.Console.Read());
-                if (System.Console.KeyAvailable == false)
-                    await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken);
+
+                // Using a loop to wait for key press without blocking thread entirely
+                while (!System.Console.KeyAvailable)
+                {
+                    await Task.Delay(10, cancellationToken);
+                }
                 var key = System.Console.ReadKey(true);
                 return key.KeyChar;
             }

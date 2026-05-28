@@ -1,4 +1,7 @@
-﻿namespace Esolang.Brainfuck.Processor.SequenceCommands;
+﻿using Esolang.Processor;
+using System.IO.Pipelines;
+
+namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
 /// <summary>
 /// Executes the <see cref="BrainfuckSequence.Output"/> instruction.
@@ -8,6 +11,15 @@ public sealed record OutputCommand(BrainfuckContext Context) : BrainfuckSequence
 {
     /// <inheritdoc />
     public override bool RequiredOutput => true;
+
+    /// <inheritdoc />
+    public override bool IsIoCommand => true;
+
+    /// <inheritdoc />
+    public override ValueTask<IOEvent?> GetIoEventAsync(CancellationToken ct) => new(new OutputCharEvent((char)Context.Stack[Context.StackIndex]));
+
+    /// <inheritdoc />
+    public override ValueTask<BrainfuckContext> ExecuteAsync(IOEvent ioEvent, CancellationToken ct) => new(Context with { SequencesIndex = Context.SequencesIndex + 1 });
 
     /// <inheritdoc />
     public override BrainfuckContext Execute(CancellationToken cancellationToken = default)

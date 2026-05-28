@@ -12,7 +12,7 @@ public class BrainfuckProcessorEventTests
         // "+" して "." するプログラム
         var processor = new BrainfuckProcessor("+.");
         var events = new List<IOEvent>();
-        
+
         await foreach (var ev in processor.RunAsyncEnumerable())
         {
             events.Add(ev);
@@ -30,21 +30,21 @@ public class BrainfuckProcessorEventTests
         // "," して "." するプログラム
         var processor = new BrainfuckProcessor(",.");
         var events = new List<IOEvent>();
-        
+
         var enumerator = processor.RunAsyncEnumerable().GetAsyncEnumerator();
-        
+
         // Input 命令に到達
         Assert.IsTrue(await enumerator.MoveNextAsync());
         Assert.IsInstanceOfType<InputCharEvent>(enumerator.Current);
-        
+
         // 入力を提供
         ((InputCharEvent)enumerator.Current).Write('A');
-        
+
         // 次の命令（出力）に到達
         Assert.IsTrue(await enumerator.MoveNextAsync());
         Assert.IsInstanceOfType<OutputCharEvent>(enumerator.Current);
         Assert.AreEqual('A', ((OutputCharEvent)enumerator.Current).Output);
-        
+
         // EndEvent
         Assert.IsTrue(await enumerator.MoveNextAsync());
         Assert.IsInstanceOfType<EndEvent>(enumerator.Current);
