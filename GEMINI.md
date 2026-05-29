@@ -14,8 +14,9 @@
 - Optimized the `BrainfuckProcessor` execution loop for event-based state transitions.
 - Updated and verified the `Processor.Tests` suite to match the new architecture.
 
-## Next Steps
-1. **McpServer Integration**:
-   - Implement interactive input handling in `McpServer` using the new event-based Processor model.
-2. **Interpreter Adaptation**:
-   - Adapt `Interpreter` to the new `IEventProcessor` model.
+## Future Design Considerations
+
+### Generator I/O Extensibility (Cross-Project)
+- **Current Approach**: Simple delegate-based I/O (`Func<char>`, `Action<char>`) is sufficient for basic requirements in individual generators.
+- **Future Consideration**: As requirements grow across the `Esolang.*.Generator` projects, we will need to ensure a consistent approach to I/O extensibility. This may involve introducing attribute-based I/O definition (e.g., `[EsolangInput]`, `[EsolangOutput]`) to explicitly specify delegate roles, support different behaviors, or handle multiple I/O streams across different Esolang languages. Architectural decisions here must be coordinated to maintain consistency across all generators.
+
