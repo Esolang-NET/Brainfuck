@@ -20,9 +20,9 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
 #else
         if (info is null) throw new ArgumentNullException(nameof(info));
 #endif
-        Sequences = (info.GetValue(nameof(Sequences), typeof(BrainfuckSequence[])) as BrainfuckSequence[] ?? Array.Empty<BrainfuckSequence>()).AsMemory();
+        Sequences = (info.GetValue(nameof(Sequences), typeof(BrainfuckSequence[])) as BrainfuckSequence[] ?? []).AsMemory();
         SequencesIndex = info.GetInt32(nameof(SequencesIndex));
-        Stack = ImmutableArray.Create(info.GetValue(nameof(Stack), typeof(byte[])) as byte[] ?? Array.Empty<byte>());
+        Stack = ImmutableArray.Create(info.GetValue(nameof(Stack), typeof(byte[])) as byte[] ?? []);
         StackIndex = info.GetInt32(nameof(StackIndex));
     }
     public bool IsEmpty

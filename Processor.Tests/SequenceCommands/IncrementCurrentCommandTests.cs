@@ -25,7 +25,7 @@ public class IncrementCurrentCommandTests
                     context,
                     context with
                     {
-                        Stack = ImmutableArray.Create<byte>(1),
+                        Stack = [1],
                         SequencesIndex = 1,
                     }
                 );
@@ -42,13 +42,13 @@ public class IncrementCurrentCommandTests
                     context,
                     context with
                     {
-                        Stack = ImmutableArray.Create(byte.MinValue),
+                        Stack = [byte.MinValue],
                         SequencesIndex = 1,
                     }
                 );
             }
             static object?[] ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
-                => new object?[] { context, expected };
+                => [context, expected];
         }
     }
     [TestMethod]

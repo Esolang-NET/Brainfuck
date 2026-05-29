@@ -37,7 +37,7 @@ public class BrainfuckProcessorTests(TestContext TestContext)
                 expected: null
             );
             static object?[] RunAndOutputStringTest(string source, string? input = default, string? expected = default)
-                => new object?[] { source, input, expected };
+                => [source, input, expected];
         }
     }
     [TestMethod]

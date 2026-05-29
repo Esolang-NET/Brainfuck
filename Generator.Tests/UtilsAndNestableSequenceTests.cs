@@ -108,8 +108,8 @@ public class UtilsAndNestableSequenceTests
         var e2 = new Sequence(4, BrainfuckSequence.End, "]".AsMemory());
         var e0 = new Sequence(5, BrainfuckSequence.End, "]".AsMemory());
 
-        var inner = new NestableSequence(new INestableSequence[] { s3 }, b2, e2);
-        var outer = new NestableSequence(new INestableSequence[] { s1, inner, new UnknownNestable() }, b0, e0);
+        var inner = new NestableSequence([s3], b2, e2);
+        var outer = new NestableSequence([s1, inner, new UnknownNestable()], b0, e0);
 
         var flattened = outer.ToArray();
 
@@ -121,7 +121,7 @@ public class UtilsAndNestableSequenceTests
     {
         var begin = new Sequence(0, BrainfuckSequence.Begin, "[".AsMemory());
         var end = new Sequence(1, BrainfuckSequence.End, "]".AsMemory());
-        var seq = new NestableSequence(Array.Empty<INestableSequence>(), begin, end);
+        var seq = new NestableSequence([], begin, end);
 
         var nonGeneric = ((IEnumerable)seq).GetEnumerator();
         Assert.IsTrue(nonGeneric.MoveNext());
@@ -153,7 +153,7 @@ public class UtilsAndNestableSequenceTests
 
         return CSharpCompilation.Create(
             assemblyName: "coverage-tests",
-            syntaxTrees: new[] { syntaxTree },
+            syntaxTrees: [syntaxTree],
             references: references,
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
     }

@@ -104,7 +104,7 @@ public sealed partial record BrainfuckSequenceEnumerable(ReadOnlyMemory<char> So
     }
 
     /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
-    public Enumerator GetEnumerator() => new(Source, OptionSyntaxes.OrderByDescending(v => v.Syntax.Length).ToArray());
+    public Enumerator GetEnumerator() => new(Source, [.. OptionSyntaxes.OrderByDescending(v => v.Syntax.Length)]);
     IEnumerator<(BrainfuckSequence, ReadOnlyMemory<char>)> IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)>.GetEnumerator() => GetEnumerator();
     IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)> OptionSyntaxes
     {

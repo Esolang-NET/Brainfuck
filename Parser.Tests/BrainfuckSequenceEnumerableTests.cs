@@ -13,11 +13,11 @@ public class BrainfuckSequenceEnumerableTests
         {
             yield return GetEnumerableTest(
                 source: string.Empty,
-                expected: Array.Empty<Tuple<BrainfuckSequence, string>>()
+                expected: []
             );
             yield return GetEnumerableTest(
                 source: "><+-.,[]",
-                expected: new[] {
+                expected: [.. new[] {
                     (IncrementPointer, ">"),
                     (DecrementPointer, "<"),
                     (IncrementCurrent, "+"),
@@ -26,7 +26,7 @@ public class BrainfuckSequenceEnumerableTests
                     (Input, ","),
                     (Begin, "["),
                     (End,"]"),
-                }.Select(v => Tuple.Create(v.Item1, v.Item2)).ToArray()
+                }.Select(v => Tuple.Create(v.Item1, v.Item2))]
             );
             yield return GetEnumerableTest(
                 source: "😀😁😂🤣😃😄😅😆",
@@ -41,7 +41,7 @@ public class BrainfuckSequenceEnumerableTests
                     Begin = "😅",
                     End = "😆",
                 },
-                expected: new[] {
+                expected: [.. new[] {
                     (IncrementPointer, "😀"),
                     (DecrementPointer, "😁"),
                     (IncrementCurrent, "😂"),
@@ -50,23 +50,23 @@ public class BrainfuckSequenceEnumerableTests
                     (Input, "😄"),
                     (Begin, "😅"),
                     (End, "😆"),
-                }.Select(v => Tuple.Create(v.Item1, v.Item2)).ToArray()
+                }.Select(v => Tuple.Create(v.Item1, v.Item2))]
             );
 
             yield return GetEnumerableTest(
                 source: "test[]test",
                 options: new TestShared.BrainfuckOptions(),
-                expected: new[]
+                expected: [.. new[]
                 {
                     (Comment,  "test"),
                     (Begin, "["),
                     (End, "]"),
                     (Comment,  "test"),
-                }.Select(v => Tuple.Create(v.Item1, v.Item2)).ToArray()
+                }.Select(v => Tuple.Create(v.Item1, v.Item2))]
             );
 
             static object?[] GetEnumerableTest(string source, TestShared.BrainfuckOptions? options = default!, Tuple<BrainfuckSequence, string>[]? expected = null)
-                => new object?[] { source, options, (expected ?? Array.Empty<Tuple<BrainfuckSequence, string>>()).ToSerializable() };
+                => [source, options, (expected ?? []).ToSerializable()];
         }
     }
     [TestMethod]

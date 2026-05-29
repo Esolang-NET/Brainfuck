@@ -194,7 +194,7 @@ public class MethodGeneratorTests
                     Assert.IsNotNull(sampleMethod);
                     try
                     {
-                        var actual = (string?)sampleMethod.Invoke(null, Array.Empty<object?>());
+                        var actual = (string?)sampleMethod.Invoke(null, []);
                         Assert.AreEqual(expected, actual);
                     }
                     catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
@@ -624,7 +624,7 @@ public class MethodGeneratorTests
             yield return ModuleSignatureTest("partial class TestClass: System.Collections.Generic.List<(string Value1, int Value2)>");
 
             static object?[] ModuleSignatureTest(string signature)
-                => new object?[] { signature };
+                => [signature];
         }
     }
     [TestMethod]
@@ -805,12 +805,12 @@ public class MethodGeneratorTests
                 Assert.IsNotNull(testClassType);
 
                 TestContext.WriteLine("=== StringMethod ===");
-                Assert.IsNull(testClassType.GetMethod("StringMethod")!.Invoke(null, Array.Empty<object?>()));
+                Assert.IsNull(testClassType.GetMethod("StringMethod")!.Invoke(null, []));
 
                 TestContext.WriteLine("=== ValueTaskStringMethod ===");
                 var valueTaskMethod = testClassType.GetMethod("ValueTaskStringMethod");
                 Assert.IsNotNull(valueTaskMethod, "ValueTaskStringMethod not found in assembly");
-                var valueTaskResult = valueTaskMethod.Invoke(null, Array.Empty<object?>());
+                var valueTaskResult = valueTaskMethod.Invoke(null, []);
                 TestContext.WriteLine($"ValueTaskStringMethod result: {valueTaskResult?.GetType().Name} = {valueTaskResult}");
                 Assert.IsNotNull(valueTaskResult, "ValueTaskStringMethod Invoke returned null");
                 TestContext.WriteLine("About to await ValueTask...");
@@ -925,13 +925,13 @@ public class MethodGeneratorTests
                 var testClassType = assembly.GetType("TestProject.TestClass");
                 Assert.IsNotNull(testClassType);
 
-                var intResult = (int?)testClassType!.GetMethod("IntMethod")!.Invoke(null, Array.Empty<object?>());
+                var intResult = (int?)testClassType!.GetMethod("IntMethod")!.Invoke(null, []);
                 Assert.AreEqual(0, intResult);
 
-                var taskInt = (Task<int>)testClassType.GetMethod("TaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
+                var taskInt = (Task<int>)testClassType.GetMethod("TaskIntMethod")!.Invoke(null, [])!;
                 Assert.AreEqual(0, await taskInt);
 
-                var valueTaskInt = (ValueTask<int>)testClassType.GetMethod("ValueTaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
+                var valueTaskInt = (ValueTask<int>)testClassType.GetMethod("ValueTaskIntMethod")!.Invoke(null, [])!;
                 Assert.AreEqual(0, await valueTaskInt);
             }
         }

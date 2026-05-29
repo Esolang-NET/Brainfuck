@@ -48,7 +48,7 @@ public class DecrementPointerCommandTests
                 );
             }
             static object[] ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
-                => new object[] { context, expected };
+                => [context, expected];
         }
     }
     [TestMethod]

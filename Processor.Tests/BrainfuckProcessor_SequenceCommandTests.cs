@@ -12,7 +12,7 @@ public class BrainfuckProcessor_SequenceCommandTests
     [TestMethod]
     public void SequenceCommandTest()
     {
-        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: [0]));
         var command = new Command(innerCommand);
         var (command2, _) = command;
         Assert.AreEqual(innerCommand, command2);
@@ -23,7 +23,7 @@ public class BrainfuckProcessor_SequenceCommandTests
     [TestMethod]
     public void SequenceCommand_IfAgumentIsSequenceCommandTest()
     {
-        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: [0]));
         var command1 = new Command(innerCommand);
         var command2 = new Command(command1);
         var (command1_inner, _) = command1;
@@ -35,7 +35,7 @@ public class BrainfuckProcessor_SequenceCommandTests
     public void RequiredInputTest()
     {
 
-        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: [0]));
         var command = new Command(innerCommand);
         Assert.AreEqual(innerCommand.RequiredInput, command.RequiredInput);
     }
@@ -43,7 +43,7 @@ public class BrainfuckProcessor_SequenceCommandTests
     public void RequiredOutputTest()
     {
 
-        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: [0]));
         var command = new Command(innerCommand);
         Assert.AreEqual(innerCommand.RequiredOutput, command.RequiredOutput);
     }
@@ -51,7 +51,7 @@ public class BrainfuckProcessor_SequenceCommandTests
     public void ToStringTest()
     {
 
-        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        var innerCommand = new CommentCommand(new(Sequences: new[] { BrainfuckSequence.Comment }.AsMemory(), Stack: [0]));
         var command = new Command(innerCommand);
         var str = command.ToString();
         TestContext.WriteLine(str);

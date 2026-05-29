@@ -15,7 +15,7 @@ public class BrainfuckContextTests
 
         var context2 = new BrainfuckContext(
             Sequences: new[] { BrainfuckSequence.Comment },
-            Stack: ImmutableArray.Create<byte>(0)
+            Stack: [0]
         );
         Assert.IsNotNull(context2.ToString());
 
@@ -30,7 +30,7 @@ public class BrainfuckContextTests
         var context1 = new BrainfuckContext();
         var context2 = new BrainfuckContext(
             Sequences: new[] { BrainfuckSequence.Comment },
-            Stack: ImmutableArray.Create<byte>(0)
+            Stack: [0]
         );
         BrainfuckContext context3 = default;
         Assert.AreNotEqual(context1, context2);
@@ -43,7 +43,7 @@ public class BrainfuckContextTests
         var context1 = new BrainfuckContext();
         var context2 = new BrainfuckContext(
             Sequences: new[] { BrainfuckSequence.Comment },
-            Stack: ImmutableArray.Create<byte>(0)
+            Stack: [0]
         );
         BrainfuckContext context3 = default;
         var hashCode1 = context1.GetHashCode();

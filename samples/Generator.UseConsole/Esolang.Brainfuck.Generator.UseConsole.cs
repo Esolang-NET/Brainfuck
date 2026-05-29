@@ -6,7 +6,7 @@ Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod1)}: {await BrainfuckSam
 Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod2)}: {await BrainfuckSample.SampleMethod2()}");
 Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod6)}: {await BrainfuckSample.SampleMethod6()}");
 Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod7)}: {BrainfuckSample.SampleMethod7()}");
-Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod8)}: {Encoding.UTF8.GetString(BrainfuckSample.SampleMethod8().ToArray())}");
+Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod8)}: {Encoding.UTF8.GetString([.. BrainfuckSample.SampleMethod8()])}");
 Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod9)}: {Encoding.UTF8.GetString(await ToByteArrayAsync(BrainfuckSample.SampleMethod9()))}");
 
 Console.WriteLine($"{nameof(BrainfuckSample.SampleMethod3)}: {await BrainfuckSample.SampleMethod3("A")}");
@@ -50,7 +50,7 @@ static async Task<string> ReadAllAsUtf8StringAsync(PipeReader reader)
         }
     }
 
-    return Encoding.UTF8.GetString(bytes.ToArray());
+    return Encoding.UTF8.GetString([.. bytes]);
 }
 
 static async Task<byte[]> ToByteArrayAsync(IAsyncEnumerable<byte> source)
@@ -60,7 +60,7 @@ static async Task<byte[]> ToByteArrayAsync(IAsyncEnumerable<byte> source)
     {
         bytes.Add(b);
     }
-    return bytes.ToArray();
+    return [.. bytes];
 }
 
 partial class BrainfuckSample

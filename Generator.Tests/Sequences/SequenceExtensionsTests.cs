@@ -13,7 +13,7 @@ public class SequenceExtensionsTests
             yield return NestAndUnNestTest("+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.");
             yield return NestAndUnNestTest("++++++[>++++++++<-]++++++++++[>.+<-]");
             static object?[] NestAndUnNestTest(string source)
-                => new object?[] { source };
+                => [source];
         }
     }
     [TestMethod]

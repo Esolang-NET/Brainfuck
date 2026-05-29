@@ -26,7 +26,7 @@ public class OutputCommandTests
                 );
                 yield return ExecuteAsyncTest(
                     context,
-                    new byte[] { 1 },
+                    [1],
                     context with
                     {
                         SequencesIndex = 1,
@@ -34,7 +34,7 @@ public class OutputCommandTests
                 );
             }
             static object[] ExecuteAsyncTest(TestShared.BrainfuckContext context, byte[] output, TestShared.BrainfuckContext expected)
-                => new object[] { context, output.ToSerializable(), expected };
+                => [context, output.ToSerializable(), expected];
         }
     }
     [TestMethod]
@@ -77,20 +77,20 @@ public class OutputCommandTests
         var actual = new Command(context).Execute();
         pipe.Writer.Complete();
         Assert.AreEqual<BrainfuckContext>(expected, actual);
-        var outputActual = pipe.Reader.TryRead(out var result) ? result.Buffer.ToArray() : Array.Empty<byte>();
+        var outputActual = pipe.Reader.TryRead(out var result) ? result.Buffer.ToArray() : [];
         CollectionAssert.AreEqual((byte[])outputExpected, outputActual);
     }
     [TestMethod]
     public void ExecuteAsync_ThrowTest()
     {
         var token = TestContext.CancellationTokenSource.Token;
-        var command = new Command(new BrainfuckContext(Sequences: new[] { Output }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        var command = new Command(new BrainfuckContext(Sequences: new[] { Output }.AsMemory(), Stack: [0]));
         Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteAsync(token)); ;
     }
     [TestMethod]
     public void Execute_ThrowTest()
     {
-        var command = new Command(new BrainfuckContext(Sequences: new[] { Output }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        var command = new Command(new BrainfuckContext(Sequences: new[] { Output }.AsMemory(), Stack: [0]));
         Assert.Throws<InvalidOperationException>(() => command.Execute());
     }
 

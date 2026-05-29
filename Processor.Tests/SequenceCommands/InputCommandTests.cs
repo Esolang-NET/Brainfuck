@@ -28,7 +28,7 @@ public class InputCommandTests
                     [1],
                     context with
                     {
-                        Stack = ImmutableArray.Create<byte>(1),
+                        Stack = [1],
                         SequencesIndex = 1,
                     }
                 );
@@ -43,7 +43,7 @@ public class InputCommandTests
                 );
                 yield return ExecuteAsyncTest(
                     context,
-                    Array.Empty<byte>(),
+                    [],
                     context with
                     {
                         SequencesIndex = 1,
@@ -105,13 +105,13 @@ public class InputCommandTests
     public void ExecuteAsync_ThrowTest()
     {
         var token = TestContext.CancellationTokenSource.Token;
-        var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: [0]));
         Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteAsync(token)); ;
     }
     [TestMethod]
     public void Execute_ThrowTest()
     {
-        var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: ImmutableArray.Create<byte>(0)));
+        var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: [0]));
         Assert.Throws<InvalidOperationException>(() => command.Execute());
     }
 

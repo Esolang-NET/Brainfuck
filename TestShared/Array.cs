@@ -19,7 +19,7 @@ public readonly struct Array<T> : ISerializable, IEquatable<T[]>, IEquatable<Arr
 
     public Array(T[] array) => InnerArray = array;
 
-    public Array(SerializationInfo info, StreamingContext context) => InnerArray = info.GetValue(nameof(InnerArray), typeof(T[])) as T[] ?? System.Array.Empty<T>();
+    public Array(SerializationInfo info, StreamingContext context) => InnerArray = info.GetValue(nameof(InnerArray), typeof(T[])) as T[] ?? [];
     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) => info.AddValue(nameof(InnerArray), InnerArray, typeof(T[]));
 
     public override string ToString()

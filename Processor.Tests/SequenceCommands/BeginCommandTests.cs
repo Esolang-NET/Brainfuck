@@ -81,7 +81,7 @@ public class BeginCommandTests
                 );
             }
             static object?[] ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext accept)
-                => new object?[] { context, accept };
+                => [context, accept];
         }
     }
 
