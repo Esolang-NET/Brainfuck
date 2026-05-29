@@ -1,6 +1,8 @@
+#nullable enable
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Esolang.Generator;
@@ -8,6 +10,7 @@ namespace Esolang.Generator;
 /// <summary>
 /// Provides utility methods for binding method signatures to <see cref="MethodSignatureBinding"/>.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class MethodSignatureBinder
 {
     /// <summary>

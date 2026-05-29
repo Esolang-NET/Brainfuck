@@ -1,3 +1,4 @@
+#nullable enable
 using Microsoft.CodeAnalysis;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
@@ -11,6 +12,7 @@ namespace Esolang.Generator;
 /// Initializes a new instance of the <see cref="KnownTypes"/> struct.
 /// </remarks>
 /// <param name="compilation">The compilation to resolve types from.</param>
+[ExcludeFromCodeCoverage]
 public readonly struct KnownTypes(Compilation compilation)
 {
     /// <summary>The <c>string</c> type symbol.</summary>
@@ -227,6 +229,7 @@ public readonly struct KnownTypes(Compilation compilation)
 /// <summary>
 /// Provides utility methods for resolving types from a <see cref="Compilation"/>.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class TypeResolutionExtensions
 {
     /// <summary>
