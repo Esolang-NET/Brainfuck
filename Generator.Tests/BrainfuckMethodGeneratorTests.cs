@@ -249,11 +249,9 @@ public class MethodGeneratorTests
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_7",
                 "System.Collections.Generic.IEnumerable<byte>");
-#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER //netframework not support IAsyncEnumerable<>
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_8",
                 "System.Collections.Generic.IAsyncEnumerable<byte>");
-#endif
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_9",
                 "void",
@@ -307,11 +305,9 @@ public class MethodGeneratorTests
             yield return ReturnTypeAndParameterPatternsTest(
                 "3_1+.",
                 "System.Collections.Generic.IEnumerable<byte>");
-#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER //netframework not support IAsyncEnumerable<>
             yield return ReturnTypeAndParameterPatternsTest(
                 "3_2+.",
                 "System.Collections.Generic.IAsyncEnumerable<byte>");
-#endif
             yield return ReturnTypeAndParameterPatternsTest(
                 "4_1+.",
                 "void",
@@ -394,12 +390,11 @@ public class MethodGeneratorTests
                 "1_N",
                 "System.Collections.Generic.IEnumerable<byte>",
                 "string input");
-#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER
+
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_O",
                 "System.Collections.Generic.IAsyncEnumerable<byte>",
                 "string input");
-#endif
             static object?[] ReturnTypeAndParameterPatternsTest(string source, string returnType, string parameters = "", string options = "")
                 => [source, returnType, parameters, options];
         }
@@ -486,12 +481,10 @@ public class MethodGeneratorTests
             yield return DiagnoticsTest(["BF0006"], "6_8.", "System.Threading.Tasks.ValueTask<string>", "System.IO.TextWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.TextWriter
             yield return DiagnoticsTest(["BF0006"], "6_9.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.TextWriter output");
-#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER  //netframework not support IAsyncEnumerable<>
             // BF0006: duplicate return IAsyncEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
             yield return DiagnoticsTest(["BF0006"], "6_5.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IAsyncEnumerable<byte> and parameter System.IO.TextWriter
             yield return DiagnoticsTest(["BF0006"], "6_A.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.TextWriter output");
-#endif
             // BF0007: no outuput
             yield return DiagnoticsTest(["BF0007"], "7_1.", "void");
             // BF0007: no outuput

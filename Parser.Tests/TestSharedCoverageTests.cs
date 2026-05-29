@@ -45,8 +45,8 @@ public class TestSharedCoverageTests
         Assert.IsTrue(wrapped.Equals((object)wrapped));
         Assert.IsTrue(wrapped == (Array<int>)new[] { 1, 2, 3 });
         Assert.IsTrue(wrapped != (Array<int>)new[] { 1, 2, 4 });
-        Assert.IsTrue(wrapped.GetHashCode() != 0);
-        StringAssert.Contains(wrapped.ToString(), "Int32[] [ 1, 2, 3 ]");
+        Assert.AreNotEqual(0, wrapped.GetHashCode());
+        Assert.Contains("Int32[] [ 1, 2, 3 ]", wrapped.ToString());
 
         var list = ((IEnumerable<int>)wrapped).ToArray();
         CollectionAssert.AreEqual(raw, list);
@@ -96,7 +96,7 @@ public class TestSharedCoverageTests
         alc.Dispose();
     }
 
-#if NET48
+#if !NET
     [TestMethod]
     public void AssemblyLoadContext_LoadFromStream_ThrowsOnNullAssembly()
     {
