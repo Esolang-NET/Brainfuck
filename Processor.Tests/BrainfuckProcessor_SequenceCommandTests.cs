@@ -1,6 +1,4 @@
 ﻿using Esolang.Brainfuck.Processor.SequenceCommands;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Immutable;
 using Command = Esolang.Brainfuck.Processor.BrainfuckProcessor.SequenceCommand;
 
 namespace Esolang.Brainfuck.Processor.Tests;

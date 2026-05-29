@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TestShared;
+﻿using TestShared;
 using static Esolang.Brainfuck.BrainfuckSequence;
 namespace Esolang.Brainfuck.Tests;
 

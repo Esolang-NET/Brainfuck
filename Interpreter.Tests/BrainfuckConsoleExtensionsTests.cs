@@ -1,5 +1,3 @@
-using Esolang.Brainfuck.Interpreter;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.CommandLine;
 
 namespace Esolang.Brainfuck.Interpreter.Tests;

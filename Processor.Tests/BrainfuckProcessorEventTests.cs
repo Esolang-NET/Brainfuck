@@ -1,5 +1,4 @@
 using Esolang.Processor;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Esolang.Brainfuck.Processor.Tests;
 

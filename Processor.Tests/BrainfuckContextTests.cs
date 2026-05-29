@@ -1,7 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Immutable;
-
-namespace Esolang.Brainfuck.Processor.Tests;
+﻿namespace Esolang.Brainfuck.Processor.Tests;
 
 [TestClass]
 public class BrainfuckContextTests

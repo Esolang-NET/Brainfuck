@@ -2,7 +2,6 @@ using Basic.Reference.Assemblies;
 using Esolang.Brainfuck.Generator.Sequences;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections;
 
 namespace Esolang.Brainfuck.Generator.Tests;

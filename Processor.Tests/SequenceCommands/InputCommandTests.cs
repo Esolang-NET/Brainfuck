@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.IO.Pipelines;
 using static Esolang.Brainfuck.BrainfuckSequence;
 using static TestShared.ArrayExtensions;

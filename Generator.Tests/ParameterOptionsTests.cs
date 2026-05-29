@@ -1,6 +1,3 @@
-using Esolang.Brainfuck.Generator;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace Esolang.Brainfuck.Generator.Tests;
 
 [TestClass]
