@@ -1,7 +1,6 @@
-﻿using Esolang.Brainfuck;
+using Esolang.Brainfuck;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.IO.Pipelines;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
@@ -11,7 +10,7 @@ namespace TestShared;
 
 [Serializable]
 [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
-public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence> Sequences, ImmutableArray<byte> Stack, int SequencesIndex = default, int StackIndex = default, PipeReader? Input = default, PipeWriter? Output = default) : ISerializable, IEquatable<BrainfuckContext>
+public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence> Sequences, ImmutableArray<byte> Stack, int SequencesIndex = default, int StackIndex = default) : ISerializable, IEquatable<BrainfuckContext>
 {
     public BrainfuckContext(SerializationInfo info, StreamingContext context) : this(Sequences: default, Stack: default!)
     {
@@ -29,9 +28,7 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
         => ReadOnlyMemory<BrainfuckSequence>.Empty.Equals(Sequences)
         && SequencesIndex == 0
         && Stack.IsEmpty
-        && StackIndex == 0
-        && Input == null
-        && Output == null;
+        && StackIndex == 0;
     bool PrintMembers(StringBuilder builder)
     {
         if (IsEmpty)
@@ -44,10 +41,6 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
         builder.Append(string.Join(", ", Stack));
         builder.Append("], " + nameof(StackIndex) + "= ");
         builder.Append(StackIndex);
-        builder.Append(", " + nameof(Input) + "=");
-        builder.Append(Input);
-        builder.Append(", " + nameof(Output) + "=");
-        builder.Append(Output);
         return true;
     }
     /// <inheritdoc />
@@ -73,9 +66,7 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
         => MemoryMarshal.Cast<BrainfuckSequence, int>(Sequences.Span).SequenceEqual(MemoryMarshal.Cast<BrainfuckSequence, int>(other.Sequences.Span))
         && SequencesIndex == other.SequencesIndex
         && Stack.SequenceEqual(other.Stack)
-        && StackIndex == other.StackIndex
-        && Equals(Input, other.Input)
-        && Equals(Output, other.Output);
+        && StackIndex == other.StackIndex;
 
     public override int GetHashCode()
     {
@@ -84,10 +75,8 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
         hash.Add(SequencesIndex);
         hash.Add(Stack);
         hash.Add(StackIndex);
-        hash.Add(Input);
-        hash.Add(Output);
         return hash.ToHashCode();
     }
-    public static implicit operator OriginalBrainfuckContext(BrainfuckContext context) => new(Sequences: context.Sequences, Stack: context.Stack, SequencesIndex: context.SequencesIndex, StackIndex: context.StackIndex, Input: context.Input, Output: context.Output);
-    public static implicit operator BrainfuckContext(OriginalBrainfuckContext context) => new(Sequences: context.Sequences, Stack: context.Stack, SequencesIndex: context.SequencesIndex, StackIndex: context.StackIndex, Input: context.Input, Output: context.Output);
+    public static implicit operator OriginalBrainfuckContext(BrainfuckContext context) => new(Sequences: context.Sequences, Stack: context.Stack, SequencesIndex: context.SequencesIndex, StackIndex: context.StackIndex);
+    public static implicit operator BrainfuckContext(OriginalBrainfuckContext context) => new(Sequences: context.Sequences, Stack: context.Stack, SequencesIndex: context.SequencesIndex, StackIndex: context.StackIndex);
 }

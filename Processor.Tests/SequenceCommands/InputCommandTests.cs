@@ -1,7 +1,6 @@
-﻿using System.Collections.Immutable;
-using System.IO.Pipelines;
+using Esolang.Processor;
+using System.Collections.Immutable;
 using static Esolang.Brainfuck.BrainfuckSequence;
-using static TestShared.ArrayExtensions;
 using Command = Esolang.Brainfuck.Processor.SequenceCommands.InputCommand;
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands.Tests;
@@ -10,108 +9,32 @@ namespace Esolang.Brainfuck.Processor.SequenceCommands.Tests;
 public class InputCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object?[]> ExecuteTestData
-    {
-        get
-        {
-            {
-                // input set.
-                var sequences = new[] { Input }.AsMemory();
-                var stack = ImmutableArray.Create<byte>(2);
-                TestShared.BrainfuckContext context = new(
-                    Sequences: sequences,
-                    Stack: stack
-                );
-                yield return ExecuteAsyncTest(
-                    context,
-                    [1],
-                    context with
-                    {
-                        Stack = [1],
-                        SequencesIndex = 1,
-                    }
-                );
-            }
-            {
-                // input nodata.
-                var sequences = new[] { Input }.AsMemory();
-                var stack = ImmutableArray.Create<byte>(2);
-                TestShared.BrainfuckContext context = new(
-                    Sequences: sequences,
-                    Stack: stack
-                );
-                yield return ExecuteAsyncTest(
-                    context,
-                    [],
-                    context with
-                    {
-                        SequencesIndex = 1,
-                    }
-                );
-            }
-            static object?[] ExecuteAsyncTest(TestShared.BrainfuckContext context, byte[] input, TestShared.BrainfuckContext expected)
-                => [context, input.ToSerializable(), expected];
-        }
-    }
+
     [TestMethod]
-    [DynamicData(nameof(ExecuteTestData))]
-    public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.Array<byte> input, TestShared.BrainfuckContext expected)
+    public async Task ExecuteAsyncTest()
     {
         var token = TestContext.CancellationTokenSource.Token;
-        var pipe = new Pipe();
-        context = context with
-        {
-            Input = pipe.Reader,
-        };
-        expected = expected with
-        {
-            Input = pipe.Reader,
-        };
+        var sequences = new[] { Input }.AsMemory();
+        var stack = ImmutableArray.Create<byte>(2);
+        BrainfuckContext context = new(
+            Sequences: sequences,
+            Stack: stack
+        );
 
-        var waiter = new Command(context).ExecuteAsync(token);
-        if (input.AsArray().Length > 0)
-            await pipe.Writer.WriteAsync(input.AsArray(), token);
-        await pipe.Writer.CompleteAsync();
-        var actual = await waiter;
-        Assert.AreEqual<BrainfuckContext>(expected, actual);
-    }
+        var command = new Command(context);
+        var ioEvent = await command.GetIoEventAsync(token);
+        Assert.IsInstanceOfType<InputCharEvent>(ioEvent);
 
-    [TestMethod]
-    [DynamicData(nameof(ExecuteTestData))]
-    public void ExecuteTest(TestShared.BrainfuckContext context, TestShared.Array<byte> input, TestShared.BrainfuckContext expected)
-    {
-        var pipe = new Pipe();
-        context = context with
-        {
-            Input = pipe.Reader,
-        };
-        expected = expected with
-        {
-            Input = pipe.Reader,
-        };
+        ((InputCharEvent)ioEvent!).Write('A');
 
-        if (input.Length > 0)
+        var actual = await command.ExecuteAsync(ioEvent!, token);
+
+        var expected = context with
         {
-            var dest = pipe.Writer.GetSpan(input.Length);
-            input.AsArray().AsSpan().CopyTo(dest);
-            pipe.Writer.Advance(input.AsArray().Length);
-        }
-        pipe.Writer.Complete();
-        var actual = new Command(context).Execute();
-        Assert.AreEqual<BrainfuckContext>(expected, actual);
-    }
-    [TestMethod]
-    public void ExecuteAsync_ThrowTest()
-    {
-        var token = TestContext.CancellationTokenSource.Token;
-        var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: [0]));
-        Assert.ThrowsAsync<InvalidOperationException>(async () => await command.ExecuteAsync(token)); ;
-    }
-    [TestMethod]
-    public void Execute_ThrowTest()
-    {
-        var command = new Command(new BrainfuckContext(Sequences: new[] { Input }.AsMemory(), Stack: [0]));
-        Assert.Throws<InvalidOperationException>(() => command.Execute());
+            Stack = [(byte)'A'],
+            SequencesIndex = 1,
+        };
+        Assert.AreEqual(expected, actual);
     }
 
     [TestMethod]
