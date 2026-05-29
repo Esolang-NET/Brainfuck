@@ -122,26 +122,50 @@ public sealed partial class BrainfuckProcessor
     /// <summary>
     /// Runs the processor and returns output as a UTF-8 string.
     /// </summary>
+    /// <param name="input">Optional input string for Input commands.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The output string, or <see langword="null"/> when output is empty.</returns>
-    public async ValueTask<string?> RunAndOutputStringAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<string?> RunAndOutputStringAsync(string? input = null, CancellationToken cancellationToken = default)
     {
         var output = new StringBuilder();
         var context = Context;
+        var inputIndex = 0;
 
         while (BrainfuckSequenceCommand.TryGetCommand(context, out var command))
         {
-            var ioEvent = await command.GetIoEventAsync(cancellationToken);
-            if (ioEvent is OutputCharEvent outputChar)
+            if (command.IsIoCommand)
             {
-                output.Append(outputChar.Output);
-            }
-            else if (ioEvent is OutputIntEvent outputInt)
-            {
-                output.Append(outputInt.Output);
-            }
+                var ioEvent = await command.GetIoEventAsync(cancellationToken);
+                
+                if (ioEvent is InputCharEvent inputCharEvent)
+                {
+                    if (inputIndex < (input?.Length ?? 0))
+                    {
+                        inputCharEvent.Write(input![inputIndex++]);
+                    }
+                    else
+                    {
+                        // Handle end of input or throw/default? 
+                        // For now, assuming EOF might be needed or just stop.
+                        // Based on Brainfuck standards, might need a value for EOF (e.g., 0 or -1).
+                        inputCharEvent.Write('\0');
+                    }
+                }
+                else if (ioEvent is OutputCharEvent outputChar)
+                {
+                    output.Append(outputChar.Output);
+                }
+                else if (ioEvent is OutputIntEvent outputInt)
+                {
+                    output.Append(outputInt.Output);
+                }
 
-            context = await command.ExecuteAsync(ioEvent ?? throw new InvalidOperationException("ioEvent is null"), cancellationToken);
+                context = await command.ExecuteAsync(ioEvent ?? throw new InvalidOperationException("ioEvent is null"), cancellationToken);
+            }
+            else
+            {
+                context = await command.ExecuteAsync(cancellationToken);
+            }
         }
 
         return output.Length == 0 ? null : output.ToString();

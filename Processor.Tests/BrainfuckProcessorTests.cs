@@ -30,13 +30,13 @@ public class BrainfuckProcessorTests(TestContext TestContext)
     }
     [TestMethod]
     [DynamicData(nameof(RunAndOutputStringTestData))]
-    public async Task RunAndOutputStringAsyncTest(string source, string? expected = default)
+    public async Task RunAndOutputStringAsyncTest(string source, string? input, string? expected)
     {
         var enumerable = new BrainfuckSequenceEnumerable(source);
         var sequences = enumerable.Select(v => v.Sequence).ToArray().AsMemory();
         var runner = new BrainfuckProcessor(sequences);
 
-        var actual = await runner.RunAndOutputStringAsync(CancellationToken);
+        var actual = await runner.RunAndOutputStringAsync(input, CancellationToken);
 
         Assert.AreEqual(expected, actual);
     }
