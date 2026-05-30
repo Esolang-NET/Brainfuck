@@ -9,7 +9,6 @@ namespace Esolang.Generator;
 /// <summary>
 /// Represents the result of binding a method signature for generation.
 /// </summary>
-/// <param name="IsValid">Whether the binding is successful.</param>
 /// <param name="ReturnKind">The return kind of the method.</param>
 /// <param name="InputKind">The input kind of the method.</param>
 /// <param name="OutputKind">The output kind of the method.</param>
@@ -23,7 +22,6 @@ namespace Esolang.Generator;
 [DebuggerDisplay("{ToString(),nq}")]
 [ExcludeFromCodeCoverage]
 public record struct MethodSignatureBinding(
-    bool IsValid,
     MethodReturnKind ReturnKind,
     MethodInputKind InputKind,
     MethodOutputKind OutputKind,
@@ -35,6 +33,10 @@ public record struct MethodSignatureBinding(
     IReadOnlyList<IParameterSymbol> UnhandledParameters,
     BindingError? Error = null)
 {
+    /// <summary> Whether the binding is successful. </summary>
+    [MemberNotNullWhen(false, nameof(Error))]
+    public readonly bool IsValid => Error is null;
+
     /// <summary>Gets a value indicating whether the method has an explicit input mechanism.</summary>
     public readonly bool HasExplicitInput => InputKind != MethodInputKind.None;
 
