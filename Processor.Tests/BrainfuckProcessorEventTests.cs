@@ -3,7 +3,7 @@ using Esolang.Processor;
 namespace Esolang.Brainfuck.Processor.Tests;
 
 [TestClass]
-public class BrainfuckProcessorEventTests
+public class BrainfuckProcessorEventTests(TestContext TestContext)
 {
     [TestMethod]
     public async Task RunAsyncEnumerable_ProducesOutputEvents()
@@ -48,6 +48,4 @@ public class BrainfuckProcessorEventTests
         Assert.IsTrue(await enumerator.MoveNextAsync());
         Assert.IsInstanceOfType<EndEvent>(enumerator.Current);
     }
-
-    public TestContext TestContext { get; set; }
 }

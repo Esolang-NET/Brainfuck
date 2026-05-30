@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using static Esolang.Brainfuck.BrainfuckSequence;
+using static Esolang.Generator.BindingError;
 
 namespace Esolang.Brainfuck.Generator;
 
@@ -931,25 +932,25 @@ public partial class MethodGenerator
                         Array.Empty<object>()
                     ),
                     DuplicateInput error => (
-                        error.Parameter.Type.ToDisplayString() == (error.ExistingKind switch
+                        error.Parameter.Type.ToDisplayString() == error.ExistingKind switch
                         {
                             MethodInputKind.String => "string",
                             MethodInputKind.TextReader => "System.IO.TextReader",
                             MethodInputKind.PipeReader => "System.IO.Pipelines.PipeReader",
                             _ => null
-                        }) ? DiagnosticDescriptors.DuplicateParameter : DiagnosticDescriptors.NotSupportParameterPattern,
+                        } ? DiagnosticDescriptors.DuplicateParameter : DiagnosticDescriptors.NotSupportParameterPattern,
                         error.Location,
-                        new object[] { error.Parameter.Type.ToDisplayString() }
+                        [error.Parameter.Type.ToDisplayString()]
                     ),
                     DuplicateOutput error => (
-                        error.Parameter.Type.ToDisplayString() == (error.ExistingKind switch
+                        error.Parameter.Type.ToDisplayString() == error.ExistingKind switch
                         {
                             MethodOutputKind.TextWriter => "System.IO.TextWriter",
                             MethodOutputKind.PipeWriter => "System.IO.Pipelines.PipeWriter",
                             _ => null
-                        }) ? DiagnosticDescriptors.DuplicateParameter : DiagnosticDescriptors.NotSupportParameterPattern,
+                        } ? DiagnosticDescriptors.DuplicateParameter : DiagnosticDescriptors.NotSupportParameterPattern,
                         error.Location,
-                        new object[] { error.Parameter.Type.ToDisplayString() }
+                        [error.Parameter.Type.ToDisplayString()]
                     ),
                     DuplicateCancellationToken error => (
                         DiagnosticDescriptors.DuplicateParameter,
@@ -966,9 +967,9 @@ public partial class MethodGenerator
                         error.Location,
                         new object[] { error.Parameter.Type.ToDisplayString(), returnTypeName }
                     ),
-                    _ => (
+                    { } error => (
                         DiagnosticDescriptors.NotSupportParameterPattern,
-                        null as Location,
+                        error.Location,
                         Array.Empty<object>()
                     )
                 };
