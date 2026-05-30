@@ -1,9 +1,6 @@
 #nullable enable
 using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 
 namespace Esolang.Generator;
 
@@ -18,23 +15,15 @@ public static class MethodSignatureBinder
     /// </summary>
     /// <param name="method">The method symbol to bind.</param>
     /// <param name="types">The known types for the compilation.</param>
-    /// <param name="invalidReturnTypeErrorId">The error ID to use if the return type is invalid.</param>
-    /// <param name="invalidParameterErrorId">The error ID to use if a parameter is invalid.</param>
-    /// <param name="duplicateParameterErrorId">The error ID to use if a parameter type is duplicated.</param>
-    /// <param name="returnOutputConflictErrorId">The error ID to use if there is a conflict between the return type and output parameters.</param>
     /// <returns>The result of the binding.</returns>
     public static MethodSignatureBinding Bind(
         IMethodSymbol method,
-        KnownTypes types,
-        string invalidReturnTypeErrorId = "ES0001",
-        string invalidParameterErrorId = "ES0002",
-        string duplicateParameterErrorId = "ES0003",
-        string returnOutputConflictErrorId = "ES0004")
+        KnownTypes types)
     {
         var returnKind = BindReturnKind(method.ReturnType, types);
         if (returnKind == MethodReturnKind.Invalid)
         {
-            return new MethodSignatureBinding(false, returnKind, MethodInputKind.None, MethodOutputKind.None, "", "", null, null, false, method.Parameters, invalidReturnTypeErrorId);
+            return new MethodSignatureBinding(false, returnKind, MethodInputKind.None, MethodOutputKind.None, "", "", null, null, false, method.Parameters, new UnsupportedReturnType(method.ReturnType, method.Locations.FirstOrDefault()));
         }
 
         var outputKind = BindDefaultOutputKind(returnKind);
@@ -50,13 +39,13 @@ public static class MethodSignatureBinder
         {
             if (p.RefKind != RefKind.None)
             {
-                return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, invalidParameterErrorId, p.Locations.FirstOrDefault());
+                return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new InvalidParameterModifier(p, p.Locations.FirstOrDefault()));
             }
 
             if (types.IsString(p.Type, false))
             {
                 if (inputKind != MethodInputKind.None)
-                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, inputKind == MethodInputKind.String ? duplicateParameterErrorId : invalidParameterErrorId, p.Locations.FirstOrDefault());
+                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new DuplicateInput(p, inputKind, p.Locations.FirstOrDefault()));
 
                 inputKind = MethodInputKind.String;
                 inputExpr = p.Name;
@@ -66,7 +55,7 @@ public static class MethodSignatureBinder
             if (types.IsTextReader(p.Type))
             {
                 if (inputKind != MethodInputKind.None)
-                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, inputKind == MethodInputKind.TextReader ? duplicateParameterErrorId : invalidParameterErrorId, p.Locations.FirstOrDefault());
+                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new DuplicateInput(p, inputKind, p.Locations.FirstOrDefault()));
 
                 inputKind = MethodInputKind.TextReader;
                 inputExpr = p.Name;
@@ -76,7 +65,7 @@ public static class MethodSignatureBinder
             if (types.IsPipeReader(p.Type))
             {
                 if (inputKind != MethodInputKind.None)
-                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, inputKind == MethodInputKind.PipeReader ? duplicateParameterErrorId : invalidParameterErrorId, p.Locations.FirstOrDefault());
+                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new DuplicateInput(p, inputKind, p.Locations.FirstOrDefault()));
 
                 inputKind = MethodInputKind.PipeReader;
                 inputExpr = p.Name;
@@ -86,10 +75,10 @@ public static class MethodSignatureBinder
             if (types.IsTextWriter(p.Type))
             {
                 if (IsOutputReturning(returnKind))
-                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, returnOutputConflictErrorId, p.Locations.FirstOrDefault());
+                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new ReturnOutputConflict(p, p.Locations.FirstOrDefault()));
 
                 if (outputKind != MethodOutputKind.None)
-                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, outputKind == MethodOutputKind.TextWriter ? duplicateParameterErrorId : invalidParameterErrorId, p.Locations.FirstOrDefault());
+                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new DuplicateOutput(p, outputKind, p.Locations.FirstOrDefault()));
 
                 outputKind = MethodOutputKind.TextWriter;
                 outputExpr = p.Name;
@@ -99,10 +88,10 @@ public static class MethodSignatureBinder
             if (types.IsPipeWriter(p.Type))
             {
                 if (IsOutputReturning(returnKind))
-                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, returnOutputConflictErrorId, p.Locations.FirstOrDefault());
+                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new ReturnOutputConflict(p, p.Locations.FirstOrDefault()));
 
                 if (outputKind != MethodOutputKind.None)
-                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, outputKind == MethodOutputKind.PipeWriter ? duplicateParameterErrorId : invalidParameterErrorId, p.Locations.FirstOrDefault());
+                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new DuplicateOutput(p, outputKind, p.Locations.FirstOrDefault()));
 
                 outputKind = MethodOutputKind.PipeWriter;
                 outputExpr = p.Name;
@@ -112,7 +101,7 @@ public static class MethodSignatureBinder
             if (types.IsCancellationToken(p.Type))
             {
                 if (cancellationTokenName != null)
-                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, duplicateParameterErrorId, p.Locations.FirstOrDefault());
+                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new DuplicateCancellationToken(p, p.Locations.FirstOrDefault()));
 
                 cancellationTokenName = p.Name;
                 continue;
@@ -121,7 +110,7 @@ public static class MethodSignatureBinder
             if (types.IsLogger(p.Type))
             {
                 if (loggerExpression != null)
-                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, duplicateParameterErrorId, p.Locations.FirstOrDefault());
+                    return new MethodSignatureBinding(false, returnKind, inputKind, outputKind, inputExpr, outputExpr, cancellationTokenName, loggerExpression, isLoggerFromParameter, method.Parameters, new DuplicateLogger(p, p.Locations.FirstOrDefault()));
 
                 loggerExpression = p.Name;
                 isLoggerFromParameter = true;
@@ -162,7 +151,7 @@ public static class MethodSignatureBinder
     /// <summary>
     /// Gets the default output kind based on the return kind.
     /// </summary>
-    private static MethodOutputKind BindDefaultOutputKind(MethodReturnKind returnKind) => returnKind switch
+    static MethodOutputKind BindDefaultOutputKind(MethodReturnKind returnKind) => returnKind switch
     {
         MethodReturnKind.String or MethodReturnKind.NullableString or MethodReturnKind.TaskString or MethodReturnKind.TaskNullableString or MethodReturnKind.ValueTaskString or MethodReturnKind.ValueTaskNullableString => MethodOutputKind.ReturnString,
         MethodReturnKind.IEnumerableByte => MethodOutputKind.ReturnIEnumerable,
@@ -173,7 +162,7 @@ public static class MethodSignatureBinder
     /// <summary>
     /// Gets a value indicating whether the return kind implies output is returned.
     /// </summary>
-    private static bool IsOutputReturning(MethodReturnKind returnKind) => returnKind switch
+    static bool IsOutputReturning(MethodReturnKind returnKind) => returnKind switch
     {
         MethodReturnKind.String or MethodReturnKind.NullableString or MethodReturnKind.TaskString or MethodReturnKind.TaskNullableString or MethodReturnKind.ValueTaskString or MethodReturnKind.ValueTaskNullableString or MethodReturnKind.IEnumerableByte or MethodReturnKind.IAsyncEnumerableByte => true,
         _ => false
@@ -187,7 +176,7 @@ public static class MethodSignatureBinder
     /// <param name="types">The known types for the compilation.</param>
     /// <param name="isFromParameter">Output: Whether the logger was found in a constructor parameter.</param>
     /// <returns>The expression to access the logger, or <c>null</c> if not found.</returns>
-    private static string? FindLoggerInContainingType(ITypeSymbol? type, bool isStatic, KnownTypes types, out bool isFromParameter)
+    static string? FindLoggerInContainingType(ITypeSymbol? type, bool isStatic, KnownTypes types, out bool isFromParameter)
     {
         isFromParameter = false;
         var currentType = type;
