@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Esolang.Brainfuck.Generator.Sequences;
 
-internal sealed record NestableSequence(IEnumerable<INestableSequence> Nest, Sequence Begin, Sequence End) : INestableSequence, IEnumerable<Sequence>
+sealed record NestableSequence(IEnumerable<INestableSequence> Nest, Sequence Begin, Sequence End) : INestableSequence, IEnumerable<Sequence>
 {
     public IEnumerator<Sequence> GetEnumerator()
     {

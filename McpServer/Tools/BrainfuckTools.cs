@@ -9,7 +9,7 @@ namespace Esolang.Brainfuck.McpServer.Tools;
 /// <summary>
 /// MCP tools for executing Brainfuck code.
 /// </summary>
-internal class BrainfuckTools
+class BrainfuckTools
 {
     [McpServerTool]
     [Description("Executes Brainfuck code and returns the collected output.")]

@@ -3,9 +3,9 @@ using System.Resources;
 
 namespace Esolang.Brainfuck.Interpreter;
 
-internal static class SR
+static class SR
 {
-    private static readonly ResourceManager ResourceManager =
+    static readonly ResourceManager ResourceManager =
         new("Esolang.Brainfuck.Interpreter.Resources.Strings", typeof(SR).Assembly);
 
     internal static string Get(string key)

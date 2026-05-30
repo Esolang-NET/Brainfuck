@@ -48,7 +48,7 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
         return builder.ToString();
     }
 
-    private string DebuggerDisplay => ToString();
+    string DebuggerDisplay => ToString();
 
     /// <summary>
     /// Determines whether this context is equal to the specified context.

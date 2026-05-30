@@ -12,13 +12,13 @@ namespace Esolang.Brainfuck.Generator.Tests;
 [TestClass]
 public class MethodGeneratorTests
 {
-    public TestContext TestContext { get; set; } = default!;
+    readonly TestContext TestContext;
     CancellationToken CancellationToken => TestContext.CancellationToken;
-    Compilation baseCompilation = default!;
+    readonly Compilation baseCompilation;
 
-    [TestInitialize]
-    public void InitializeCompilation()
+    public MethodGeneratorTests(TestContext TestContext)
     {
+        this.TestContext = TestContext;
         // running .NET Core system assemblies dir path
 
         IEnumerable<PortableExecutableReference> references;
@@ -413,7 +413,7 @@ public class MethodGeneratorTests
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             // BF0009 (Hidden) may be reported for unused input parameters; allow Hidden.
@@ -536,7 +536,7 @@ public class MethodGeneratorTests
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             Assert.IsNotEmpty(diagnostics, $"diagnostics is empty required {string.Join(", ", expected)}");
@@ -633,12 +633,12 @@ public class MethodGeneratorTests
             public static partial void SampleMethod();
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
         }
         catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
         {
@@ -659,12 +659,12 @@ public class MethodGeneratorTests
             public static partial string SampleMethod(string input);
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
         }
         catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
         {
@@ -687,12 +687,12 @@ public class MethodGeneratorTests
             public static partial string SampleMethod(string input);
         }
         """";
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
         }
         catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
         {
@@ -718,12 +718,12 @@ public class MethodGeneratorTests
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
 
             var generatedTrees = outputCompilation.SyntaxTrees
                 .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
@@ -745,7 +745,7 @@ public class MethodGeneratorTests
     }
 
     [TestMethod]
-    [Timeout(10000)]  // 10 second timeout to detect hangs
+    [Timeout(10000, CooperativeCancellation = true)]  // 10 second timeout to detect hangs
     public async Task OutputlessReturnPatternsTest()
     {
         var source = $$"""
@@ -783,7 +783,7 @@ public class MethodGeneratorTests
             public static partial void UnusedPipeReaderInputMethod(PipeReader input);
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             // BF0009 (Hidden) may be reported; allow Hidden diagnostics.
@@ -791,7 +791,7 @@ public class MethodGeneratorTests
             // OutputSource(outputCompilation.SyntaxTrees);  // Temporarily disabled for debugging
             AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
 
-            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
+            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationToken);
             using (context)
             {
                 var testClassType = assembly.GetType("TestProject.TestClass");
@@ -867,12 +867,12 @@ public class MethodGeneratorTests
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
 
             var generatedTree = outputCompilation.SyntaxTrees
                 .Single(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal));
@@ -906,13 +906,13 @@ public class MethodGeneratorTests
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
             AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
 
-            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
+            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationToken);
             using (context)
             {
                 var testClassType = assembly.GetType("TestProject.TestClass");

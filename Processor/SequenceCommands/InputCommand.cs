@@ -8,9 +8,9 @@ namespace Esolang.Brainfuck.Processor.SequenceCommands;
 /// <param name="Context">The context to execute against.</param>
 public sealed record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    private sealed class InputCharEventImpl : InputCharEvent
+    sealed class InputCharEventImpl : InputCharEvent
     {
-        private readonly TaskCompletionSource<char> _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        readonly TaskCompletionSource<char> _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public override void Write(char c) => _tcs.TrySetResult(c);
         public Task<char> Task => _tcs.Task;
     }

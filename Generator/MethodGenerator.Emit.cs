@@ -982,7 +982,7 @@ public partial class MethodGenerator
     }
 
 }
-internal readonly record struct InternalOptions(
+readonly record struct InternalOptions(
     string Space,
     string VariableStack,
     string VariableStackIndex,
@@ -1014,7 +1014,7 @@ internal readonly record struct InternalOptions(
 
 }
 
-internal readonly record struct ParameterOptions(
+readonly record struct ParameterOptions(
     string ParameterSymbols,
     string? VariableCancellation,
     string? VariablePipeWriter,
@@ -1042,7 +1042,7 @@ internal readonly record struct ParameterOptions(
 
 }
 
-internal enum ParameterType
+enum ParameterType
 {
     None = default,
     String,

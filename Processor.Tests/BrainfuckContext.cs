@@ -54,7 +54,7 @@ public readonly record struct BrainfuckContext(ReadOnlyMemory<BrainfuckSequence>
         return builder.ToString();
     }
 
-    private string DebuggerDisplay => ToString();
+    string DebuggerDisplay => ToString();
     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
     {
         info.AddValue(nameof(Sequences), Sequences.ToArray(), typeof(BrainfuckSequence[]));

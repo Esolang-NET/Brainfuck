@@ -136,7 +136,7 @@ public sealed partial class BrainfuckProcessor
             if (command.IsIoCommand)
             {
                 var ioEvent = await command.GetIoEventAsync(cancellationToken);
-                
+
                 if (ioEvent is InputCharEvent inputCharEvent)
                 {
                     if (inputIndex < (input?.Length ?? 0))

@@ -20,7 +20,7 @@ finally
 /// <summary>
 /// The main program class for the Brainfuck interpreter. This class is responsible for setting up the command-line interface and handling user input. It defines the entry point of the application and orchestrates the execution of commands based on the provided arguments.
 /// </summary>
-internal partial class Program
+partial class Program
 {
     public static async Task<int> RunAsync(string[] args, CancellationToken cancellationToken)
     {

@@ -7,7 +7,7 @@ using System.Reflection;
 
 namespace TestShared;
 
-internal class AssemblyLoadContext
+class AssemblyLoadContext
     :
 
 #if NET
@@ -17,7 +17,7 @@ internal class AssemblyLoadContext
 {
 #if !NET
     const string DOMAIN_NAME = "test domain";
-    private AppDomain _domain;
+    AppDomain _domain;
 #endif
 
     public AssemblyLoadContext()

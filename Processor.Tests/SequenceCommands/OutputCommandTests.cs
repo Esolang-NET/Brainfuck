@@ -13,7 +13,7 @@ public class OutputCommandTests
     [TestMethod]
     public async Task ExecuteAsyncTest()
     {
-        var token = TestContext.CancellationTokenSource.Token;
+        var token = TestContext.CancellationToken;
         var sequences = new[] { Output }.AsMemory();
         var stack = ImmutableArray.Create<byte>(65); // 'A'
         BrainfuckContext context = new(

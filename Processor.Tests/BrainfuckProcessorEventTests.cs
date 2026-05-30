@@ -12,12 +12,12 @@ public class BrainfuckProcessorEventTests
         var processor = new BrainfuckProcessor("+.");
         var events = new List<IOEvent>();
 
-        await foreach (var ev in processor.RunAsyncEnumerable())
+        await foreach (var ev in processor.RunAsyncEnumerable(TestContext.CancellationToken))
         {
             events.Add(ev);
         }
 
-        Assert.AreEqual(2, events.Count); // OutputCharEvent, EndEvent
+        Assert.HasCount(2, events); // OutputCharEvent, EndEvent
         Assert.IsInstanceOfType<OutputCharEvent>(events[0]);
         Assert.AreEqual(1, ((OutputCharEvent)events[0]).Output);
         Assert.IsInstanceOfType<EndEvent>(events[1]);
@@ -30,7 +30,7 @@ public class BrainfuckProcessorEventTests
         var processor = new BrainfuckProcessor(",.");
         var events = new List<IOEvent>();
 
-        var enumerator = processor.RunAsyncEnumerable().GetAsyncEnumerator();
+        var enumerator = processor.RunAsyncEnumerable(TestContext.CancellationToken).GetAsyncEnumerator(TestContext.CancellationToken);
 
         // Input 命令に到達
         Assert.IsTrue(await enumerator.MoveNextAsync());
@@ -48,4 +48,6 @@ public class BrainfuckProcessorEventTests
         Assert.IsTrue(await enumerator.MoveNextAsync());
         Assert.IsInstanceOfType<EndEvent>(enumerator.Current);
     }
+
+    public TestContext TestContext { get; set; }
 }

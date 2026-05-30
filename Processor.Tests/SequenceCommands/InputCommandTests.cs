@@ -13,7 +13,7 @@ public class InputCommandTests
     [TestMethod]
     public async Task ExecuteAsyncTest()
     {
-        var token = TestContext.CancellationTokenSource.Token;
+        var token = TestContext.CancellationToken;
         var sequences = new[] { Input }.AsMemory();
         var stack = ImmutableArray.Create<byte>(2);
         BrainfuckContext context = new(

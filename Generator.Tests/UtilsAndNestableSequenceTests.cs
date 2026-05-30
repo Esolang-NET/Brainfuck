@@ -127,10 +127,10 @@ public class UtilsAndNestableSequenceTests
 
         var withNullNest = new NestableSequence(null!, begin, end);
         var text = withNullNest.ToString();
-        StringAssert.Contains(text, "NestableSequence");
+        Assert.Contains("NestableSequence", text);
     }
 
-    private static CSharpCompilation CreateCompilation(string source)
+    static CSharpCompilation CreateCompilation(string source)
     {
         IEnumerable<PortableExecutableReference> references;
 #if NET10_0_OR_GREATER
@@ -157,5 +157,5 @@ public class UtilsAndNestableSequenceTests
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
     }
 
-    private sealed record UnknownNestable : INestableSequence;
+    sealed record UnknownNestable : INestableSequence;
 }
