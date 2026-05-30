@@ -903,11 +903,7 @@ public partial class MethodGenerator
 
             var binding = MethodSignatureBinder.Bind(
                 methodSymbol,
-                types,
-                invalidReturnTypeErrorId: DiagnosticDescriptors.InvalidReturnType.Id,
-                invalidParameterErrorId: DiagnosticDescriptors.NotSupportParameterPattern.Id,
-                duplicateParameterErrorId: DiagnosticDescriptors.DuplicateParameter.Id,
-                returnOutputConflictErrorId: DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern.Id
+                types
             );
             if (binding is { IsValid: true, UnhandledParameters.Count: > 0 })
             {
@@ -922,20 +918,62 @@ public partial class MethodGenerator
             }
             if (!binding.IsValid)
             {
-                var descriptor = binding.ErrorId switch
+                var (descriptor, location, messageArgs) = binding.Error switch
                 {
-                    "BF0002" => DiagnosticDescriptors.InvalidReturnType,
-                    "BF0005" => DiagnosticDescriptors.NotSupportParameterPattern,
-                    "BF0004" => DiagnosticDescriptors.DuplicateParameter,
-                    "BF0006" => DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
-                    _ => DiagnosticDescriptors.NotSupportParameterPattern
+                    UnsupportedReturnType error => (
+                        DiagnosticDescriptors.InvalidReturnType,
+                        error.Location,
+                        new object[] { error.ReturnType.ToDisplayString() }
+                    ),
+                    InvalidParameterModifier error => (
+                        DiagnosticDescriptors.NotSupportParameterPattern,
+                        error.Location,
+                        Array.Empty<object>()
+                    ),
+                    DuplicateInput error => (
+                        error.Parameter.Type.ToDisplayString() == (error.ExistingKind switch
+                        {
+                            MethodInputKind.String => "string",
+                            MethodInputKind.TextReader => "System.IO.TextReader",
+                            MethodInputKind.PipeReader => "System.IO.Pipelines.PipeReader",
+                            _ => null
+                        }) ? DiagnosticDescriptors.DuplicateParameter : DiagnosticDescriptors.NotSupportParameterPattern,
+                        error.Location,
+                        new object[] { error.Parameter.Type.ToDisplayString() }
+                    ),
+                    DuplicateOutput error => (
+                        error.Parameter.Type.ToDisplayString() == (error.ExistingKind switch
+                        {
+                            MethodOutputKind.TextWriter => "System.IO.TextWriter",
+                            MethodOutputKind.PipeWriter => "System.IO.Pipelines.PipeWriter",
+                            _ => null
+                        }) ? DiagnosticDescriptors.DuplicateParameter : DiagnosticDescriptors.NotSupportParameterPattern,
+                        error.Location,
+                        new object[] { error.Parameter.Type.ToDisplayString() }
+                    ),
+                    DuplicateCancellationToken error => (
+                        DiagnosticDescriptors.DuplicateParameter,
+                        error.Location,
+                        new object[] { error.Parameter.Type.ToDisplayString() }
+                    ),
+                    DuplicateLogger error => (
+                        DiagnosticDescriptors.DuplicateParameter,
+                        error.Location,
+                        new object[] { error.Parameter.Type.ToDisplayString() }
+                    ),
+                    ReturnOutputConflict error => (
+                        DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern,
+                        error.Location,
+                        new object[] { error.Parameter.Type.ToDisplayString(), returnTypeName }
+                    ),
+                    _ => (
+                        DiagnosticDescriptors.NotSupportParameterPattern,
+                        null as Location,
+                        Array.Empty<object>()
+                    )
                 };
 
-                var location = binding.Location ?? methodDeclarationSyntax.Identifier.GetLocation();
-                var messageArgs = descriptor == DiagnosticDescriptors.InvalidReturnType ? [methodSymbol.ReturnType.ToDisplayString()]
-                                : descriptor == DiagnosticDescriptors.NotSupportParameterAndReturnTypePattern ? ["parameter", returnTypeName]
-                                : descriptor == DiagnosticDescriptors.DuplicateParameter ? ["parameter"]
-                                : Array.Empty<object>();
+                location ??= methodDeclarationSyntax.Identifier.GetLocation();
 
                 var diagnostic = Diagnostic.Create(descriptor, location, messageArgs);
                 context.ReportDiagnostic(diagnostic);
