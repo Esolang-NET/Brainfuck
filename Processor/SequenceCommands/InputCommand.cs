@@ -1,4 +1,5 @@
 using Esolang.Processor;
+using static Esolang.Processor.IOEvent;
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
@@ -8,12 +9,6 @@ namespace Esolang.Brainfuck.Processor.SequenceCommands;
 /// <param name="Context">The context to execute against.</param>
 public sealed record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
-    sealed class InputCharEventImpl : InputCharEvent
-    {
-        readonly TaskCompletionSource<char> _tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public override void Write(char c) => _tcs.TrySetResult(c);
-        public Task<char> Task => _tcs.Task;
-    }
 
     /// <inheritdoc />
     public override bool RequiredInput => true;
@@ -21,13 +16,17 @@ public sealed record InputCommand(BrainfuckContext Context) : BrainfuckSequenceC
     /// <inheritdoc />
     public override bool IsIoCommand => true;
 
+    readonly TaskCompletionSource<char> source = new();
+
     /// <inheritdoc />
-    public override ValueTask<IOEvent?> GetIoEventAsync(CancellationToken ct) => new(new InputCharEventImpl());
+    public override ValueTask<IOEvent?> GetIoEventAsync(CancellationToken ct) => new(InputChar(c => source.TrySetResult(c)));
 
     /// <inheritdoc />
     public override async ValueTask<BrainfuckContext> ExecuteAsync(IOEvent ioEvent, CancellationToken ct)
     {
-        var inputChar = await ((InputCharEventImpl)ioEvent).Task;
+        ct.ThrowIfCancellationRequested();
+        if (!source.Task.IsCompleted) return Context;
+        var inputChar = await source.Task;
         return Context with
         {
             Stack = Context.Stack.SetItem(Context.StackIndex, (byte)inputChar),

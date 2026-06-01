@@ -1,6 +1,6 @@
-using Esolang.Processor;
 using System.Diagnostics;
 using System.Text;
+using static Esolang.Processor.IOEvent;
 
 namespace Esolang.Brainfuck.Processor;
 

@@ -1,4 +1,5 @@
 using Esolang.Processor;
+using static Esolang.Processor.IOEvent;
 
 namespace Esolang.Brainfuck.Processor.Tests;
 

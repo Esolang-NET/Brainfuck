@@ -1,5 +1,6 @@
 using Esolang.Brainfuck.Processor.SequenceCommands;
 using Esolang.Processor;
+using static Esolang.Processor.IOEvent;
 
 namespace Esolang.Brainfuck.Processor;
 
@@ -31,6 +32,6 @@ public sealed partial class BrainfuckProcessor : IEventProcessor
             }
         }
 
-        yield return new EndEvent(0);
+        yield return End(0);
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Esolang.Brainfuck.Processor;
+using Esolang.Interpreter;
 using System.CommandLine;
-using System.Text;
 
 
 namespace Esolang.Brainfuck.Interpreter;
@@ -96,41 +96,7 @@ public static class BrainfuckInterpreterExtensions
 
             var processor = new BrainfuckProcessor(source: source, sourceOptions: o);
 
-            var encoding = Encoding.UTF8;
-
-            await foreach (var ioEvent in processor.RunAsyncEnumerable(cancellationToken))
-            {
-                switch (ioEvent)
-                {
-                    case Esolang.Processor.InputCharEvent inputEvent:
-                        var c = await ConsoleReadAsync(Console.In, cancellationToken);
-                        inputEvent.Write(c);
-                        break;
-                    case Esolang.Processor.OutputCharEvent outputEvent:
-                        var chars = outputEvent.Output.ToString();
-                        if (!Console.IsOutputRedirected && chars == "\r") chars = Environment.NewLine;
-                        Console.Write(chars);
-                        break;
-                    case Esolang.Processor.EndEvent:
-                        return 0;
-                }
-            }
-
-            return 0;
-
-            static async ValueTask<char> ConsoleReadAsync(TextReader console, CancellationToken cancellationToken)
-            {
-                if (Console.IsInputRedirected)
-                    return Convert.ToChar(System.Console.Read());
-
-                // Using a loop to wait for key press without blocking thread entirely
-                while (!System.Console.KeyAvailable)
-                {
-                    await Task.Delay(10, cancellationToken);
-                }
-                var key = System.Console.ReadKey(true);
-                return key.KeyChar;
-            }
+            return await processor.RunToConsoleAsync(cancellationToken);
         });
         return rootCommand;
     }

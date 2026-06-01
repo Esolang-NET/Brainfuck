@@ -1,4 +1,5 @@
 using Esolang.Processor;
+using static Esolang.Processor.IOEvent;
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
@@ -15,7 +16,7 @@ public sealed record OutputCommand(BrainfuckContext Context) : BrainfuckSequence
     public override bool IsIoCommand => true;
 
     /// <inheritdoc />
-    public override ValueTask<IOEvent?> GetIoEventAsync(CancellationToken ct) => new(new OutputCharEvent((char)Context.Stack[Context.StackIndex]));
+    public override ValueTask<IOEvent?> GetIoEventAsync(CancellationToken ct) => new(OutputChar((char)Context.Stack[Context.StackIndex]));
 
     /// <inheritdoc />
     public override ValueTask<BrainfuckContext> ExecuteAsync(IOEvent ioEvent, CancellationToken ct) => new(Context with { SequencesIndex = Context.SequencesIndex + 1 });

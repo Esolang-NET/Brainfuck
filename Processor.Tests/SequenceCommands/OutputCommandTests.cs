@@ -1,6 +1,6 @@
-using Esolang.Processor;
 using System.Collections.Immutable;
 using static Esolang.Brainfuck.BrainfuckSequence;
+using static Esolang.Processor.IOEvent;
 using Command = Esolang.Brainfuck.Processor.SequenceCommands.OutputCommand;
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands.Tests;

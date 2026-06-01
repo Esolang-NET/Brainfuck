@@ -1,5 +1,5 @@
 using Esolang.Brainfuck.Processor;
-using Esolang.Processor;
+using static Esolang.Processor.IOEvent;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
 using System.Text;
