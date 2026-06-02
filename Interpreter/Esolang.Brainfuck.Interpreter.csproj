@@ -3,8 +3,6 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <AssemblyName>dotnet-brainfuck</AssemblyName>
     <Title>brainfuck console.</Title>
     <PublishRelease>true</PublishRelease>
@@ -13,25 +11,6 @@
     <ToolCommandName>dotnet-brainfuck</ToolCommandName>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>esolang;brainfuck;interpreter;cli;dotnet-tool</PackageTags>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net6.0'))">
-    <IsTrimmable>true</IsTrimmable>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
-    <EnableAotAnalyzer>true</EnableAotAnalyzer>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)' == 'net7.0'">
-    <StripSymbols>true</StripSymbols>
-    <IsTrimmable>true</IsTrimmable>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
-    <EnableAotAnalyzer>true</EnableAotAnalyzer>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net8.0'))">
     <IsAotCompatible>true</IsAotCompatible>
     <StripSymbols>false</StripSymbols>
   </PropertyGroup>
