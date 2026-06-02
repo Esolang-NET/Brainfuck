@@ -13,6 +13,9 @@
     <PackageTags>esolang;brainfuck;interpreter;cli;dotnet-tool</PackageTags>
     <IsAotCompatible>true</IsAotCompatible>
     <StripSymbols>false</StripSymbols>
+    <VerifyReferenceAotCompatibility>true</VerifyReferenceAotCompatibility>
+    <PublishAot>true</PublishAot>
+    <ToolPackageRuntimeIdentifiers>win-x64;linux-x64;osx-arm64;any</ToolPackageRuntimeIdentifiers>
   </PropertyGroup>
 
   <ItemGroup>
