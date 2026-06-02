@@ -14,7 +14,7 @@
     <IsAotCompatible>true</IsAotCompatible>
     <StripSymbols>false</StripSymbols>
     <VerifyReferenceAotCompatibility>false</VerifyReferenceAotCompatibility>
-    <PublishAot>true</PublishAot>
+    <PublishAot Condition="'$(RuntimeIdentifier)' != '' and '$(RuntimeIdentifier)' != 'any'">true</PublishAot>
     <ToolPackageRuntimeIdentifiers>win-x64;linux-x64;osx-arm64;any</ToolPackageRuntimeIdentifiers>
   </PropertyGroup>
 

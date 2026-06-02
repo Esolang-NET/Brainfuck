@@ -6,7 +6,7 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
-## [2.0.0] - 2026-06-02
+## [2.0.0] - 2026-06-03
 
 ### Added
 - `Esolang.Brainfuck.Generator`: Added BF0011 diagnostic for enforcing partial method declaration.
