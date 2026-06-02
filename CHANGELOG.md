@@ -6,8 +6,29 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-06-02
+
 ### Added
 - `Esolang.Brainfuck.Generator`: Added BF0011 diagnostic for enforcing partial method declaration.
+- `Esolang.Brainfuck.Generator`: Integrated `Esolang.Generator.Abstractions` (v2.0.0) for standardized type resolution and shared generator logic.
+- `Esolang.Brainfuck.Processor`: Introduced `IOEvent` and `IEventProcessor` for a pure event-based execution model.
+
+### Changed
+- **Breaking Change**: Refactored `BrainfuckProcessor` and `BrainfuckContext` to remove direct dependencies on `System.IO.Pipelines` (`PipeReader`/`PipeWriter`).
+- **Breaking Change**: Transitioned all `SequenceCommands` (`InputCommand`, `OutputCommand`) to use events instead of direct stream/pipe I/O.
+- `BrainfuckProcessor`: Now implements `IEventProcessor` as a partial class, optimizing the execution loop for event-based state transitions.
+- `Esolang.Brainfuck.Generator`: Updated code generation to align with the new event-based I/O model while maintaining backward compatibility for supported method signatures.
+- Updated all projects to target .NET 10.0, .NET 9.0, and .NET 8.0 where applicable.
+
+### Improved
+- Optimized `BrainfuckProcessor` execution performance by streamlining state transitions in the main loop.
+- Improved repository independence by standardizing common abstractions into the `Esolang.Abstractions` ecosystem.
+- Cleaned up internal project structures and removed redundant dependencies.
+
+### Fixed
+- Fixed a packaging issue where `Esolang.Generator.Abstractions` was not correctly included in the `Esolang.Brainfuck.Generator` NuGet package.
+- Corrected local reference patterns in samples to ensure consistent behavior between development and production builds.
+
 
 ## [1.1.3] - 2026-05-25
 
@@ -101,7 +122,8 @@ The format is based on Keep a Changelog.
 - Parser: README output text typo corrections.
 - Processor: README sample updated to use `BrainfuckProcessor`.
 
-[Unreleased]: https://github.com/Esolang-NET/Brainfuck/compare/v1.1.3...HEAD
+[Unreleased]: https://github.com/Esolang-NET/Brainfuck/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/Esolang-NET/Brainfuck/tree/v2.0.0
 [1.1.3]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.3
 [1.1.2]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.2
 [1.1.1]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.1

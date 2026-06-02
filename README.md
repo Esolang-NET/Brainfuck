@@ -45,8 +45,9 @@ For runnable examples, see:
 |---|---|
 | Core Brainfuck instructions | ✅ |
 | `[` `]` matching | ✅ |
-| `TextReader` / `PipeReader` input | ✅ |
-| `TextWriter` / `PipeWriter` output | ✅ |
+| Event-based I/O | ✅ |
+| `TextReader` / `PipeReader` input (Adapter) | ✅ |
+| `TextWriter` / `PipeWriter` output (Adapter) | ✅ |
 
 ## Install
 
@@ -63,7 +64,7 @@ dotnet tool install -g dotnet-brainfuck
 | --- | --- |
 | Generate C# methods from Brainfuck at compile time | Esolang.Brainfuck.Generator |
 | Parse source into sequence tokens | Esolang.Brainfuck.Parser |
-| Execute Brainfuck in-process | Esolang.Brainfuck.Processor |
+| Execute Brainfuck in-process (Event-based) | Esolang.Brainfuck.Processor |
 | Run Brainfuck from CLI | dotnet-brainfuck |
 
 ## License
@@ -75,10 +76,10 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 | Project | NuGet | Summary |
 | --- | --- | --- |
-| [dotnet-brainfuck](./Interpreter/README.md) | [![NuGet: dotnet-brainfuck](https://img.shields.io/nuget/v/dotnet-brainfuck?logo=nuget&label=1.1.3)](https://www.nuget.org/packages/dotnet-brainfuck/) | brainfuck command line utility dotnet-brainfuck command. |
-| [Esolang.Brainfuck.Generator](./Generator/README.md) | [![NuGet: Esolang.Brainfuck.Generator](https://img.shields.io/nuget/v/Esolang.Brainfuck.Generator?logo=nuget&label=1.1.3)](https://www.nuget.org/packages/Esolang.Brainfuck.Generator/) | brainfuck method generator. |
-| [Esolang.Brainfuck.Parser](./Parser/README.md) | [![NuGet: Esolang.Brainfuck.Parser](https://img.shields.io/nuget/v/Esolang.Brainfuck.Parser?logo=nuget&label=1.1.3)](https://www.nuget.org/packages/Esolang.Brainfuck.Parser/) | brainfuck source parser. |
-| [Esolang.Brainfuck.Processor](./Processor/README.md) | [![NuGet: Esolang.Brainfuck.Processor](https://img.shields.io/nuget/v/Esolang.Brainfuck.Processor?logo=nuget&label=1.1.3)](https://www.nuget.org/packages/Esolang.Brainfuck.Processor/) | brainfuck processor. |
+| [dotnet-brainfuck](./Interpreter/README.md) | [![NuGet: dotnet-brainfuck](https://img.shields.io/nuget/v/dotnet-brainfuck?logo=nuget&label=2.0.0)](https://www.nuget.org/packages/dotnet-brainfuck/) | brainfuck command line utility dotnet-brainfuck command. |
+| [Esolang.Brainfuck.Generator](./Generator/README.md) | [![NuGet: Esolang.Brainfuck.Generator](https://img.shields.io/nuget/v/Esolang.Brainfuck.Generator?logo=nuget&label=2.0.0)](https://www.nuget.org/packages/Esolang.Brainfuck.Generator/) | brainfuck method generator. |
+| [Esolang.Brainfuck.Parser](./Parser/README.md) | [![NuGet: Esolang.Brainfuck.Parser](https://img.shields.io/nuget/v/Esolang.Brainfuck.Parser?logo=nuget&label=2.0.0)](https://www.nuget.org/packages/Esolang.Brainfuck.Parser/) | brainfuck source parser. |
+| [Esolang.Brainfuck.Processor](./Processor/README.md) | [![NuGet: Esolang.Brainfuck.Processor](https://img.shields.io/nuget/v/Esolang.Brainfuck.Processor?logo=nuget&label=2.0.0)](https://www.nuget.org/packages/Esolang.Brainfuck.Processor/) | brainfuck processor. |
 
 ## Framework Support
 

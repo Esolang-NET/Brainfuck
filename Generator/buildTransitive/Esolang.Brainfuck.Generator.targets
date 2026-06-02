@@ -2,5 +2,6 @@
   <ItemGroup Condition="'$(MSBuildThisPackageRoot)' != ''">
     <Analyzer Include="$(MSBuildThisPackageRoot)analyzers/dotnet/cs/Esolang.Brainfuck.Generator.dll" />
     <Analyzer Include="$(MSBuildThisPackageRoot)analyzers/dotnet/cs/Esolang.Brainfuck.Parser.dll" />
+    <Analyzer Include="$(MSBuildThisPackageRoot)analyzers/dotnet/cs/Esolang.Generator.Abstractions.dll" />
   </ItemGroup>
 </Project>

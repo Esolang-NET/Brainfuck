@@ -1,7 +1,4 @@
 <Solution>
-  <Folder Name="/McpServer/">
-    <Project Path="McpServer/Esolang.Brainfuck.McpServer.csproj" />
-  </Folder>
   <Folder Name="/Parser/" />
   <Folder Name="/samples/" />
   <Project Path="samples/Generator.UseConsole/Esolang.Brainfuck.Generator.UseConsole.csproj" />
