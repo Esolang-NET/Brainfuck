@@ -70,7 +70,7 @@ jobs:
         tool_version=${tool_version%.nupkg}
         echo "Detected tool version: $tool_version"
 
-        dotnet new tool-manifest
+        dotnet new tool-manifest --force
         dotnet tool install dotnet-brainfuck \
           --add-source .artifacts/tool-e2e \
           --version "$tool_version"
