@@ -75,18 +75,22 @@ jobs:
           --add-source .artifacts/tool-e2e \
           --version "$tool_version"
 
-        # Execute using the DLL directly via 'dotnet' for maximum reliability in custom tool-path
-        TOOL_DLL=$(find .artifacts/tool-e2e/path/.store -name "dotnet-brainfuck.dll" | head -n 1)
+        # Execute using the DLL directly via 'dotnet exec' for maximum reliability
+        # Use a broader search to find the DLL regardless of the OS-specific internal store structure
+        TOOL_DLL=$(find .artifacts/tool-e2e -name "dotnet-brainfuck.dll" | head -n 1)
+        if [ -z "$TOOL_DLL" ]; then
+          echo "Failed to find dotnet-brainfuck.dll in .artifacts/tool-e2e"
+          find .artifacts/tool-e2e -maxdepth 4
+          exit 1
+        fi
         echo "Found tool DLL: $TOOL_DLL"
 
-        dotnet "$TOOL_DLL" --help
-        # Use -- to separate dotnet arguments from tool arguments if necessary, 
-        # though for direct DLL execution it's usually not needed unless there's ambiguity.
-        output1=$(dotnet "$TOOL_DLL" -- "++++++[>++++++++<-]++++++++++[>.+<-]")
+        dotnet exec "$TOOL_DLL" --help
+        output1=$(dotnet exec "$TOOL_DLL" -- "++++++[>++++++++<-]++++++++++[>.+<-]")
         echo "$output1"
         test "$output1" = "0123456789"
 
-        output2=$(dotnet "$TOOL_DLL" -- parse "++>--")
+        output2=$(dotnet exec "$TOOL_DLL" -- parse "++>--")
         echo "$output2"
         echo "$output2" | grep -q "IncrementCurrent"
         echo "$output2" | grep -q "IncrementPointer"
