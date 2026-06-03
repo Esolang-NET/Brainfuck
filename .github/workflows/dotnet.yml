@@ -75,19 +75,15 @@ jobs:
           --add-source .artifacts/tool-e2e \
           --version "$tool_version"
 
-        # Add to PATH and execute by name
+        # Add the tool directory to the PATH and execute via 'dotnet'
         export PATH="$PWD/.artifacts/tool-e2e/path:$PATH"
         
-        echo "Contents of tool path:"
-        ls -la .artifacts/tool-e2e/path
-        echo "Current PATH: $PATH"
-
-        dotnet-brainfuck --help
-        output1=$(dotnet-brainfuck "++++++[>++++++++<-]++++++++++[>.+<-]")
+        dotnet brainfuck --help
+        output1=$(dotnet brainfuck "++++++[>++++++++<-]++++++++++[>.+<-]")
         echo "$output1"
         test "$output1" = "0123456789"
 
-        output2=$(dotnet-brainfuck parse "++>--")
+        output2=$(dotnet brainfuck parse "++>--")
         echo "$output2"
         echo "$output2" | grep -q "IncrementCurrent"
         echo "$output2" | grep -q "IncrementPointer"
