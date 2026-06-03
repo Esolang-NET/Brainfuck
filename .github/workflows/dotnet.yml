@@ -80,11 +80,13 @@ jobs:
         echo "Found tool DLL: $TOOL_DLL"
 
         dotnet "$TOOL_DLL" --help
-        output1=$(dotnet "$TOOL_DLL" "++++++[>++++++++<-]++++++++++[>.+<-]")
+        # Use -- to separate dotnet arguments from tool arguments if necessary, 
+        # though for direct DLL execution it's usually not needed unless there's ambiguity.
+        output1=$(dotnet "$TOOL_DLL" -- "++++++[>++++++++<-]++++++++++[>.+<-]")
         echo "$output1"
         test "$output1" = "0123456789"
 
-        output2=$(dotnet "$TOOL_DLL" parse "++>--")
+        output2=$(dotnet "$TOOL_DLL" -- parse "++>--")
         echo "$output2"
         echo "$output2" | grep -q "IncrementCurrent"
         echo "$output2" | grep -q "IncrementPointer"
