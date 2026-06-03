@@ -75,27 +75,24 @@ jobs:
           --add-source .artifacts/tool-e2e \
           --version "$tool_version"
 
-        # Resolve absolute path for the tool directory
+        # Add the tool directory to the PATH and execute by name
         TOOL_PATH=$(realpath .artifacts/tool-e2e/path)
         export PATH="$TOOL_PATH:$PATH"
 
-        # On Windows, the executable has .exe extension
         if [ "${{ runner.os }}" = "Windows" ]; then
           exe_name="dotnet-brainfuck.exe"
         else
           exe_name="dotnet-brainfuck"
         fi
 
-        # Execute using the resolved absolute path or via PATH
-        exe_path="$TOOL_PATH/$exe_name"
-        chmod +x "$exe_path" 2>/dev/null || true
+        chmod +x "$TOOL_PATH/$exe_name" 2>/dev/null || true
         
-        "$exe_path" --help
-        output1=$("$exe_path" "++++++[>++++++++<-]++++++++++[>.+<-]")
+        dotnet-brainfuck --help
+        output1=$(dotnet-brainfuck "++++++[>++++++++<-]++++++++++[>.+<-]")
         echo "$output1"
         test "$output1" = "0123456789"
 
-        output2=$("$exe_path" parse "++>--")
+        output2=$(dotnet-brainfuck parse "++>--")
         echo "$output2"
         echo "$output2" | grep -q "IncrementCurrent"
         echo "$output2" | grep -q "IncrementPointer"
