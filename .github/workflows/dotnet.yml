@@ -75,14 +75,21 @@ jobs:
           --add-source .artifacts/tool-e2e \
           --version "$tool_version"
 
-        # On Windows, the executable has .exe extension and path needs adjustment for bash
+        # Resolve absolute path for the tool directory
+        TOOL_PATH=$(realpath .artifacts/tool-e2e/path)
+        export PATH="$TOOL_PATH:$PATH"
+
+        # On Windows, the executable has .exe extension
         if [ "${{ runner.os }}" = "Windows" ]; then
-          exe_path="./.artifacts/tool-e2e/path/dotnet-brainfuck.exe"
+          exe_name="dotnet-brainfuck.exe"
         else
-          exe_path="./.artifacts/tool-e2e/path/dotnet-brainfuck"
+          exe_name="dotnet-brainfuck"
         fi
 
+        # Execute using the resolved absolute path or via PATH
+        exe_path="$TOOL_PATH/$exe_name"
         chmod +x "$exe_path" 2>/dev/null || true
+        
         "$exe_path" --help
         output1=$("$exe_path" "++++++[>++++++++<-]++++++++++[>.+<-]")
         echo "$output1"
