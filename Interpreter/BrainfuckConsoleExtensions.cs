@@ -1,8 +1,6 @@
 ﻿using Esolang.Brainfuck.Processor;
-using System.Buffers;
+using Esolang.Interpreter;
 using System.CommandLine;
-using System.IO.Pipelines;
-using System.Text;
 
 
 namespace Esolang.Brainfuck.Interpreter;
@@ -94,52 +92,11 @@ public static class BrainfuckInterpreterExtensions
         rootCommand.SetAction(async (result, cancellationToken) =>
         {
             var source = result.GetRequiredValue(sourceArgument);
-            var console = Console.In;
             var o = option.GetValue(result);
-            var sequence = new BrainfuckSequenceEnumerable(source, o).Select(v => v.Sequence).ToArray().AsMemory();
-            var input = new Pipe();
-            var output = new Pipe();
 
-            var encoding = Encoding.UTF8;
-            var runner = new BrainfuckProcessor(source: source, sourceOptions: o, output: output.Writer, input: input.Reader);
-            foreach (var command in runner.StepCommands())
-            {
-                if (command.RequiredInput)
-                {
-                    var kc = await ConsoleReadAsync(console, cancellationToken);
-                    var bytes = encoding.GetBytes(new[] { kc });
-                    var flush = await input.Writer.WriteAsync(bytes, cancellationToken);
-                    await input.Writer.FlushAsync(cancellationToken);
+            var processor = new BrainfuckProcessor(source: source, sourceOptions: o);
 
-                }
-                await command.ExecuteAsync(cancellationToken);
-                if (command.RequiredOutput)
-                {
-                    var reader = await output.Reader.ReadAsync(cancellationToken);
-                    var buffer = reader.Buffer;
-                    if (buffer.Length > 0)
-                    {
-                        var sequence2 = buffer.Slice(buffer.Start, buffer.End);
-                        if (encoding.GetString(sequence2.FirstSpan) is string chars && !string.IsNullOrEmpty(chars))
-                        {
-                            if (!Console.IsOutputRedirected && chars == "\r") chars = Environment.NewLine;
-                            result.InvocationConfiguration.Output.Write(chars);
-                        }
-
-                        output.Reader.AdvanceTo(buffer.End);
-                    }
-                }
-            }
-            return 0;
-            static async ValueTask<char> ConsoleReadAsync(TextReader console, CancellationToken cancellationToken)
-            {
-                if (Console.IsInputRedirected)
-                    return Convert.ToChar(System.Console.Read());
-                if (System.Console.KeyAvailable == false)
-                    await Task.Delay(TimeSpan.FromMilliseconds(5), cancellationToken);
-                var key = System.Console.ReadKey(true);
-                return key.KeyChar;
-            }
+            return await processor.RunToConsoleAsync(cancellationToken);
         });
         return rootCommand;
     }

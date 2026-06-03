@@ -1,6 +1,3 @@
-using Esolang.Brainfuck.Generator;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace Esolang.Brainfuck.Generator.Tests;
 
 [TestClass]
@@ -17,7 +14,8 @@ public class ParameterOptionsTests
             VariablePipeReader: "reader",
             VariableTextReader: null,
             VariableInputString: "input",
-            VariableLogger: null
+            VariableLogger: null,
+            IsLoggerFromParameter: false
         );
 
         Assert.IsTrue(options.HasPipeWriterParameter);

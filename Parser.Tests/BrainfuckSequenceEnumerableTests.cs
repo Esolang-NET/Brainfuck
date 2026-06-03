@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TestShared;
+﻿using TestShared;
 using static Esolang.Brainfuck.BrainfuckSequence;
 namespace Esolang.Brainfuck.Tests;
 
@@ -13,11 +12,11 @@ public class BrainfuckSequenceEnumerableTests
         {
             yield return GetEnumerableTest(
                 source: string.Empty,
-                expected: Array.Empty<Tuple<BrainfuckSequence, string>>()
+                expected: []
             );
             yield return GetEnumerableTest(
                 source: "><+-.,[]",
-                expected: new[] {
+                expected: [.. new[] {
                     (IncrementPointer, ">"),
                     (DecrementPointer, "<"),
                     (IncrementCurrent, "+"),
@@ -26,7 +25,7 @@ public class BrainfuckSequenceEnumerableTests
                     (Input, ","),
                     (Begin, "["),
                     (End,"]"),
-                }.Select(v => Tuple.Create(v.Item1, v.Item2)).ToArray()
+                }.Select(v => Tuple.Create(v.Item1, v.Item2))]
             );
             yield return GetEnumerableTest(
                 source: "😀😁😂🤣😃😄😅😆",
@@ -41,7 +40,7 @@ public class BrainfuckSequenceEnumerableTests
                     Begin = "😅",
                     End = "😆",
                 },
-                expected: new[] {
+                expected: [.. new[] {
                     (IncrementPointer, "😀"),
                     (DecrementPointer, "😁"),
                     (IncrementCurrent, "😂"),
@@ -50,23 +49,23 @@ public class BrainfuckSequenceEnumerableTests
                     (Input, "😄"),
                     (Begin, "😅"),
                     (End, "😆"),
-                }.Select(v => Tuple.Create(v.Item1, v.Item2)).ToArray()
+                }.Select(v => Tuple.Create(v.Item1, v.Item2))]
             );
 
             yield return GetEnumerableTest(
                 source: "test[]test",
                 options: new TestShared.BrainfuckOptions(),
-                expected: new[]
+                expected: [.. new[]
                 {
                     (Comment,  "test"),
                     (Begin, "["),
                     (End, "]"),
                     (Comment,  "test"),
-                }.Select(v => Tuple.Create(v.Item1, v.Item2)).ToArray()
+                }.Select(v => Tuple.Create(v.Item1, v.Item2))]
             );
 
             static object?[] GetEnumerableTest(string source, TestShared.BrainfuckOptions? options = default!, Tuple<BrainfuckSequence, string>[]? expected = null)
-                => new object?[] { source, options, (expected ?? Array.Empty<Tuple<BrainfuckSequence, string>>()).ToSerializable() };
+                => [source, options, (expected ?? []).ToSerializable()];
         }
     }
     [TestMethod]
@@ -83,17 +82,17 @@ public class BrainfuckSequenceEnumerableTests
     public void RequiredInputTest()
     {
         var e1 = new BrainfuckSequenceEnumerable("[");
-        Assert.AreEqual(false, e1.RequiredInput);
+        Assert.IsFalse(e1.RequiredInput);
         var e2 = new BrainfuckSequenceEnumerable(",");
-        Assert.AreEqual(true, e2.RequiredInput);
+        Assert.IsTrue(e2.RequiredInput);
     }
     [TestMethod]
     public void RequiredOutputTest()
     {
         var e1 = new BrainfuckSequenceEnumerable("]");
-        Assert.AreEqual(false, e1.RequiredOutput);
+        Assert.IsFalse(e1.RequiredOutput);
         var e2 = new BrainfuckSequenceEnumerable(".");
-        Assert.AreEqual(true, e2.RequiredOutput);
+        Assert.IsTrue(e2.RequiredOutput);
     }
     [TestMethod]
     public void ToStringTest()
@@ -110,7 +109,7 @@ public class BrainfuckSequenceEnumerableTests
         try
         {
             var e = enumerator;
-            Assert.AreEqual(true, e.MoveNext());
+            Assert.IsTrue(e.MoveNext());
             var syntax1 = (e.Current as (BrainfuckSequence, ReadOnlyMemory<char>)?)?.Item1;
             Assert.AreEqual(Begin, syntax1);
 

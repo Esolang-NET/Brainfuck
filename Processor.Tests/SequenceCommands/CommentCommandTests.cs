@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using static Esolang.Brainfuck.BrainfuckSequence;
 using Command = Esolang.Brainfuck.Processor.SequenceCommands.CommentCommand;
 
@@ -30,14 +29,14 @@ public class CommentCommandTests
                 );
             }
             static object?[] ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
-                => new object?[] { context, expected };
+                => [context, expected];
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
     public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
     {
-        var token = TestContext.CancellationTokenSource.Token;
+        var token = TestContext.CancellationToken;
 
         var actual = await new Command(context).ExecuteAsync(token);
         Assert.AreEqual<BrainfuckContext>(expected, actual);
@@ -46,19 +45,19 @@ public class CommentCommandTests
     [DynamicData(nameof(ExecuteTestData))]
     public void ExecuteTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
     {
-        var actual = new Command(context).Execute();
+        var actual = new Command(context).Execute(TestContext.CancellationToken);
         Assert.AreEqual<BrainfuckContext>(expected, actual);
     }
     [TestMethod]
     public void RequiredInputTest()
     {
         var command = new Command(default);
-        Assert.AreEqual(false, command.RequiredInput);
+        Assert.IsFalse(command.RequiredInput);
     }
     [TestMethod]
     public void RequiredOutputTest()
     {
         var command = new Command(default);
-        Assert.AreEqual(false, command.RequiredOutput);
+        Assert.IsFalse(command.RequiredOutput);
     }
 }

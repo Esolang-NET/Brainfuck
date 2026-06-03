@@ -1,8 +1,7 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections;
-using System.Runtime.Serialization;
+using TestShared;
 
-namespace TestShared.Tests;
+namespace Esolang.Brainfuck.Parser.Tests;
 
 [TestClass]
 public class TestSharedCoverageTests
@@ -12,40 +11,27 @@ public class TestSharedCoverageTests
     {
         var options = new BrainfuckOptions();
 
-        Assert.AreEqual(Esolang.Brainfuck.BrainfuckOptionsDefault.IncrementPointer, options.IncrementPointer);
-        Assert.AreEqual(Esolang.Brainfuck.BrainfuckOptionsDefault.DecrementPointer, options.DecrementPointer);
-        Assert.AreEqual(Esolang.Brainfuck.BrainfuckOptionsDefault.IncrementCurrent, options.IncrementCurrent);
-        Assert.AreEqual(Esolang.Brainfuck.BrainfuckOptionsDefault.DecrementCurrent, options.DecrementCurrent);
-        Assert.AreEqual(Esolang.Brainfuck.BrainfuckOptionsDefault.Output, options.Output);
-        Assert.AreEqual(Esolang.Brainfuck.BrainfuckOptionsDefault.Input, options.Input);
-        Assert.AreEqual(Esolang.Brainfuck.BrainfuckOptionsDefault.Begin, options.Begin);
-        Assert.AreEqual(Esolang.Brainfuck.BrainfuckOptionsDefault.End, options.End);
+        Assert.AreEqual(BrainfuckOptionsDefault.IncrementPointer, options.IncrementPointer);
+        Assert.AreEqual(BrainfuckOptionsDefault.DecrementPointer, options.DecrementPointer);
+        Assert.AreEqual(BrainfuckOptionsDefault.IncrementCurrent, options.IncrementCurrent);
+        Assert.AreEqual(BrainfuckOptionsDefault.DecrementCurrent, options.DecrementCurrent);
+        Assert.AreEqual(BrainfuckOptionsDefault.Output, options.Output);
+        Assert.AreEqual(BrainfuckOptionsDefault.Input, options.Input);
+        Assert.AreEqual(BrainfuckOptionsDefault.Begin, options.Begin);
+        Assert.AreEqual(BrainfuckOptionsDefault.End, options.End);
     }
 
     [TestMethod]
     public void BrainfuckOptions_Copy_Works()
     {
         var source = new BrainfuckOptions("R", "L", "A", "B", "O", "I", "S", "E");
-        var copied = new BrainfuckOptions((Esolang.Brainfuck.IBrainfuckOptions)source);
+        var copied = new BrainfuckOptions(source);
 
-        var eq = ((IEquatable<Esolang.Brainfuck.IBrainfuckOptions>)copied)
-            .Equals((Esolang.Brainfuck.IBrainfuckOptions)source);
+        var eq = ((IEquatable<IBrainfuckOptions>)copied)
+            .Equals(source);
 
         Assert.IsTrue(eq);
     }
-
-#if NET48
-    [TestMethod]
-    public void BrainfuckOptions_SerializationRoundTrip_Works()
-    {
-        var source = new BrainfuckOptions("R", "L", "A", "B", "O", "I", "S", "E");
-        var info = new SerializationInfo(typeof(BrainfuckOptions), new FormatterConverter());
-        ((ISerializable)source).GetObjectData(info, new StreamingContext(StreamingContextStates.All));
-
-        var restored = new BrainfuckOptions(info, new StreamingContext(StreamingContextStates.All));
-        Assert.AreEqual(source, restored);
-    }
-#endif
 
     [TestMethod]
     public void ArrayWrapper_BasicBehavior_Works()
@@ -59,8 +45,8 @@ public class TestSharedCoverageTests
         Assert.IsTrue(wrapped.Equals((object)wrapped));
         Assert.IsTrue(wrapped == (Array<int>)new[] { 1, 2, 3 });
         Assert.IsTrue(wrapped != (Array<int>)new[] { 1, 2, 4 });
-        Assert.IsTrue(wrapped.GetHashCode() != 0);
-        StringAssert.Contains(wrapped.ToString(), "Int32[] [ 1, 2, 3 ]");
+        Assert.AreNotEqual(0, wrapped.GetHashCode());
+        Assert.Contains("Int32[] [ 1, 2, 3 ]", wrapped.ToString());
 
         var list = ((IEnumerable<int>)wrapped).ToArray();
         CollectionAssert.AreEqual(raw, list);
@@ -70,18 +56,18 @@ public class TestSharedCoverageTests
     }
 
     [TestMethod]
-#if NET48
+#if !NET
     public void ArrayWrapper_SerializationCtor_FallbacksToEmpty_WhenMissingValue()
     {
-        var emptyInfo = new SerializationInfo(typeof(Array<int>), new FormatterConverter());
+        var emptyInfo = new System.Runtime.Serialization.SerializationInfo(typeof(Array<int>), new System.Runtime.Serialization.FormatterConverter());
         emptyInfo.AddValue("InnerArray", null, typeof(int[]));
-        var empty = new Array<int>(emptyInfo, new StreamingContext(StreamingContextStates.All));
+        var empty = new Array<int>(emptyInfo, new System.Runtime.Serialization.StreamingContext(System.Runtime.Serialization.StreamingContextStates.All));
         Assert.AreEqual(0, empty.Length);
 
-        var info = new SerializationInfo(typeof(Array<int>), new FormatterConverter());
+        var info = new System.Runtime.Serialization.SerializationInfo(typeof(Array<int>), new System.Runtime.Serialization.FormatterConverter());
         var source = (Array<int>)new[] { 7, 8 };
-        ((ISerializable)source).GetObjectData(info, new StreamingContext(StreamingContextStates.All));
-        var restored = new Array<int>(info, new StreamingContext(StreamingContextStates.All));
+        ((System.Runtime.Serialization.ISerializable)source).GetObjectData(info, new System.Runtime.Serialization.StreamingContext(System.Runtime.Serialization.StreamingContextStates.All));
+        var restored = new Array<int>(info, new System.Runtime.Serialization.StreamingContext(System.Runtime.Serialization.StreamingContextStates.All));
 
         CollectionAssert.AreEqual(new[] { 7, 8 }, restored.AsArray());
     }
@@ -110,7 +96,7 @@ public class TestSharedCoverageTests
         alc.Dispose();
     }
 
-#if NET48
+#if !NET
     [TestMethod]
     public void AssemblyLoadContext_LoadFromStream_ThrowsOnNullAssembly()
     {

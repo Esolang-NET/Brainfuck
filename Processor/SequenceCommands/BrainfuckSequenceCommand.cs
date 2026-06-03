@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using Esolang.Processor;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
@@ -20,6 +21,22 @@ public abstract record class BrainfuckSequenceCommand(BrainfuckContext Context)
     /// <see cref="Context"/> need Output
     /// </summary>
     public virtual bool RequiredOutput => false;
+
+    /// <summary>
+    /// Whether this command requires an I/O event.
+    /// </summary>
+    public virtual bool IsIoCommand => false;
+
+    /// <summary>
+    /// Gets the I/O event for this command if <see cref="IsIoCommand"/> is true.
+    /// </summary>
+    public virtual ValueTask<IOEvent?> GetIoEventAsync(CancellationToken ct) => default;
+
+    /// <summary>
+    /// Executes this command with the given I/O event.
+    /// </summary>
+    public virtual ValueTask<BrainfuckContext> ExecuteAsync(IOEvent ioEvent, CancellationToken ct) => throw new NotSupportedException();
+
     /// <summary>
     /// Executes this command asynchronously.
     /// </summary>

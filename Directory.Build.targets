@@ -7,7 +7,9 @@
     <PackageReference Update="Basic.Reference.Assemblies.Net80" Version="1.8.5" />
     <PackageReference Update="Basic.Reference.Assemblies.Net90" Version="1.8.5" />
 	  <PackageReference Update="ConsoleAppFramework" Version="5.7.13" />
-    <PackageReference Update="Esolang.Processor.Abstractions" Version="1.0.0" />
+    <PackageReference Update="Esolang.Generator.Abstractions" Version="2.0.2" />
+    <PackageReference Update="Esolang.Processor.Abstractions" Version="2.0.2" />
+    <PackageReference Update="Esolang.Interpreter.Abstractions" Version="2.0.2" />
     <PackageReference Update="IndexRange" Version="1.1.1" />
     <PackageReference Update="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
     <PackageReference Update="Microsoft.Extensions.Logging" Version="10.0.6" />
@@ -21,9 +23,7 @@
     <PackageReference Update="MSTest.TestFramework" Version="4.2.1" />
     <PackageReference Update="PolySharp" Version="1.15.0" />
     <PackageReference Update="System.Collections.Immutable" Version="10.0.6" />
-    <PackageReference Update="System.CommandLine" Version="2.0.6" />
-    <PackageReference Update="System.CommandLine.Hosting" Version="2.0.6" />
-    <PackageReference Update="System.CommandLine.Rendering" Version="2.0.6" />
+    <PackageReference Update="System.CommandLine" Version="2.0.7" />
     <PackageReference Update="System.IO.Pipelines" Version="10.0.6" />
   </ItemGroup>
 

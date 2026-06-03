@@ -3,7 +3,7 @@
 /// <summary>
 /// Serializable array wrapper helpers for MSTest.
 /// </summary>
-internal static class ArrayExtensions
+static class ArrayExtensions
 {
     public static Array<T> ToSerializable<T>(this T[] array) => new(array);
     public static T[] AsArray<T>(this Array<T> array) => (T[])array;

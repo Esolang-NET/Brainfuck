@@ -1,6 +1,5 @@
-﻿using System.Buffers;
-using System.Collections.Immutable;
-using System.IO.Pipelines;
+using Esolang.Processor;
+using static Esolang.Processor.IOEvent;
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands;
 
@@ -10,65 +9,34 @@ namespace Esolang.Brainfuck.Processor.SequenceCommands;
 /// <param name="Context">The context to execute against.</param>
 public sealed record InputCommand(BrainfuckContext Context) : BrainfuckSequenceCommand(Context)
 {
+
     /// <inheritdoc />
     public override bool RequiredInput => true;
 
     /// <inheritdoc />
-    public override BrainfuckContext Execute(CancellationToken cancellationToken = default)
+    public override bool IsIoCommand => true;
+
+    readonly TaskCompletionSource<char> source = new();
+
+    /// <inheritdoc />
+    public override ValueTask<IOEvent?> GetIoEventAsync(CancellationToken ct) => new(InputChar(c => source.TrySetResult(c)));
+
+    /// <inheritdoc />
+    public override async ValueTask<BrainfuckContext> ExecuteAsync(IOEvent ioEvent, CancellationToken ct)
     {
-        if (!TryInput(out var sequencesIndex, out var stack, cancellationToken))
-            return Next();
+        ct.ThrowIfCancellationRequested();
+        if (!source.Task.IsCompleted) return Context;
+        var inputChar = await source.Task;
         return Context with
         {
-            SequencesIndex = sequencesIndex,
-            Stack = stack,
+            Stack = Context.Stack.SetItem(Context.StackIndex, (byte)inputChar),
+            SequencesIndex = Context.SequencesIndex + 1
         };
     }
 
     /// <inheritdoc />
-    public override async ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        if (await InputAsync(cancellationToken) is not (var sequencesIndex, var stack))
-            return Next();
-        return Context with
-        {
-            SequencesIndex = sequencesIndex,
-            Stack = stack,
-        };
-    }
-    async ValueTask<(int SequencesIndex, ImmutableArray<byte> Stack)?> InputAsync(CancellationToken cancellationToken = default)
-    {
-        if (Context.Input is null) throw new InvalidOperationException("required context.Input.");
-        var memory = new byte[1].AsMemory();
-        if (!((await Context.Input.ReadAtLeastAsync(memory.Length, cancellationToken)) is { } result
-            && TryReadWriteFromResult(Context.Input, result, memory.Span)))
-            return null;
-        var sequencesIndex = Context.SequencesIndex + 1;
-        var stack = Context.Stack.SetItem(Context.StackIndex, memory.Span[0]);
-        return (sequencesIndex, stack);
-    }
-    bool TryInput(out int sequencesIndex, out ImmutableArray<byte> stack, CancellationToken cancellationToken)
-    {
-        sequencesIndex = default;
-        stack = default!;
-        if (Context.Input is null) throw new InvalidOperationException("required context.Input.");
-        Span<byte> span = stackalloc byte[1];
-        ReadResult result;
-        while (!Context.Input.TryRead(out result))
-            if (cancellationToken.IsCancellationRequested) return false;
-        if (!TryReadWriteFromResult(Context.Input, result, span)) return false;
-        sequencesIndex = Context.SequencesIndex + 1;
-        stack = Context.Stack.SetItem(Context.StackIndex, span[0]);
-        return true;
-    }
-    static bool TryReadWriteFromResult(PipeReader reader, ReadResult result, Span<byte> dest)
-    {
-        var buffer = result.Buffer;
-        var readableSeq = buffer.IsEmpty ? buffer : buffer.Slice(buffer.Start, dest.Length);
-        if (readableSeq.Length > 0) readableSeq.CopyTo(dest);
-        reader.AdvanceTo(readableSeq.End);
-        return readableSeq.Length == dest.Length;
-    }
+    public override BrainfuckContext Execute(CancellationToken cancellationToken = default) => throw new NotSupportedException("Synchronous input is not supported in the event-based I/O model.");
 
+    /// <inheritdoc />
+    public override ValueTask<BrainfuckContext> ExecuteAsync(CancellationToken cancellationToken = default) => throw new NotSupportedException("Synchronous input is not supported in the event-based I/O model.");
 }

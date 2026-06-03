@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-
-namespace Esolang.Brainfuck.Generator.Sequences.Tests;
+﻿namespace Esolang.Brainfuck.Generator.Sequences.Tests;
 
 [TestClass]
 public class SequenceExtensionsTests
@@ -13,7 +11,7 @@ public class SequenceExtensionsTests
             yield return NestAndUnNestTest("+++++++++[>++++++++>+++++++++++>+++++<<<-]>.>++.+++++++..+++.>-.------------.<++++++++.--------.+++.------.--------.>+.");
             yield return NestAndUnNestTest("++++++[>++++++++<-]++++++++++[>.+<-]");
             static object?[] NestAndUnNestTest(string source)
-                => new object?[] { source };
+                => [source];
         }
     }
     [TestMethod]

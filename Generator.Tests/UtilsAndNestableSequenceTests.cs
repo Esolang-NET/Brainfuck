@@ -2,7 +2,6 @@ using Basic.Reference.Assemblies;
 using Esolang.Brainfuck.Generator.Sequences;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections;
 
 namespace Esolang.Brainfuck.Generator.Tests;
@@ -108,8 +107,8 @@ public class UtilsAndNestableSequenceTests
         var e2 = new Sequence(4, BrainfuckSequence.End, "]".AsMemory());
         var e0 = new Sequence(5, BrainfuckSequence.End, "]".AsMemory());
 
-        var inner = new NestableSequence(new INestableSequence[] { s3 }, b2, e2);
-        var outer = new NestableSequence(new INestableSequence[] { s1, inner, new UnknownNestable() }, b0, e0);
+        var inner = new NestableSequence([s3], b2, e2);
+        var outer = new NestableSequence([s1, inner, new UnknownNestable()], b0, e0);
 
         var flattened = outer.ToArray();
 
@@ -121,17 +120,17 @@ public class UtilsAndNestableSequenceTests
     {
         var begin = new Sequence(0, BrainfuckSequence.Begin, "[".AsMemory());
         var end = new Sequence(1, BrainfuckSequence.End, "]".AsMemory());
-        var seq = new NestableSequence(Array.Empty<INestableSequence>(), begin, end);
+        var seq = new NestableSequence([], begin, end);
 
         var nonGeneric = ((IEnumerable)seq).GetEnumerator();
         Assert.IsTrue(nonGeneric.MoveNext());
 
         var withNullNest = new NestableSequence(null!, begin, end);
         var text = withNullNest.ToString();
-        StringAssert.Contains(text, "NestableSequence");
+        Assert.Contains("NestableSequence", text);
     }
 
-    private static CSharpCompilation CreateCompilation(string source)
+    static CSharpCompilation CreateCompilation(string source)
     {
         IEnumerable<PortableExecutableReference> references;
 #if NET10_0_OR_GREATER
@@ -153,10 +152,10 @@ public class UtilsAndNestableSequenceTests
 
         return CSharpCompilation.Create(
             assemblyName: "coverage-tests",
-            syntaxTrees: new[] { syntaxTree },
+            syntaxTrees: [syntaxTree],
             references: references,
             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
     }
 
-    private sealed record UnknownNestable : INestableSequence;
+    sealed record UnknownNestable : INestableSequence;
 }

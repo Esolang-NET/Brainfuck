@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using static Esolang.Brainfuck.BrainfuckSequence;
 using Command = Esolang.Brainfuck.Processor.SequenceCommands.DecrementCurrentCommand;
 
@@ -26,7 +25,7 @@ public class DecrementCurrentCommandTests
                     context with
                     {
                         SequencesIndex = 1,
-                        Stack = ImmutableArray.Create<byte>(0),
+                        Stack = [0],
                     }
                 );
             }
@@ -43,19 +42,19 @@ public class DecrementCurrentCommandTests
                     context with
                     {
                         SequencesIndex = 1,
-                        Stack = ImmutableArray.Create(byte.MaxValue),
+                        Stack = [byte.MaxValue],
                     }
                 );
             }
             static object[] ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
-                => new object[] { context, expected };
+                => [context, expected];
         }
     }
     [TestMethod]
     [DynamicData(nameof(ExecuteTestData))]
     public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
     {
-        var token = TestContext.CancellationTokenSource.Token;
+        var token = TestContext.CancellationToken;
 
         var actual = await new Command(context).ExecuteAsync(token);
         Assert.AreEqual<BrainfuckContext>(expected, actual);
@@ -65,7 +64,7 @@ public class DecrementCurrentCommandTests
     [DynamicData(nameof(ExecuteTestData))]
     public void ExecuteTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
     {
-        var actual = new Command(context).Execute();
+        var actual = new Command(context).Execute(TestContext.CancellationToken);
         Assert.AreEqual<BrainfuckContext>(expected, actual);
     }
 
@@ -73,12 +72,12 @@ public class DecrementCurrentCommandTests
     public void RequiredInputTest()
     {
         var command = new Command(default);
-        Assert.AreEqual(false, command.RequiredInput);
+        Assert.IsFalse(command.RequiredInput);
     }
     [TestMethod]
     public void RequiredOutputTest()
     {
         var command = new Command(default);
-        Assert.AreEqual(false, command.RequiredOutput);
+        Assert.IsFalse(command.RequiredOutput);
     }
 }

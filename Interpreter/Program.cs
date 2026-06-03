@@ -1,31 +1,35 @@
+using Esolang.Brainfuck.Interpreter;
 using System.CommandLine;
 
-namespace Esolang.Brainfuck.Interpreter;
+CancellationTokenSource cancellationTokenSource = new();
+void CancelKeyPress(object? _, ConsoleCancelEventArgs e)
+{
+    e.Cancel = true;
+    cancellationTokenSource.Cancel();
+}
+try
+{
+    Console.CancelKeyPress += CancelKeyPress;
+    return await RunAsync(args, cancellationTokenSource.Token);
+}
+finally
+{
+    Console.CancelKeyPress -= CancelKeyPress;
+}
 
 /// <summary>
-/// Entry points for the dotnet-brainfuck command-line tool.
+/// The main program class for the Brainfuck interpreter. This class is responsible for setting up the command-line interface and handling user input. It defines the entry point of the application and orchestrates the execution of commands based on the provided arguments.
 /// </summary>
-public static class Program
+partial class Program
 {
-    /// <summary>
-    /// Runs the command-line pipeline and returns the process exit code.
-    /// </summary>
-    /// <param name="args">Command-line arguments.</param>
-    /// <returns>The exit code.</returns>
-    public static async Task<int> RunAsync(string[] args)
+    public static async Task<int> RunAsync(string[] args, CancellationToken cancellationToken)
     {
-        RootCommand rootCommand = new();
+        RootCommand rootCommand = [];
         var option = rootCommand.AddDefaultGlobalOptions();
         rootCommand
             .AddDefaultCommand(option)
             .AddParseCommand(option);
-        return await rootCommand.Parse(args).InvokeAsync();
-    }
+        return await rootCommand.Parse(args).InvokeAsync(cancellationToken: cancellationToken);
 
-    /// <summary>
-    /// Application entry point.
-    /// </summary>
-    /// <param name="args">Command-line arguments.</param>
-    public static async Task Main(string[] args)
-        => _ = await RunAsync(args);
+    }
 }

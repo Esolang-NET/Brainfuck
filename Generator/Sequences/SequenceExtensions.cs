@@ -2,7 +2,7 @@
 
 namespace Esolang.Brainfuck.Generator.Sequences;
 
-internal static class SequenceExtensions
+static class SequenceExtensions
 {
     /// <summary>
     /// enumerable sequence to nestable sequence

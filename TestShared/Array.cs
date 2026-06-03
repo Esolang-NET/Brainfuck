@@ -19,7 +19,7 @@ public readonly struct Array<T> : ISerializable, IEquatable<T[]>, IEquatable<Arr
 
     public Array(T[] array) => InnerArray = array;
 
-    public Array(SerializationInfo info, StreamingContext context) => InnerArray = info.GetValue(nameof(InnerArray), typeof(T[])) as T[] ?? System.Array.Empty<T>();
+    public Array(SerializationInfo info, StreamingContext context) => InnerArray = info.GetValue(nameof(InnerArray), typeof(T[])) as T[] ?? [];
     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context) => info.AddValue(nameof(InnerArray), InnerArray, typeof(T[]));
 
     public override string ToString()
@@ -56,9 +56,9 @@ public readonly struct Array<T> : ISerializable, IEquatable<T[]>, IEquatable<Arr
         var seed = 1009;
         var factor = 9176;
         var hash = seed;
-        hash = (hash * factor) + InnerArray.Length.GetHashCode();
+        hash = hash * factor + InnerArray.Length.GetHashCode();
         foreach (var a in InnerArray)
-            hash = (hash * factor) + (a?.GetHashCode() ?? 0);
+            hash = hash * factor + (a?.GetHashCode() ?? 0);
         return hash;
 #endif
     }

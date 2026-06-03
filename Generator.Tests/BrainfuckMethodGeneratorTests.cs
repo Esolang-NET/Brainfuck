@@ -12,13 +12,13 @@ namespace Esolang.Brainfuck.Generator.Tests;
 [TestClass]
 public class MethodGeneratorTests
 {
-    public TestContext TestContext { get; set; } = default!;
+    readonly TestContext TestContext;
     CancellationToken CancellationToken => TestContext.CancellationToken;
-    Compilation baseCompilation = default!;
+    readonly Compilation baseCompilation;
 
-    [TestInitialize]
-    public void InitializeCompilation()
+    public MethodGeneratorTests(TestContext TestContext)
     {
+        this.TestContext = TestContext;
         // running .NET Core system assemblies dir path
 
         IEnumerable<PortableExecutableReference> references;
@@ -181,7 +181,7 @@ public class MethodGeneratorTests
 
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
             var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
             CancellationToken.ThrowIfCancellationRequested();
             using (context)
@@ -194,12 +194,12 @@ public class MethodGeneratorTests
                     Assert.IsNotNull(sampleMethod);
                     try
                     {
-                        var actual = (string?)sampleMethod.Invoke(null, Array.Empty<object?>());
+                        var actual = (string?)sampleMethod.Invoke(null, []);
                         Assert.AreEqual(expected, actual);
                     }
                     catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
                     {
-                        LogWriteLine($"Logs:\n{string.Join("\n", outputCompilation.GetDiagnostics())}\n");
+                        LogWriteLine($"Logs:\n{string.Join("\n", outputCompilation.GetDiagnostics(CancellationToken))}\n");
                         throw;
                     }
                 }, CancellationToken, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default);
@@ -249,11 +249,9 @@ public class MethodGeneratorTests
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_7",
                 "System.Collections.Generic.IEnumerable<byte>");
-#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER //netframework not support IAsyncEnumerable<>
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_8",
                 "System.Collections.Generic.IAsyncEnumerable<byte>");
-#endif
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_9",
                 "void",
@@ -307,11 +305,9 @@ public class MethodGeneratorTests
             yield return ReturnTypeAndParameterPatternsTest(
                 "3_1+.",
                 "System.Collections.Generic.IEnumerable<byte>");
-#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER //netframework not support IAsyncEnumerable<>
             yield return ReturnTypeAndParameterPatternsTest(
                 "3_2+.",
                 "System.Collections.Generic.IAsyncEnumerable<byte>");
-#endif
             yield return ReturnTypeAndParameterPatternsTest(
                 "4_1+.",
                 "void",
@@ -394,12 +390,11 @@ public class MethodGeneratorTests
                 "1_N",
                 "System.Collections.Generic.IEnumerable<byte>",
                 "string input");
-#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER
+
             yield return ReturnTypeAndParameterPatternsTest(
                 "1_O",
                 "System.Collections.Generic.IAsyncEnumerable<byte>",
                 "string input");
-#endif
             static object?[] ReturnTypeAndParameterPatternsTest(string source, string returnType, string parameters = "", string options = "")
                 => [source, returnType, parameters, options];
         }
@@ -418,7 +413,7 @@ public class MethodGeneratorTests
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             // BF0009 (Hidden) may be reported for unused input parameters; allow Hidden.
@@ -437,101 +432,99 @@ public class MethodGeneratorTests
         get
         {
             // BF0001: GenerateBrainfuckMethod required first parameter.
-            yield return DiagnoticsTest("BF0001", "", "void");
+            yield return DiagnoticsTest(["BF0001"], "", "void");
             // BF0002: not support return type double.
-            yield return DiagnoticsTest("BF0002", "2_1", "double");
+            yield return DiagnoticsTest(["BF0002"], "2_1", "double");
             // BF0003: not support parameter type int.
-            yield return DiagnoticsTest("BF0003", "3_1", "void", "int param1");
+            yield return DiagnoticsTest(["BF0003"], "3_1", "void", "int param1");
             // BF0009: unused input parameter string (source no input)
-            yield return DiagnoticsTest("BF0009", "3_2", "void", "string input");
+            yield return DiagnoticsTest(["BF0009"], "3_2", "void", "string input");
             // BF0009: unused input parameter PipeReader (source no input)
-            yield return DiagnoticsTest("BF0009", "3_3", "void", "System.IO.Pipelines.PipeReader input");
+            yield return DiagnoticsTest(["BF0009"], "3_3", "void", "System.IO.Pipelines.PipeReader input");
             // BF0009: unused input parameter TextReader (source no input)
-            yield return DiagnoticsTest("BF0009", "3_4", "void", "System.IO.TextReader input");
+            yield return DiagnoticsTest(["BF0009"], "3_4", "void", "System.IO.TextReader input");
             // BF0004: duplicate parameter CancellationToken
-            yield return DiagnoticsTest("BF0004", "4_1.", "string", "System.Threading.CancellationToken token1, System.Threading.CancellationToken token2");
+            yield return DiagnoticsTest(["BF0004"], "4_1.", "string", "System.Threading.CancellationToken token1, System.Threading.CancellationToken token2");
             // BF0004: duplicate parameter string
-            yield return DiagnoticsTest("BF0004", "4_2,", "void", "string input1, string input2");
+            yield return DiagnoticsTest(["BF0004"], "4_2,", "void", "string input1, string input2");
             // BF0004: duplicate parameter System.IO.Pipelines.PipeReader
-            yield return DiagnoticsTest("BF0004", "4_3,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.Pipelines.PipeReader input2");
+            yield return DiagnoticsTest(["BF0004"], "4_3,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.Pipelines.PipeReader input2");
             // BF0004: duplicate parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0004", "4_4.", "void", "System.IO.Pipelines.PipeWriter output1, System.IO.Pipelines.PipeWriter output2");
+            yield return DiagnoticsTest(["BF0004"], "4_4.", "void", "System.IO.Pipelines.PipeWriter output1, System.IO.Pipelines.PipeWriter output2");
             // BF0004: duplicate parameter System.IO.TextReader
-            yield return DiagnoticsTest("BF0004", "4_5,", "void", "System.IO.TextReader input1, System.IO.TextReader input2");
+            yield return DiagnoticsTest(["BF0004"], "4_5,", "void", "System.IO.TextReader input1, System.IO.TextReader input2");
             // BF0004: duplicate parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0004", "4_6.", "void", "System.IO.TextWriter output1, System.IO.TextWriter output2");
+            yield return DiagnoticsTest(["BF0004"], "4_6.", "void", "System.IO.TextWriter output1, System.IO.TextWriter output2");
             // BF0005: duplicate parameter System.IO.Pipelines.PipeReader and string
-            yield return DiagnoticsTest("BF0005", "5_1,", "void", "System.IO.Pipelines.PipeReader input1, string input2");
+            yield return DiagnoticsTest(["BF0005"], "5_1,", "void", "System.IO.Pipelines.PipeReader input1, string input2");
             // BF0005: duplicate parameter string and System.IO.Pipelines.PipeReader
-            yield return DiagnoticsTest("BF0005", "5_2,", "void", "string input1, System.IO.Pipelines.PipeReader input2");
+            yield return DiagnoticsTest(["BF0005"], "5_2,", "void", "string input1, System.IO.Pipelines.PipeReader input2");
             // BF0005: duplicate parameter TextReader and string
-            yield return DiagnoticsTest("BF0005", "5_3,", "void", "System.IO.TextReader input1, string input2");
+            yield return DiagnoticsTest(["BF0005"], "5_3,", "void", "System.IO.TextReader input1, string input2");
             // BF0005: duplicate parameter string and TextReader
-            yield return DiagnoticsTest("BF0005", "5_4,", "void", "string input1, System.IO.TextReader input2");
+            yield return DiagnoticsTest(["BF0005"], "5_4,", "void", "string input1, System.IO.TextReader input2");
             // BF0005: duplicate parameter PipeReader and TextReader
-            yield return DiagnoticsTest("BF0005", "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
+            yield return DiagnoticsTest(["BF0005"], "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
             // BF0006: duplicate return string and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_1.", "string", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_1.", "string", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_2.", "System.Threading.Tasks.Task<string>", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_2.", "System.Threading.Tasks.Task<string>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return ValueTask<string> and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_3.", "System.Threading.Tasks.ValueTask<string>", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_3.", "System.Threading.Tasks.ValueTask<string>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_4.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_4.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return string and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_6.", "string", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_6.", "string", "System.IO.TextWriter output");
             // BF0006: duplicate return Task<string> and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_7.", "System.Threading.Tasks.Task<string>", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_7.", "System.Threading.Tasks.Task<string>", "System.IO.TextWriter output");
             // BF0006: duplicate return ValueTask<string> and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_8.", "System.Threading.Tasks.ValueTask<string>", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_8.", "System.Threading.Tasks.ValueTask<string>", "System.IO.TextWriter output");
             // BF0006: duplicate return IEnumerable<byte> and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_9.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.TextWriter output");
-#if NETSTANDARD2_1 || NETCOREAPP3_0_OR_GREATER  //netframework not support IAsyncEnumerable<>
+            yield return DiagnoticsTest(["BF0006"], "6_9.", "System.Collections.Generic.IEnumerable<byte>", "System.IO.TextWriter output");
             // BF0006: duplicate return IAsyncEnumerable<byte> and parameter System.IO.Pipelines.PipeWriter
-            yield return DiagnoticsTest("BF0006", "6_5.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_5.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.Pipelines.PipeWriter output");
             // BF0006: duplicate return IAsyncEnumerable<byte> and parameter System.IO.TextWriter
-            yield return DiagnoticsTest("BF0006", "6_A.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.TextWriter output");
-#endif
+            yield return DiagnoticsTest(["BF0006"], "6_A.", "System.Collections.Generic.IAsyncEnumerable<byte>", "System.IO.TextWriter output");
             // BF0007: no outuput
-            yield return DiagnoticsTest("BF0007", "7_1.", "void");
+            yield return DiagnoticsTest(["BF0007"], "7_1.", "void");
             // BF0007: no outuput
-            yield return DiagnoticsTest("BF0007", "7_2.", "System.Threading.Tasks.Task");
+            yield return DiagnoticsTest(["BF0007"], "7_2.", "System.Threading.Tasks.Task");
             // BF0007: no outuput
-            yield return DiagnoticsTest("BF0007", "7_3.", "System.Threading.Tasks.ValueTask");
+            yield return DiagnoticsTest(["BF0007"], "7_3.", "System.Threading.Tasks.ValueTask");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_1,", "void");
+            yield return DiagnoticsTest(["BF0008"], "8_1,", "void");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_2,", "System.Threading.Tasks.Task");
+            yield return DiagnoticsTest(["BF0008"], "8_2,", "System.Threading.Tasks.Task");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_3,", "System.Threading.Tasks.ValueTask");
+            yield return DiagnoticsTest(["BF0008"], "8_3,", "System.Threading.Tasks.ValueTask");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_4,", "string", options: "#nullable disable");
+            yield return DiagnoticsTest(["BF0008"], "8_4,", "string", options: "#nullable disable");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_5,", "System.Threading.Tasks.Task<string>", options: "#nullable disable");
+            yield return DiagnoticsTest(["BF0008"], "8_5,", "System.Threading.Tasks.Task<string>", options: "#nullable disable");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_6,", "System.Threading.Tasks.ValueTask<string>", options: "#nullable disable");
+            yield return DiagnoticsTest(["BF0008"], "8_6,", "System.Threading.Tasks.ValueTask<string>", options: "#nullable disable");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_7,", "void", "System.IO.Pipelines.PipeWriter output");
+            yield return DiagnoticsTest(["BF0008"], "8_7,", "void", "System.IO.Pipelines.PipeWriter output");
             // BF0008: no input
-            yield return DiagnoticsTest("BF0008", "8_8,", "void", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0008"], "8_8,", "void", "System.IO.TextWriter output");
             // BF0007: required output interface missing
-            yield return DiagnoticsTest("BF0007", "1+.", "void");
+            yield return DiagnoticsTest(["BF0007"], "1+.", "void");
             // BF0008: required input interface missing
-            yield return DiagnoticsTest("BF0008", "1,", "void");
+            yield return DiagnoticsTest(["BF0008"], "1,", "void");
             // BF0005: duplicate parameter PipeReader and TextReader
-            yield return DiagnoticsTest("BF0005", "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
+            yield return DiagnoticsTest(["BF0005"], "5_5,", "void", "System.IO.Pipelines.PipeReader input1, System.IO.TextReader input2");
             // BF0006: duplicate return string and parameter TextWriter
-            yield return DiagnoticsTest("BF0006", "6_6.", "string", "System.IO.TextWriter output");
+            yield return DiagnoticsTest(["BF0006"], "6_6.", "string", "System.IO.TextWriter output");
             // BF0003: Invalid parameter (e.g., int - unsupported)
-            yield return DiagnoticsTest("BF0003", "1+", "void", "int invalidParam");
-            static object?[] DiagnoticsTest(string expected, string source, string returnType, string parameters = "", string options = "", int sourceCount = 3)
+            yield return DiagnoticsTest(["BF0003"], "1+", "void", "int invalidParam");
+            static object?[] DiagnoticsTest(string[] expected, string source, string returnType, string parameters = "", string options = "", int sourceCount = 3)
                 => [expected, source, returnType, parameters, options, sourceCount];
         }
     }
     [TestMethod]
     [DynamicData(nameof(DiagnoticsTestData))]
     [Timeout(50000, CooperativeCancellation = true)]
-    public void DiagnoticsTest(string expected, string source, string returnType, string parameters, string options, int sourceCount)
+    public void DiagnoticsTest(string[] expected, string source, string returnType, string parameters, string options, int sourceCount)
     {
         source = $$"""
         using Esolang.Brainfuck;
@@ -543,11 +536,11 @@ public class MethodGeneratorTests
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
-            Assert.IsFalse(diagnostics.IsEmpty, $"diagnostics is empty required {expected}");
-            CollectionAssert.AreEqual(new[] { expected }, diagnostics.Select(v => v.Id).ToArray());
+            Assert.IsNotEmpty(diagnostics, $"diagnostics is empty required {string.Join(", ", expected)}");
+            CollectionAssert.AreEqual(expected, diagnostics.Select(v => v.Id).ToArray());
             Assert.HasCount(sourceCount, outputCompilation.SyntaxTrees);
         }
         catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
@@ -624,7 +617,7 @@ public class MethodGeneratorTests
             yield return ModuleSignatureTest("partial class TestClass: System.Collections.Generic.List<(string Value1, int Value2)>");
 
             static object?[] ModuleSignatureTest(string signature)
-                => new object?[] { signature };
+                => [signature];
         }
     }
     [TestMethod]
@@ -640,12 +633,12 @@ public class MethodGeneratorTests
             public static partial void SampleMethod();
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
         }
         catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
         {
@@ -666,12 +659,12 @@ public class MethodGeneratorTests
             public static partial string SampleMethod(string input);
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
         }
         catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
         {
@@ -694,12 +687,12 @@ public class MethodGeneratorTests
             public static partial string SampleMethod(string input);
         }
         """";
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
         }
         catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
         {
@@ -725,12 +718,12 @@ public class MethodGeneratorTests
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
 
             var generatedTrees = outputCompilation.SyntaxTrees
                 .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
@@ -752,7 +745,7 @@ public class MethodGeneratorTests
     }
 
     [TestMethod]
-    [Timeout(10000)]  // 10 second timeout to detect hangs
+    [Timeout(10000, CooperativeCancellation = true)]  // 10 second timeout to detect hangs
     public async Task OutputlessReturnPatternsTest()
     {
         var source = $$"""
@@ -790,7 +783,7 @@ public class MethodGeneratorTests
             public static partial void UnusedPipeReaderInputMethod(PipeReader input);
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             // BF0009 (Hidden) may be reported; allow Hidden diagnostics.
@@ -798,19 +791,19 @@ public class MethodGeneratorTests
             // OutputSource(outputCompilation.SyntaxTrees);  // Temporarily disabled for debugging
             AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
 
-            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
+            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationToken);
             using (context)
             {
                 var testClassType = assembly.GetType("TestProject.TestClass");
                 Assert.IsNotNull(testClassType);
 
                 TestContext.WriteLine("=== StringMethod ===");
-                Assert.IsNull(testClassType.GetMethod("StringMethod")!.Invoke(null, Array.Empty<object?>()));
+                Assert.IsNull(testClassType.GetMethod("StringMethod")!.Invoke(null, []));
 
                 TestContext.WriteLine("=== ValueTaskStringMethod ===");
                 var valueTaskMethod = testClassType.GetMethod("ValueTaskStringMethod");
                 Assert.IsNotNull(valueTaskMethod, "ValueTaskStringMethod not found in assembly");
-                var valueTaskResult = valueTaskMethod.Invoke(null, Array.Empty<object?>());
+                var valueTaskResult = valueTaskMethod.Invoke(null, []);
                 TestContext.WriteLine($"ValueTaskStringMethod result: {valueTaskResult?.GetType().Name} = {valueTaskResult}");
                 Assert.IsNotNull(valueTaskResult, "ValueTaskStringMethod Invoke returned null");
                 TestContext.WriteLine("About to await ValueTask...");
@@ -874,12 +867,12 @@ public class MethodGeneratorTests
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNoErrors(diagnostics, outputCompilation);
             Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(), outputCompilation);
+            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
 
             var generatedTree = outputCompilation.SyntaxTrees
                 .Single(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal));
@@ -913,25 +906,25 @@ public class MethodGeneratorTests
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationTokenSource.Token);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
         try
         {
             AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
             AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
 
-            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationTokenSource.Token);
+            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationToken);
             using (context)
             {
                 var testClassType = assembly.GetType("TestProject.TestClass");
                 Assert.IsNotNull(testClassType);
 
-                var intResult = (int?)testClassType!.GetMethod("IntMethod")!.Invoke(null, Array.Empty<object?>());
+                var intResult = (int?)testClassType!.GetMethod("IntMethod")!.Invoke(null, []);
                 Assert.AreEqual(0, intResult);
 
-                var taskInt = (Task<int>)testClassType.GetMethod("TaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
+                var taskInt = (Task<int>)testClassType.GetMethod("TaskIntMethod")!.Invoke(null, [])!;
                 Assert.AreEqual(0, await taskInt);
 
-                var valueTaskInt = (ValueTask<int>)testClassType.GetMethod("ValueTaskIntMethod")!.Invoke(null, Array.Empty<object?>())!;
+                var valueTaskInt = (ValueTask<int>)testClassType.GetMethod("ValueTaskIntMethod")!.Invoke(null, [])!;
                 Assert.AreEqual(0, await valueTaskInt);
             }
         }
@@ -1083,5 +1076,21 @@ public class MethodGeneratorTests
             LogDiagnostics(diagnostics, outputCompilation);
             throw;
         }
+    }
+
+    [TestMethod]
+    public void NonPartialMethod_ReportsError()
+    {
+        var source = """
+            using Esolang.Brainfuck;
+            namespace TestProject;
+            public class TestClass
+            {
+                [GenerateBrainfuckMethod("+")]
+                public static void SampleMethod() {}
+            }
+            """;
+        RunGeneratorsAndUpdateCompilation(source, out _, out var diagnostics, cancellationToken: CancellationToken);
+        Assert.Contains(d => d.Id == "BF0011", diagnostics, "Expected BF0011 diagnostic");
     }
 }

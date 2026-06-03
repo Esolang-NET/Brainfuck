@@ -1,21 +1,26 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-
 namespace Esolang.Brainfuck.Interpreter.Tests;
 
 [TestClass]
 public class ProgramTests
 {
-    [TestMethod]
-    public async Task RunAsync_ParseCommand_ReturnsZero()
+    static int Run(string[] args)
     {
-        var exitCode = await Program.RunAsync(["parse", "++"]);
-        Assert.AreEqual(0, exitCode);
+        var entryPoint = typeof(Program).Assembly.EntryPoint!;
+        Assert.IsNotNull(entryPoint);
+        object?[] parmaeters = [args];
+        var result = entryPoint.Invoke(null, parmaeters) as int?;
+        Assert.IsNotNull(result);
+        return result.Value;
     }
+    [TestMethod]
+    public void RunAsync_ParseCommand_ReturnsZero() => Assert.AreEqual(0, Run(["parse", "++"]));
 
     [TestMethod]
-    public async Task RunAsync_DefaultCommand_ReturnsZero()
-    {
-        var exitCode = await Program.RunAsync(["++++"]);
-        Assert.AreEqual(0, exitCode);
-    }
+    public void RunAsync_DefaultCommand_ReturnsZero() => Assert.AreEqual(0, Run(["+++"]));
+
+    [TestMethod]
+    public void RunAsync_EmptyArgs_ReturnOne() => Assert.AreEqual(1, Run([]));
+
+    [TestMethod]
+    public void RunAsync_Help_ReturnZero() => Assert.AreEqual(0, Run(["--help"]));
 }

@@ -32,14 +32,13 @@ Console.WriteLine(result);
 | `>` (pointer increment) | Moves right and grows tape with a new `0` cell when needed. |
 | `<` (pointer decrement) | At index `0`, it becomes a no-op. |
 | `[` and `]` | Standard loop jump when matching bracket exists; if not found, the command advances as no-op. |
-| Input | Reads one byte from `System.IO.Pipelines.PipeReader` into current cell. |
-| Output | Writes one byte from current cell to `System.IO.Pipelines.PipeWriter`. |
+| Input | Requests one byte via `InputCharEvent`. |
+| Output | Emits one byte via `OutputCharEvent`. |
 
 ## Advanced API
 
-- `Run` / `RunAsync`: execute and return `BrainfuckContext`.
-- `RunAndOutputString` / `RunAndOutputStringAsync`: execute and collect UTF-8 output.
-- `StepCommands`: iterate command-by-command execution.
+- `RunAsyncEnumerable`: Asynchronous stream of I/O events.
+- `RunAndOutputStringAsync`: High-level helper to execute and collect UTF-8 output.
 
 ## See also
 

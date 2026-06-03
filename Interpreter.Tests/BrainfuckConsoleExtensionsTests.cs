@@ -1,5 +1,3 @@
-using Esolang.Brainfuck.Interpreter;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.CommandLine;
 
 namespace Esolang.Brainfuck.Interpreter.Tests;
@@ -89,7 +87,7 @@ public class BrainfuckConsoleExtensionsTests
 
         root.AddDefaultCommand(binder);
 
-        Assert.IsTrue(root.Arguments.Any(v => v.Name == "source"));
+        Assert.Contains(v => v.Name == "source", root.Arguments);
     }
 
     [TestMethod]
@@ -100,12 +98,12 @@ public class BrainfuckConsoleExtensionsTests
 
         root.AddParseCommand(binder);
 
-        Assert.IsTrue(root.Subcommands.Any(v => v.Name == "parse"));
+        Assert.Contains(v => v.Name == "parse", root.Subcommands);
     }
 
     static void AssertCanParse(Command root, string[] args)
     {
         var parsed = root.Parse(args);
-        Assert.AreEqual(0, parsed.Errors.Count, $"Expected successful parse for args: {string.Join(" ", args)}");
+        Assert.IsEmpty(parsed.Errors, $"Expected successful parse for args: {string.Join(" ", args)}");
     }
 }

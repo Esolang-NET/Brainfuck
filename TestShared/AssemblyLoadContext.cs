@@ -1,23 +1,23 @@
 
-#if NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER
-using System.Runtime.Loader;
+#if NET
+// using System.Runtime.Loader;
 #else
 using System.Reflection;
 #endif
 
 namespace TestShared;
 
-internal class AssemblyLoadContext
+class AssemblyLoadContext
     :
 
-#if NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER
+#if NET
     System.Runtime.Loader.AssemblyLoadContext,
 #endif
     IDisposable
 {
-#if !(NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER)
+#if !NET
     const string DOMAIN_NAME = "test domain";
-    private AppDomain _domain;
+    AppDomain _domain;
 #endif
 
     public AssemblyLoadContext()
@@ -26,11 +26,11 @@ internal class AssemblyLoadContext
 #endif
 #pragma warning disable IDE0021 // Use expression body for constructors
     {
-#if !(NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER)
+#if !NET
         _domain = AppDomain.CreateDomain(DOMAIN_NAME);
 #endif
     }
-#if !(NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER)
+#if !NET
     public Assembly LoadFromAssemblyPath(string assemblyFile) => Assembly.LoadFrom(assemblyFile);
     public Assembly LoadFromStream(Stream assembly, Stream? pdbStream = null)
     {
@@ -82,7 +82,7 @@ internal class AssemblyLoadContext
     public void Dispose()
 #pragma warning disable IDE0022 // Use expression body for methods
     {
-#if NETCOREAPP1_0_OR_GREATER || NET5_0_OR_GREATER
+#if NET
         Unload();
 #else
         if (_domain is null) return;

@@ -3,9 +3,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>14</LangVersion>
-    <AssemblyVersion>1.1.3.107</AssemblyVersion>
-    <FileVersion>1.1.3.107</FileVersion>
-    <Version>1.1.3</Version>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <FileVersion>2.0.0.108</FileVersion>
+    <Version>2.0.0</Version>
     <PackageProjectUrl>https://github.com/Esolang-NET/Brainfuck/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Esolang-NET/Brainfuck.git</RepositoryUrl>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -16,6 +16,7 @@
     <NoWarn>$(NoWarn);NETSDK1213;CS9057</NoWarn>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>True</IncludeSymbols>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'!='DEBUG'">
@@ -45,7 +46,10 @@
 
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests')) == 'True'">
     <TestResultsFolderPath>$(MSBuildProjectDirectory)\TestResults</TestResultsFolderPath>
-    <NoWarn>$(NoWarn);RS1035</NoWarn>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <IsPublishable>false</IsPublishable>
+    <NoWarn>$(NoWarn);RS1035;CS1591</NoWarn>
     <OutputType>Exe</OutputType>
     <EnableMSTestRunner>true</EnableMSTestRunner>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>

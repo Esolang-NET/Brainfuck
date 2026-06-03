@@ -19,30 +19,86 @@ env:
   DOTNET_VERSION: '10.0.x'
 
 jobs:
+  build-aot:
+    name: build-aot-${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: macos-latest
+            rid: osx-x64
+          - os: macos-latest
+            rid: osx-arm64
+          - os: ubuntu-latest
+            rid: any
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux' && matrix.rid != 'any'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang zlib1g-dev
+
+      - name: Pack
+        run: |
+          dotnet pack Interpreter/Esolang.Brainfuck.Interpreter.csproj -r ${{ matrix.rid }} -c Release -o artifacts/
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: nupkg-${{ matrix.rid }}
+          path: artifacts/*
+
   publish:
     name: publish-packages-and-release
+    needs: build-aot
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref }}
           fetch-depth: 0
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Download AOT Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/aot
+          pattern: 'nupkg-*'
+          merge-multiple: true
+
       - name: Restore
         run: dotnet restore
+
       - name: Build
         run: dotnet build --configuration Release --no-restore
+
       - name: Test
         run: dotnet test --configuration Release --no-build --verbosity normal
-      - name: Pack
+
+      - name: Pack Libraries
         run: |
           dotnet pack Generator/Esolang.Brainfuck.Generator.csproj -c Release -o artifacts/nuget
           dotnet pack Parser/Esolang.Brainfuck.Parser.csproj -c Release -o artifacts/nuget
           dotnet pack Processor/Esolang.Brainfuck.Processor.csproj -c Release -o artifacts/nuget
-          dotnet pack Interpreter/Esolang.Brainfuck.Interpreter.csproj -c Release -o artifacts/nuget
+
       - name: Publish to NuGet.org
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
@@ -54,23 +110,17 @@ jobs:
             exit 1
           fi
           shopt -s nullglob
-          for pkg in artifacts/nuget/*.nupkg; do
+          # AOT packages + Libs
+          for pkg in artifacts/aot/*.nupkg artifacts/nuget/*.nupkg; do
             case "$pkg" in
-              *.snupkg)
-                continue
-                ;;
+              *.snupkg) continue ;;
             esac
-            dotnet nuget push "$pkg" \
-              --api-key "$NUGET_API_KEY" \
-              --source https://api.nuget.org/v3/index.json \
-              --skip-duplicate
+            dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
           done
-          for symbol_pkg in artifacts/nuget/*.snupkg; do
-            dotnet nuget push "$symbol_pkg" \
-              --api-key "$NUGET_API_KEY" \
-              --source https://api.nuget.org/v3/index.json \
-              --skip-duplicate
+          for symbol_pkg in artifacts/aot/*.snupkg artifacts/nuget/*.snupkg; do
+            dotnet nuget push "$symbol_pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
           done
+
       - name: Publish to GitHub Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,17 +128,13 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
-          for pkg in artifacts/nuget/*.nupkg; do
+          for pkg in artifacts/aot/*.nupkg artifacts/nuget/*.nupkg; do
             case "$pkg" in
-              *.snupkg)
-                continue
-                ;;
+              *.snupkg) continue ;;
             esac
-            dotnet nuget push "$pkg" \
-              --api-key "$GITHUB_TOKEN" \
-              --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
-              --skip-duplicate
+            dotnet nuget push "$pkg" --api-key "$GITHUB_TOKEN" --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --skip-duplicate
           done
+
       - name: Create GitHub Release and Upload Assets
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,18 +143,38 @@ jobs:
           set -euo pipefail
           tag="${{ github.event.inputs.tag || github.ref_name }}"
           shopt -s nullglob
-          assets=(artifacts/nuget/*.nupkg artifacts/nuget/*.snupkg)
+          
+          # Collect all assets
+          lib_assets=(artifacts/nuget/*.nupkg artifacts/nuget/*.snupkg)
+          
+          # Separate AOT assets
+          aot_all=(artifacts/aot/*.nupkg artifacts/aot/*.snupkg)
+          aot_others=()
+          aot_any=()
+          for f in "${aot_all[@]}"; do
+            if [[ "$f" == *".any."* ]]; then
+              aot_any+=("$f")
+            else
+              aot_others+=("$f")
+            fi
+          done
+          
+          # Final Order: 
+          # 1. Native RID-specific AOT packages
+          # 2. Library packages (Generator, Parser, Processor)
+          # 3. any (portable) Interpreter package
+          upload_files=("${aot_others[@]}" "${lib_assets[@]}" "${aot_any[@]}")
+          
           prerelease_flag=""
           if [[ "$tag" == *-* ]]; then
             prerelease_flag="--prerelease"
           fi
+          
           if gh release view "$tag" >/dev/null 2>&1; then
-            if [ ${#assets[@]} -gt 0 ]; then
-              gh release upload "$tag" "${assets[@]}" --clobber
-            fi
+            gh release upload "$tag" "${upload_files[@]}" --clobber
           else
             gh release create "$tag" \
-              "${assets[@]}" \
+              "${upload_files[@]}" \
               --title "$tag" \
               --generate-notes \
               $prerelease_flag
