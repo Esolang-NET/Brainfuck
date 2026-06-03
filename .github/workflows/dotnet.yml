@@ -75,18 +75,20 @@ jobs:
           --add-source .artifacts/tool-e2e \
           --version "$tool_version"
 
-        # On Windows, the executable has .exe extension
-        exe_path="./.artifacts/tool-e2e/path/dotnet-brainfuck"
-        if [ -f "$exe_path.exe" ]; then
-          exe_path="$exe_path.exe"
+        # On Windows, the executable has .exe extension and path needs adjustment for bash
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          exe_path="./.artifacts/tool-e2e/path/dotnet-brainfuck.exe"
+        else
+          exe_path="./.artifacts/tool-e2e/path/dotnet-brainfuck"
         fi
 
-        $exe_path --help
-        output1=$($exe_path "++++++[>++++++++<-]++++++++++[>.+<-]")
+        chmod +x "$exe_path" 2>/dev/null || true
+        "$exe_path" --help
+        output1=$("$exe_path" "++++++[>++++++++<-]++++++++++[>.+<-]")
         echo "$output1"
         test "$output1" = "0123456789"
 
-        output2=$($exe_path parse "++>--")
+        output2=$("$exe_path" parse "++>--")
         echo "$output2"
         echo "$output2" | grep -q "IncrementCurrent"
         echo "$output2" | grep -q "IncrementPointer"
