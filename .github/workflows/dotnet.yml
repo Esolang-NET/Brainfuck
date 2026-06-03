@@ -75,24 +75,20 @@ jobs:
           --add-source .artifacts/tool-e2e \
           --version "$tool_version"
 
-        # Add the tool directory to the PATH and execute by name
-        TOOL_PATH=$(realpath .artifacts/tool-e2e/path)
-        export PATH="$TOOL_PATH:$PATH"
-
+        # Use dotnet tool run to execute the tool reliably across all OSs
+        # Note: When using --tool-path, we need to call the binary directly, 
+        # but on Windows bash, we'll use a more direct approach that works with the shim.
+        TOOL_EXE=".artifacts/tool-e2e/path/dotnet-brainfuck"
         if [ "${{ runner.os }}" = "Windows" ]; then
-          exe_name="dotnet-brainfuck.exe"
-        else
-          exe_name="dotnet-brainfuck"
+          TOOL_EXE="${TOOL_EXE}.exe"
         fi
 
-        chmod +x "$TOOL_PATH/$exe_name" 2>/dev/null || true
-        
-        dotnet-brainfuck --help
-        output1=$(dotnet-brainfuck "++++++[>++++++++<-]++++++++++[>.+<-]")
+        "$TOOL_EXE" --help
+        output1=$("$TOOL_EXE" "++++++[>++++++++<-]++++++++++[>.+<-]")
         echo "$output1"
         test "$output1" = "0123456789"
 
-        output2=$(dotnet-brainfuck parse "++>--")
+        output2=$("$TOOL_EXE" parse "++>--")
         echo "$output2"
         echo "$output2" | grep -q "IncrementCurrent"
         echo "$output2" | grep -q "IncrementPointer"
