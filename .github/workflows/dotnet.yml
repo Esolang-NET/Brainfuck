@@ -60,13 +60,13 @@ jobs:
 
         dotnet pack Interpreter/Esolang.Brainfuck.Interpreter.csproj -r "$rid" -p:ToolPackageRuntimeIdentifiers= -o .artifacts/tool-e2e
 
-        nupkg_path=$(find .artifacts/tool-e2e -maxdepth 1 -type f -name "dotnet-brainfuck.$rid.*.nupkg" | head -n 1)
+        nupkg_path=$(find .artifacts/tool-e2e -maxdepth 1 -type f -name "dotnet-brainfuck.*.nupkg" ! -name "*.snupkg" | head -n 1)
         if [ -z "$nupkg_path" ]; then
-          echo "Failed to find dotnet-brainfuck $rid nupkg in .artifacts/tool-e2e"
+          echo "Failed to find dotnet-brainfuck nupkg in .artifacts/tool-e2e"
           exit 1
         fi
         nupkg_name=$(basename "$nupkg_path")
-        tool_version=${nupkg_name#dotnet-brainfuck."$rid".}
+        tool_version=${nupkg_name#dotnet-brainfuck.}
         tool_version=${tool_version%.nupkg}
         echo "Detected tool version: $tool_version"
 
