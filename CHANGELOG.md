@@ -6,7 +6,15 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
-## [2.0.0] - 2026-06-03
+## [2.0.1] - 2026-06-04
+
+### Changed
+
+- `Esolang.Brainfuck.Processor`: Removed `System.IO.Pipelines` package reference (no longer required after event-based I/O migration).
+- `Esolang.Brainfuck.Processor`: Removed `Microsoft.Bcl.AsyncInterfaces` package reference from `netstandard2.0` target (no longer required).
+- `Esolang.Brainfuck.Processor`: Scoped `System.Collections.Immutable` package reference to `netstandard2.0` and `netstandard2.1` targets only (not needed for .NET 5+).
+
+## [2.0.0]- 2026-06-03
 
 ### Added
 - `Esolang.Brainfuck.Generator`: Added BF0011 diagnostic for enforcing partial method declaration.
@@ -122,7 +130,8 @@ The format is based on Keep a Changelog.
 - Parser: README output text typo corrections.
 - Processor: README sample updated to use `BrainfuckProcessor`.
 
-[Unreleased]: https://github.com/Esolang-NET/Brainfuck/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/Esolang-NET/Brainfuck/compare/v2.0.1...HEAD
+[2.0.1]: https://github.com/Esolang-NET/Brainfuck/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Esolang-NET/Brainfuck/tree/v2.0.0
 [1.1.3]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.3
 [1.1.2]: https://github.com/Esolang-NET/Brainfuck/tree/v1.1.2
