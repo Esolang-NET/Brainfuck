@@ -95,9 +95,10 @@ jobs:
 
       - name: Pack Libraries
         run: |
-          dotnet pack Generator/Esolang.Brainfuck.Generator.csproj -c Release -o artifacts/nuget
-          dotnet pack Parser/Esolang.Brainfuck.Parser.csproj -c Release -o artifacts/nuget
-          dotnet pack Processor/Esolang.Brainfuck.Processor.csproj -c Release -o artifacts/nuget
+          dotnet pack Interpreter/Esolang.Brainfuck.Interpreter.csproj -c Release -o artifacts/aot --no-build -p:ToolPackageRuntimeIdentifiers=""
+          dotnet pack Generator/Esolang.Brainfuck.Generator.csproj -c Release -o artifacts/nuget --no-build
+          dotnet pack Parser/Esolang.Brainfuck.Parser.csproj -c Release -o artifacts/nuget --no-build
+          dotnet pack Processor/Esolang.Brainfuck.Processor.csproj -c Release -o artifacts/nuget --no-build
 
       - name: Publish to NuGet.org
         env:
@@ -122,23 +123,20 @@ jobs:
           for pkg in artifacts/nuget/*.nupkg; do
             push_pair "$pkg"
           done
-          # 1. RID-specific AOT packages (win-x64, linux-x64, osx-*, etc.)
+          # 2. RID-specific AOT packages (win-x64, linux-x64, osx-*, etc.)
           for pkg in artifacts/aot/*.nupkg; do
             [[ "$pkg" =~ \.(win|linux|osx|freebsd|android|ios)- ]] || continue
             push_pair "$pkg"
           done
-          # 2. any/portable package
+          # 3. any/portable package
           for pkg in artifacts/aot/*.nupkg; do
             [[ "$pkg" == *".any."* ]] || continue
             push_pair "$pkg"
           done
-          # 3. no-RID meta package + lib packages (Generator, Parser, Processor)
+          # 4. no-RID meta package
           for pkg in artifacts/aot/*.nupkg; do
             [[ "$pkg" =~ \.(win|linux|osx|freebsd|android|ios)- ]] && continue
             [[ "$pkg" == *".any."* ]] && continue
-            push_pair "$pkg"
-          done
-          for pkg in artifacts/nuget/*.nupkg; do
             push_pair "$pkg"
           done
 
@@ -164,10 +162,10 @@ jobs:
           set -euo pipefail
           tag="${{ github.event.inputs.tag || github.ref_name }}"
           shopt -s nullglob
-          
+
           # Collect all assets
           lib_assets=(artifacts/nuget/*.nupkg artifacts/nuget/*.snupkg)
-          
+
           # Separate AOT assets
           aot_all=(artifacts/aot/*.nupkg artifacts/aot/*.snupkg)
           aot_others=()
@@ -179,18 +177,18 @@ jobs:
               aot_others+=("$f")
             fi
           done
-          
-          # Final Order: 
+
+          # Final Order:
           # 1. Native RID-specific AOT packages
           # 2. Library packages (Generator, Parser, Processor)
           # 3. any (portable) Interpreter package
           upload_files=("${aot_others[@]}" "${lib_assets[@]}" "${aot_any[@]}")
-          
+
           prerelease_flag=""
           if [[ "$tag" == *-* ]]; then
             prerelease_flag="--prerelease"
           fi
-          
+
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${upload_files[@]}" --clobber
           else
