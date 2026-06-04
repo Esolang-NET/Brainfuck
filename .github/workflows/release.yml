@@ -113,7 +113,7 @@ jobs:
           shopt -s nullglob
           push_nupkg() {
             local pkg="$1"
-            dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+            dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate --no-symbols
           }
           push_snupkg() {
             local pkg="$1"
