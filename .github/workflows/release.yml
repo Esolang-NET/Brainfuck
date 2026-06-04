@@ -95,9 +95,10 @@ jobs:
 
       - name: Pack Libraries
         run: |
-          dotnet pack Generator/Esolang.Brainfuck.Generator.csproj -c Release -o artifacts/nuget
-          dotnet pack Parser/Esolang.Brainfuck.Parser.csproj -c Release -o artifacts/nuget
-          dotnet pack Processor/Esolang.Brainfuck.Processor.csproj -c Release -o artifacts/nuget
+          dotnet pack Interpreter/Esolang.Brainfuck.Interpreter.csproj -c Release -o artifacts/aot --no-build -p:ToolPackageRuntimeIdentifiers=""
+          dotnet pack Generator/Esolang.Brainfuck.Generator.csproj -c Release -o artifacts/nuget --no-build
+          dotnet pack Parser/Esolang.Brainfuck.Parser.csproj -c Release -o artifacts/nuget --no-build
+          dotnet pack Processor/Esolang.Brainfuck.Processor.csproj -c Release -o artifacts/nuget --no-build
 
       - name: Publish to NuGet.org
         env:
@@ -110,15 +111,46 @@ jobs:
             exit 1
           fi
           shopt -s nullglob
-          # AOT packages + Libs
-          for pkg in artifacts/aot/*.nupkg artifacts/nuget/*.nupkg; do
-            case "$pkg" in
-              *.snupkg) continue ;;
-            esac
+          push_nupkg() {
+            local pkg="$1"
             dotnet nuget push "$pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          }
+          push_snupkg() {
+            local pkg="$1"
+            local snupkg="${pkg%.nupkg}.snupkg"
+            if [ -f "$snupkg" ]; then
+              dotnet nuget push "$snupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+            fi
+          }
+          # Collect nupkg files in order:
+          # 1. RID-specific AOT packages (win-x64, linux-x64, osx-*, etc.)
+          # 2. any/portable package
+          # 3. no-RID meta package (the main dotnet-brainfuck tool entry point)
+          # 4. Library packages (Generator, Parser, Processor)
+          ordered_nupkgs=()
+          for pkg in artifacts/aot/*.nupkg; do
+            [[ "$pkg" =~ \.(win|linux|osx|freebsd|android|ios)- ]] || continue
+            ordered_nupkgs+=("$pkg")
           done
-          for symbol_pkg in artifacts/aot/*.snupkg artifacts/nuget/*.snupkg; do
-            dotnet nuget push "$symbol_pkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
+          for pkg in artifacts/aot/*.nupkg; do
+            [[ "$pkg" == *".any."* ]] || continue
+            ordered_nupkgs+=("$pkg")
+          done
+          for pkg in artifacts/aot/*.nupkg; do
+            [[ "$pkg" =~ \.(win|linux|osx|freebsd|android|ios)- ]] && continue
+            [[ "$pkg" == *".any."* ]] && continue
+            ordered_nupkgs+=("$pkg")
+          done
+          for pkg in artifacts/nuget/*.nupkg; do
+            ordered_nupkgs+=("$pkg")
+          done
+          # Upload all nupkg files first
+          for pkg in "${ordered_nupkgs[@]}"; do
+            push_nupkg "$pkg"
+          done
+          # Then upload all snupkg files
+          for pkg in "${ordered_nupkgs[@]}"; do
+            push_snupkg "$pkg"
           done
 
       - name: Publish to GitHub Packages
@@ -143,11 +175,9 @@ jobs:
           set -euo pipefail
           tag="${{ github.event.inputs.tag || github.ref_name }}"
           shopt -s nullglob
-          
-          # Collect all assets
+
           lib_assets=(artifacts/nuget/*.nupkg artifacts/nuget/*.snupkg)
-          
-          # Separate AOT assets
+
           aot_all=(artifacts/aot/*.nupkg artifacts/aot/*.snupkg)
           aot_others=()
           aot_any=()
@@ -158,18 +188,15 @@ jobs:
               aot_others+=("$f")
             fi
           done
-          
-          # Final Order: 
-          # 1. Native RID-specific AOT packages
-          # 2. Library packages (Generator, Parser, Processor)
-          # 3. any (portable) Interpreter package
+
+          # Order: native RID packages → library packages → any/portable package
           upload_files=("${aot_others[@]}" "${lib_assets[@]}" "${aot_any[@]}")
-          
+
           prerelease_flag=""
           if [[ "$tag" == *-* ]]; then
             prerelease_flag="--prerelease"
           fi
-          
+
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "${upload_files[@]}" --clobber
           else

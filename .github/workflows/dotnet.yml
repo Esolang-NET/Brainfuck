@@ -94,6 +94,7 @@ jobs:
         dotnet pack Parser/Esolang.Brainfuck.Parser.csproj -o artifacts/
         dotnet pack Processor/Esolang.Brainfuck.Processor.csproj -o artifacts/
         dotnet pack Interpreter/Esolang.Brainfuck.Interpreter.csproj -p:ToolPackageRuntimeIdentifiers= -o artifacts/
+        dotnet pack Interpreter/Esolang.Brainfuck.Interpreter.csproj -p:PublishAot=false -p:ToolPackageRuntimeIdentifiers="" -o artifacts/
       
     - uses: actions/upload-artifact@v7
       if: ${{ matrix.os == 'ubuntu-latest' }}
