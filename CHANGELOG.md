@@ -6,6 +6,10 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Fixed
+
+- CI: Added `--no-symbols` flag to `push_nupkg` step in the release workflow to prevent automatic `.snupkg` uploads for RID-specific (NativeAOT) packages, which do not have valid symbol packages. Symbol packages for `any`/portable and library packages are still pushed explicitly via the dedicated `push_snupkg` step.
+
 ## [2.0.1] - 2026-06-04
 
 ### Changed
