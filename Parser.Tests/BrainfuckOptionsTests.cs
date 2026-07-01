@@ -1,11 +1,10 @@
 ﻿using MockBrainfuckOptions = TestShared.BrainfuckOptions;
 namespace Esolang.Brainfuck.Tests;
 
-[TestClass]
 public class BrainfuckOptionsTests
 {
-    [TestMethod]
-    public void BrainfuckOptionsTest_IBrainfuckOptions()
+    [Test]
+    public async Task BrainfuckOptionsTest_IBrainfuckOptions()
     {
         BrainfuckOptions expected = new()
         {
@@ -30,10 +29,10 @@ public class BrainfuckOptionsTests
             End = "😆",
         };
         BrainfuckOptions actual = new(mock);
-        Assert.AreEqual(expected, actual);
+        await Assert.That(actual).IsEqualTo(expected);
     }
-    [TestMethod]
-    public void IBrainfuckOptions_Equals()
+    [Test]
+    public async Task IBrainfuckOptions_Equals()
     {
 
         BrainfuckOptions expected = new()
@@ -58,8 +57,9 @@ public class BrainfuckOptionsTests
             Begin = "😅",
             End = "😆",
         };
-        Assert.IsFalse(((IEquatable<IBrainfuckOptions?>)expected).Equals(null));
-        Assert.IsTrue(((IEquatable<IBrainfuckOptions>)expected).Equals(mock));
+        await Assert.That<IEquatable<IBrainfuckOptions>>(expected)
+            .HasProperty(v => v.Equals(null!), false)
+            .And.HasProperty(v => v.Equals(expected), true);
     }
 
 }

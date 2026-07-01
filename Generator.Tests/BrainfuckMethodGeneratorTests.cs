@@ -6,19 +6,19 @@ using System.Collections.Immutable;
 using System.IO.Pipelines;
 using System.Reflection;
 using System.Text;
+using TUnit.Assertions.Enums;
+using TUnit.Assertions.Exceptions;
 
 namespace Esolang.Brainfuck.Generator.Tests;
 
-[TestClass]
 public class MethodGeneratorTests
 {
     readonly TestContext TestContext;
-    CancellationToken CancellationToken => TestContext.CancellationToken;
     readonly Compilation baseCompilation;
 
-    public MethodGeneratorTests(TestContext TestContext)
+    public MethodGeneratorTests()
     {
-        this.TestContext = TestContext;
+        TestContext = TestContext.Current!;
         // running .NET Core system assemblies dir path
 
         IEnumerable<PortableExecutableReference> references;
@@ -84,16 +84,16 @@ public class MethodGeneratorTests
         // Run the generator
         return driver.RunGeneratorsAndUpdateCompilation(compilation, out outputCompilation, out diagnostics, cancellationToken);
     }
-    void LogWriteLine(string message) => TestContext.WriteLine(message);
+    void LogWriteLine(string message) => TestContext.OutputWriter.WriteLine(message);
 
-    (TestShared.AssemblyLoadContext Context, Assembly Assembly) Emit(Compilation compilation, TestShared.AssemblyLoadContext? context = null, CancellationToken cancellationToken = default)
+    async Task<(TestShared.AssemblyLoadContext Context, Assembly Assembly)> Emit(Compilation compilation, TestShared.AssemblyLoadContext? context = null, CancellationToken cancellationToken = default)
     {
         using var stream = new MemoryStream();
         using var pdbStream = new MemoryStream();
         var emitResult = compilation.Emit(stream, pdbStream: pdbStream, cancellationToken: cancellationToken);
         if (!emitResult.Success)
-            AssertNoErrors(emitResult.Diagnostics, compilation);
-        Assert.IsTrue(emitResult.Success);
+            await AssertNoErrors(emitResult.Diagnostics, compilation, cancellationToken);
+        await Assert.That(emitResult.Success).IsTrue();
         stream.Seek(0, SeekOrigin.Begin);
         pdbStream.Seek(0, SeekOrigin.Begin);
         LogWriteLine($"assembly Length:{stream.Length}");
@@ -128,29 +128,29 @@ public class MethodGeneratorTests
             LogWriteLine($"{diagnostic}");
     }
 
-    void LogDiagnostics(Compilation compilation) => LogDiagnostics(compilation.GetDiagnostics(CancellationToken));
+    void LogDiagnostics(Compilation compilation, CancellationToken CancellationToken) => LogDiagnostics(compilation.GetDiagnostics(CancellationToken));
 
-    void LogDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
+    void LogDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation, CancellationToken CancellationToken)
     {
         LogDiagnostics(diagnostics);
-        LogDiagnostics(compilation);
+        LogDiagnostics(compilation, CancellationToken);
         LogSource(compilation);
     }
 
-    void AssertNoErrors(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
+    async Task AssertNoErrors(ImmutableArray<Diagnostic> diagnostics, Compilation compilation, CancellationToken CancellationToken)
     {
-        Assert.IsTrue(diagnostics.IsEmpty);
+        await Assert.That(diagnostics.IsEmpty).IsTrue();
         var diagnostics2 = compilation.GetDiagnostics(CancellationToken);
-        Assert.IsTrue(diagnostics2.IsEmpty);
+        await Assert.That(diagnostics2.IsEmpty).IsTrue();
     }
-    void AssertNonHiddenDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation)
+    async Task AssertNonHiddenDiagnostics(ImmutableArray<Diagnostic> diagnostics, Compilation compilation, CancellationToken CancellationToken)
     {
         var significant = diagnostics.Where(d => d.Severity > DiagnosticSeverity.Hidden).ToImmutableArray();
-        Assert.IsTrue(significant.IsEmpty);
+        await Assert.That(significant.IsEmpty).IsTrue();
         var diagnostics2 = compilation.GetDiagnostics(CancellationToken).Where(d => d.Severity > DiagnosticSeverity.Hidden).ToImmutableArray();
-        Assert.IsTrue(diagnostics2.IsEmpty);
+        await Assert.That(diagnostics2.IsEmpty).IsTrue();
     }
-    static IEnumerable<object?[]> SourceGeneratorTest1Data
+    internal static IEnumerable<object?[]> SourceGeneratorTest1Data
     {
         get
         {
@@ -160,10 +160,10 @@ public class MethodGeneratorTests
                 => [source, expected];
         }
     }
-    [TestMethod]
-    [DynamicData(nameof(SourceGeneratorTest1Data))]
-    [Timeout(30000, CooperativeCancellation = true)]
-    public async Task SourceGeneratorTest(string source, string? expected)
+    [Test]
+    [MethodDataSource(nameof(SourceGeneratorTest1Data))]
+    [Timeout(30000)]
+    public async Task SourceGeneratorTest(string source, string? expected, CancellationToken CancellationToken)
     {
         source = $$"""
         using Esolang.Brainfuck;
@@ -179,25 +179,25 @@ public class MethodGeneratorTests
         try
         {
 
-            AssertNoErrors(diagnostics, outputCompilation);
-            Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
-            var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
+            await AssertNoErrors(diagnostics, outputCompilation, CancellationToken);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(3);
+            await AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation, CancellationToken);
+            var (context, assembly) = await Emit(outputCompilation, cancellationToken: CancellationToken);
             CancellationToken.ThrowIfCancellationRequested();
             using (context)
             {
-                await Task.Factory.StartNew(() =>
+                await Task.Factory.StartNew(async () =>
                 {
                     var testClassType = assembly.GetType("TestProject.TestClass");
-                    Assert.IsNotNull(testClassType);
+                    Assert.NotNull(testClassType);
                     var sampleMethod = testClassType.GetMethod("SampleMethod");
-                    Assert.IsNotNull(sampleMethod);
+                    Assert.NotNull(sampleMethod);
                     try
                     {
                         var actual = (string?)sampleMethod.Invoke(null, []);
-                        Assert.AreEqual(expected, actual);
+                        await Assert.That(actual).IsEqualTo(expected);
                     }
-                    catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+                    catch (Exception e) when (e is TargetInvocationException or AssertionException)
                     {
                         LogWriteLine($"Logs:\n{string.Join("\n", outputCompilation.GetDiagnostics(CancellationToken))}\n");
                         throw;
@@ -206,13 +206,13 @@ public class MethodGeneratorTests
                 CancellationToken.ThrowIfCancellationRequested();
             }
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
-    static IEnumerable<object?[]> ReturnTypeAndParameterPatternsTestData
+    internal static IEnumerable<object?[]> ReturnTypeAndParameterPatternsTestData
     {
         get
         {
@@ -399,9 +399,9 @@ public class MethodGeneratorTests
                 => [source, returnType, parameters, options];
         }
     }
-    [TestMethod]
-    [DynamicData(nameof(ReturnTypeAndParameterPatternsTestData))]
-    public void ReturnTypeAndParameterPatternsTest(string source, string returnType, string parameters, string options)
+    [Test]
+    [MethodDataSource(nameof(ReturnTypeAndParameterPatternsTestData))]
+    public async Task ReturnTypeAndParameterPatternsTest(string source, string returnType, string parameters, string options, CancellationToken CancellationToken)
     {
         source = $$"""
         using Esolang.Brainfuck;
@@ -413,21 +413,21 @@ public class MethodGeneratorTests
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
             // BF0009 (Hidden) may be reported for unused input parameters; allow Hidden.
-            AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
-            Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
+            await AssertNonHiddenDiagnostics(diagnostics, outputCompilation, CancellationToken);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(3);
+            await AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation, CancellationToken);
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
-    static IEnumerable<object?[]> DiagnoticsTestData
+    internal static IEnumerable<object?[]> DiagnoticsTestData
     {
         get
         {
@@ -521,10 +521,10 @@ public class MethodGeneratorTests
                 => [expected, source, returnType, parameters, options, sourceCount];
         }
     }
-    [TestMethod]
-    [DynamicData(nameof(DiagnoticsTestData))]
-    [Timeout(50000, CooperativeCancellation = true)]
-    public void DiagnoticsTest(string[] expected, string source, string returnType, string parameters, string options, int sourceCount)
+    [Test]
+    [MethodDataSource(nameof(DiagnoticsTestData))]
+    [Timeout(50000)]
+    public async Task DiagnoticsTest(string[] expected, string source, string returnType, string parameters, string options, int sourceCount, CancellationToken CancellationToken)
     {
         source = $$"""
         using Esolang.Brainfuck;
@@ -536,21 +536,21 @@ public class MethodGeneratorTests
             public static partial {{returnType}} SampleMethod({{parameters}});
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
-            Assert.IsNotEmpty(diagnostics, $"diagnostics is empty required {string.Join(", ", expected)}");
-            CollectionAssert.AreEqual(expected, diagnostics.Select(v => v.Id).ToArray());
-            Assert.HasCount(sourceCount, outputCompilation.SyntaxTrees);
+            await Assert.That(diagnostics).IsNotEmpty().Because($"diagnostics is empty required {string.Join(", ", expected)}");
+            await Assert.That(diagnostics.Select(v => v.Id)).IsEquivalentTo(expected, CollectionOrdering.Matching);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(sourceCount);
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
-    [TestMethod]
-    public void DiagnoticsTest_NoArgumentConstructor()
+    [Test]
+    public async Task DiagnoticsTest_NoArgumentConstructor(CancellationToken CancellationToken)
     {
         var source = $$"""
         using Esolang.Brainfuck;
@@ -564,19 +564,19 @@ public class MethodGeneratorTests
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
-            Assert.IsFalse(diagnostics.IsEmpty);
-            CollectionAssert.AreEqual(new[] { "BF0001" }, diagnostics.Select(v => v.Id).ToArray());
-            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+            await Assert.That(diagnostics).IsNotEmpty().Because("diagnostics is empty required BF0001");
+            await Assert.That(diagnostics.Select(v => v.Id)).IsEquivalentTo((string[])["BF0001"], CollectionOrdering.Matching);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(3);
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    [TestMethod]
-    public void DiagnoticsTest_LanguageVersionTooLow_ReportsWarning()
+    [Test]
+    public async Task DiagnoticsTest_LanguageVersionTooLow_ReportsWarning(CancellationToken CancellationToken)
     {
         var source = """
         using Esolang.Brainfuck;
@@ -595,18 +595,18 @@ public class MethodGeneratorTests
             CancellationToken);
         try
         {
-            Assert.Contains(v => v.Id == "BF0010" && v.Severity == DiagnosticSeverity.Warning, diagnostics);
-            Assert.DoesNotContain(v => v.Severity == DiagnosticSeverity.Error, diagnostics);
-            Assert.HasCount(3, outputCompilation.SyntaxTrees);
+            await Assert.That(diagnostics).Contains(v => v.Id == "BF0010" && v.Severity == DiagnosticSeverity.Warning);
+            await Assert.That(diagnostics).DoesNotContain(v => v.Severity == DiagnosticSeverity.Error);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(3);
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    static IEnumerable<object?[]> ModuleSignatureTestData
+    internal static IEnumerable<object?[]> ModuleSignatureTestData
     {
         get
         {
@@ -620,9 +620,9 @@ public class MethodGeneratorTests
                 => [signature];
         }
     }
-    [TestMethod]
-    [DynamicData(nameof(ModuleSignatureTestData))]
-    public void ModuleSignatureTest(string signature)
+    [Test]
+    [MethodDataSource(nameof(ModuleSignatureTestData))]
+    public async Task ModuleSignatureTest(string signature, CancellationToken CancellationToken)
     {
         var source = $$"""
         using Esolang.Brainfuck;
@@ -633,22 +633,22 @@ public class MethodGeneratorTests
             public static partial void SampleMethod();
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
-            AssertNoErrors(diagnostics, outputCompilation);
-            Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
+            await AssertNoErrors(diagnostics, outputCompilation, CancellationToken);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(3);
+            await AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation, CancellationToken);
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    [TestMethod]
-    public void AttributeSubParameterTest()
+    [Test]
+    public async Task AttributeSubParameterTest(CancellationToken CancellationToken)
     {
         var source = $$"""
         using Esolang.Brainfuck;
@@ -659,22 +659,22 @@ public class MethodGeneratorTests
             public static partial string SampleMethod(string input);
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
-            AssertNoErrors(diagnostics, outputCompilation);
-            Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
+            await AssertNoErrors(diagnostics, outputCompilation, CancellationToken);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(3);
+            await AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation, CancellationToken);
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    [TestMethod]
-    public void RawStringTest()
+    [Test]
+    public async Task RawStringTest(CancellationToken CancellationToken)
     {
         var source = $$""""
         using Esolang.Brainfuck;
@@ -687,22 +687,22 @@ public class MethodGeneratorTests
             public static partial string SampleMethod(string input);
         }
         """";
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
-            AssertNoErrors(diagnostics, outputCompilation);
-            Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
+            await AssertNoErrors(diagnostics, outputCompilation, CancellationToken);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(3);
+            await AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation, CancellationToken);
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    [TestMethod]
-    public void GeneratedFileNameTest()
+    [Test]
+    public async Task GeneratedFileNameTest(CancellationToken CancellationToken)
     {
         var source = $$"""
         using Esolang.Brainfuck;
@@ -718,35 +718,35 @@ public class MethodGeneratorTests
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
-            AssertNoErrors(diagnostics, outputCompilation);
-            Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
+            await AssertNoErrors(diagnostics, outputCompilation, CancellationToken);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(3);
+            await AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation, CancellationToken);
 
             var generatedTrees = outputCompilation.SyntaxTrees
                 .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
                 .ToArray();
-            Assert.HasCount(1, generatedTrees);
+            await Assert.That(generatedTrees).Count().IsEqualTo(1);
 
             var generatedSource = generatedTrees[0].ToString();
-            Assert.AreEqual(1, generatedSource.Split([MethodGenerator.CommentAutoGenerated], StringSplitOptions.None).Length - 1);
-            Assert.AreEqual(1, generatedSource.Split(["#pragma warning disable CS0219"], StringSplitOptions.None).Length - 1);
-            Assert.AreEqual(1, generatedSource.Split(["#pragma warning disable CS1998"], StringSplitOptions.None).Length - 1);
-            Assert.Contains("SampleMethod1()", generatedSource);
-            Assert.Contains("SampleMethod2()", generatedSource);
+            await Assert.That(generatedSource).Contains(MethodGenerator.CommentAutoGenerated);
+            await Assert.That(generatedSource).Contains("#pragma warning disable CS0219");
+            await Assert.That(generatedSource).Contains("#pragma warning disable CS1998");
+            await Assert.That(generatedSource).Contains("SampleMethod1()");
+            await Assert.That(generatedSource).Contains("SampleMethod2()");
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    [TestMethod]
-    [Timeout(10000, CooperativeCancellation = true)]  // 10 second timeout to detect hangs
-    public async Task OutputlessReturnPatternsTest()
+    [Test]
+    [Timeout(10000)]  // 10 second timeout to detect hangs
+    public async Task OutputlessReturnPatternsTest(CancellationToken CancellationToken)
     {
         var source = $$"""
         using Esolang.Brainfuck;
@@ -783,75 +783,75 @@ public class MethodGeneratorTests
             public static partial void UnusedPipeReaderInputMethod(PipeReader input);
         }
         """;
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
             // BF0009 (Hidden) may be reported; allow Hidden diagnostics.
-            AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
+            await AssertNonHiddenDiagnostics(diagnostics, outputCompilation, CancellationToken);
             // OutputSource(outputCompilation.SyntaxTrees);  // Temporarily disabled for debugging
-            AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
+            await AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation, CancellationToken);
 
-            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationToken);
+            var (context, assembly) = await Emit(outputCompilation, cancellationToken: CancellationToken);
             using (context)
             {
                 var testClassType = assembly.GetType("TestProject.TestClass");
-                Assert.IsNotNull(testClassType);
+                Assert.NotNull(testClassType);
 
-                TestContext.WriteLine("=== StringMethod ===");
-                Assert.IsNull(testClassType.GetMethod("StringMethod")!.Invoke(null, []));
+                LogWriteLine("=== StringMethod ===");
+                await Assert.That(testClassType.GetMethod("StringMethod")!.Invoke(null, [])).IsNull();
 
-                TestContext.WriteLine("=== ValueTaskStringMethod ===");
+                LogWriteLine("=== ValueTaskStringMethod ===");
                 var valueTaskMethod = testClassType.GetMethod("ValueTaskStringMethod");
-                Assert.IsNotNull(valueTaskMethod, "ValueTaskStringMethod not found in assembly");
+                Assert.NotNull(valueTaskMethod, "ValueTaskStringMethod not found in assembly");
                 var valueTaskResult = valueTaskMethod.Invoke(null, []);
-                TestContext.WriteLine($"ValueTaskStringMethod result: {valueTaskResult?.GetType().Name} = {valueTaskResult}");
-                Assert.IsNotNull(valueTaskResult, "ValueTaskStringMethod Invoke returned null");
-                TestContext.WriteLine("About to await ValueTask...");
-                Assert.IsNull(await (ValueTask<string?>)valueTaskResult);
-                TestContext.WriteLine("ValueTask await completed");
+                LogWriteLine($"ValueTaskStringMethod result: {valueTaskResult?.GetType().Name} = {valueTaskResult}");
+                Assert.NotNull(valueTaskResult, "ValueTaskStringMethod Invoke returned null");
+                LogWriteLine("About to await ValueTask...");
+                await Assert.That(await (ValueTask<string?>)valueTaskResult).IsNull();
+                LogWriteLine("ValueTask await completed");
 
-                TestContext.WriteLine("=== EnumerableMethod ===");
+                LogWriteLine("=== EnumerableMethod ===");
                 var enumerable = (IEnumerable<byte>)testClassType.GetMethod("EnumerableMethod")!.Invoke(null, [])!;
-                CollectionAssert.AreEqual(Array.Empty<byte>(), enumerable.ToArray());
+                await Assert.That(enumerable).IsEquivalentTo(Array.Empty<byte>(), CollectionOrdering.Matching);
 
-                TestContext.WriteLine("=== AsyncEnumerableMethod ===");
+                LogWriteLine("=== AsyncEnumerableMethod ===");
                 var asyncEnumerable = testClassType.GetMethod("AsyncEnumerableMethod")?.Invoke(null, []) as IAsyncEnumerable<byte>;
-                Assert.IsNotNull(asyncEnumerable);
+                Assert.NotNull(asyncEnumerable);
                 var asyncBytes = new List<byte>();
                 await foreach (var item in asyncEnumerable)
                 {
                     asyncBytes.Add(item);
                 }
-                CollectionAssert.AreEqual(Array.Empty<byte>(), asyncBytes.ToArray());
+                await Assert.That(asyncBytes).IsEquivalentTo(Array.Empty<byte>(), CollectionOrdering.Matching);
 
-                TestContext.WriteLine("=== PipeWriterMethod ===");
+                LogWriteLine("=== PipeWriterMethod ===");
                 // Skip the complex PipeWriter test to avoid deadlock
                 // Just verify the method exists and can be invoked
                 var pipeWriterMethod = testClassType.GetMethod("PipeWriterMethod");
-                Assert.IsNotNull(pipeWriterMethod);
+                Assert.NotNull(pipeWriterMethod);
 
                 // Unused input parameters: methods run normally, input is simply ignored.
-                TestContext.WriteLine("=== UnusedStringInputMethod ===");
+                LogWriteLine("=== UnusedStringInputMethod ===");
                 testClassType.GetMethod("UnusedStringInputMethod")!.Invoke(null, ["ignored"]);
 
-                TestContext.WriteLine("=== UnusedPipeReaderInputMethod ===");
+                LogWriteLine("=== UnusedPipeReaderInputMethod ===");
                 var unusedPipe = new Pipe();
                 await unusedPipe.Writer.CompleteAsync();
                 testClassType.GetMethod("UnusedPipeReaderInputMethod")!.Invoke(null, [unusedPipe.Reader]);
                 await unusedPipe.Reader.CompleteAsync();
 
-                TestContext.WriteLine("=== Test completed ===");
+                LogWriteLine("=== Test completed ===");
             }
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    [TestMethod]
-    public void GeneratedFile_SharedHelperDeclaredOnceTest()
+    [Test]
+    public async Task GeneratedFile_SharedHelperDeclaredOnceTest(CancellationToken CancellationToken)
     {
         var source = $$"""
         using Esolang.Brainfuck;
@@ -867,27 +867,27 @@ public class MethodGeneratorTests
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
-            AssertNoErrors(diagnostics, outputCompilation);
-            Assert.HasCount(3, outputCompilation.SyntaxTrees);
-            AssertNoErrors(outputCompilation.GetDiagnostics(TestContext.CancellationToken), outputCompilation);
+            await AssertNoErrors(diagnostics, outputCompilation, CancellationToken);
+            await Assert.That(outputCompilation.SyntaxTrees).Count().IsEqualTo(3);
+            await AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation, CancellationToken);
 
             var generatedTree = outputCompilation.SyntaxTrees
                 .Single(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal));
             var generatedSource = generatedTree.ToString();
-            Assert.Contains("internal static class ListDummyHelper", generatedSource);
+            await Assert.That(generatedSource).Contains("internal static class ListDummyHelper");
         }
-        catch (AssertFailedException)
+        catch (AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    [TestMethod]
-    public async Task ExitCodeReturnPatterns_ReturnZero()
+    [Test]
+    public async Task ExitCodeReturnPatterns_ReturnZero(CancellationToken CancellationToken)
     {
         var source = $$"""
         using Esolang.Brainfuck;
@@ -906,38 +906,38 @@ public class MethodGeneratorTests
         }
         """;
 
-        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: TestContext.CancellationToken);
+        RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
-            AssertNonHiddenDiagnostics(diagnostics, outputCompilation);
-            AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation);
+            await AssertNonHiddenDiagnostics(diagnostics, outputCompilation, CancellationToken);
+            await AssertNoErrors(outputCompilation.GetDiagnostics(CancellationToken), outputCompilation, CancellationToken);
 
-            var (context, assembly) = Emit(outputCompilation, cancellationToken: TestContext.CancellationToken);
+            var (context, assembly) = await Emit(outputCompilation, cancellationToken: CancellationToken);
             using (context)
             {
                 var testClassType = assembly.GetType("TestProject.TestClass");
-                Assert.IsNotNull(testClassType);
+                Assert.NotNull(testClassType);
 
                 var intResult = (int?)testClassType!.GetMethod("IntMethod")!.Invoke(null, []);
-                Assert.AreEqual(0, intResult);
+                await Assert.That(intResult).IsEqualTo(0);
 
                 var taskInt = (Task<int>)testClassType.GetMethod("TaskIntMethod")!.Invoke(null, [])!;
-                Assert.AreEqual(0, await taskInt);
+                await Assert.That(await taskInt).IsEqualTo(0);
 
                 var valueTaskInt = (ValueTask<int>)testClassType.GetMethod("ValueTaskIntMethod")!.Invoke(null, [])!;
-                Assert.AreEqual(0, await valueTaskInt);
+                await Assert.That(await valueTaskInt).IsEqualTo(0);
             }
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
 
-    [TestMethod]
-    public async Task LoggerParameterTest()
+    [Test]
+    public async Task LoggerParameterTest(CancellationToken CancellationToken)
     {
         var source = """
         using Esolang.Brainfuck;
@@ -968,52 +968,52 @@ public class MethodGeneratorTests
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, cancellationToken: CancellationToken);
         try
         {
-            AssertNoErrors(diagnostics, outputCompilation);
+            await AssertNoErrors(diagnostics, outputCompilation, CancellationToken);
 
             var generatedTrees = outputCompilation.SyntaxTrees
                 .Where(v => v.FilePath.EndsWith(MethodGenerator.GeneratedMethodsFileName, StringComparison.Ordinal))
                 .ToArray();
-            Assert.HasCount(1, generatedTrees);
+            await Assert.That(generatedTrees).Count().IsEqualTo(1);
 
-            var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
-            await Task.Factory.StartNew(() =>
+            var (context, assembly) = await Emit(outputCompilation, cancellationToken: CancellationToken);
+            await Task.Factory.StartNew(async () =>
             {
                 using (context)
                 {
                     var testClassType = assembly.GetType("TestProject.TestClass");
-                    Assert.IsNotNull(testClassType);
+                    Assert.NotNull(testClassType);
                     var fakeLoggerType = assembly.GetType("TestProject.FakeLogger")!;
-                    Assert.IsNotNull(fakeLoggerType);
+                    Assert.NotNull(fakeLoggerType);
                     var loggerInstance = Activator.CreateInstance(fakeLoggerType);
-                    Assert.IsNotNull(loggerInstance);
+                    Assert.NotNull(loggerInstance);
                     var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
-                    Assert.IsNotNull(logs);
+                    Assert.NotNull(logs);
 
                     try
                     {
                         var sampleMethod = testClassType.GetMethod("SampleMethod");
-                        Assert.IsNotNull(sampleMethod);
+                        Assert.NotNull(sampleMethod);
                         sampleMethod.Invoke(null, [loggerInstance]);
-                        Assert.IsNotEmpty(logs);
-                        Assert.Contains("IP 0: '+' [Pointer: 0, Value: 1]", logs);
+                        await Assert.That(logs).IsNotEmpty();
+                        await Assert.That(logs).Contains("IP 0: '+' [Pointer: 0, Value: 1]");
                     }
                     catch
                     {
-                        LogDiagnostics(diagnostics, outputCompilation);
+                        LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
                         throw;
                     }
                 }
             }, CancellationToken);
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    [TestMethod]
-    public async Task LoggerPrimaryConstructorTest()
+    [Test]
+    public async Task LoggerPrimaryConstructorTest(CancellationToken CancellationToken)
     {
         var source = $$"""
             using Esolang.Brainfuck;
@@ -1044,42 +1044,42 @@ public class MethodGeneratorTests
         RunGeneratorsAndUpdateCompilation(source, out var outputCompilation, out var diagnostics, languageVersion: LanguageVersion.CSharp12, cancellationToken: CancellationToken);
         try
         {
-            AssertNoErrors(diagnostics, outputCompilation);
+            await AssertNoErrors(diagnostics, outputCompilation, CancellationToken);
 
-            var (context, assembly) = Emit(outputCompilation, cancellationToken: CancellationToken);
-            await Task.Factory.StartNew(() =>
+            var (context, assembly) = await Emit(outputCompilation, cancellationToken: CancellationToken);
+            await Task.Factory.StartNew(async () =>
             {
                 using (context)
                 {
                     var testClassType = assembly.GetType("TestProject.TestClass");
-                    Assert.IsNotNull(testClassType);
+                    Assert.NotNull(testClassType);
                     var fakeLoggerType = assembly.GetType("TestProject.FakeLogger")!;
-                    Assert.IsNotNull(fakeLoggerType);
+                    Assert.NotNull(fakeLoggerType);
                     var loggerInstance = Activator.CreateInstance(fakeLoggerType);
-                    Assert.IsNotNull(loggerInstance);
+                    Assert.NotNull(loggerInstance);
                     var logs = fakeLoggerType.GetField("Logs")?.GetValue(loggerInstance) as List<string>;
-                    Assert.IsNotNull(logs);
+                    Assert.NotNull(logs);
                     var instance = Activator.CreateInstance(testClassType, loggerInstance);
-                    Assert.IsNotNull(instance);
+                    Assert.NotNull(instance);
 
                     var sampleMethod = testClassType.GetMethod("SampleMethod");
-                    Assert.IsNotNull(sampleMethod);
+                    Assert.NotNull(sampleMethod);
                     sampleMethod.Invoke(instance, null);
 
-                    Assert.IsNotEmpty(logs);
-                    Assert.Contains("IP 0: '+' [Pointer: 0, Value: 1]", logs);
+                    await Assert.That(logs).IsNotEmpty();
+                    await Assert.That(logs).Contains("IP 0: '+' [Pointer: 0, Value: 1]");
                 }
             }, CancellationToken);
         }
-        catch (Exception e) when (e is TargetInvocationException or AssertFailedException)
+        catch (Exception e) when (e is TargetInvocationException or AssertionException)
         {
-            LogDiagnostics(diagnostics, outputCompilation);
+            LogDiagnostics(diagnostics, outputCompilation, CancellationToken);
             throw;
         }
     }
 
-    [TestMethod]
-    public void NonPartialMethod_ReportsError()
+    [Test]
+    public async Task NonPartialMethod_ReportsError(CancellationToken CancellationToken)
     {
         var source = """
             using Esolang.Brainfuck;
@@ -1091,6 +1091,6 @@ public class MethodGeneratorTests
             }
             """;
         RunGeneratorsAndUpdateCompilation(source, out _, out var diagnostics, cancellationToken: CancellationToken);
-        Assert.Contains(d => d.Id == "BF0011", diagnostics, "Expected BF0011 diagnostic");
+        await Assert.That(diagnostics).Contains(d => d.Id == "BF0011").Because("Expected BF0011 diagnostic");
     }
 }

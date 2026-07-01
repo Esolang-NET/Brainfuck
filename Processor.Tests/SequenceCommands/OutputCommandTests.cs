@@ -5,15 +5,13 @@ using Command = Esolang.Brainfuck.Processor.SequenceCommands.OutputCommand;
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands.Tests;
 
-[TestClass()]
 public class OutputCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
 
-    [TestMethod]
-    public async Task ExecuteAsyncTest()
+    [Test]
+    public async Task ExecuteAsyncTest(CancellationToken CancellationToken)
     {
-        var token = TestContext.CancellationToken;
         var sequences = new[] { Output }.AsMemory();
         var stack = ImmutableArray.Create<byte>(65); // 'A'
         BrainfuckContext context = new(
@@ -23,29 +21,29 @@ public class OutputCommandTests
         );
 
         var command = new Command(context);
-        var ioEvent = await command.GetIoEventAsync(token);
-        Assert.IsInstanceOfType<OutputCharEvent>(ioEvent);
-        Assert.AreEqual('A', ((OutputCharEvent)ioEvent!).Output);
+        var ioEvent = await command.GetIoEventAsync(CancellationToken);
+        await Assert.That(ioEvent).IsTypeOf<OutputCharEvent>();
+        await Assert.That(((OutputCharEvent)ioEvent!).Output).IsEqualTo('A');
 
-        var actual = await command.ExecuteAsync(ioEvent!, token);
+        var actual = await command.ExecuteAsync(ioEvent!, CancellationToken);
 
         var expected = context with
         {
             SequencesIndex = 1,
         };
-        Assert.AreEqual(expected, actual);
+        await Assert.That(actual).IsEqualTo(expected);
     }
 
-    [TestMethod]
-    public void RequiredInputTest()
+    [Test]
+    public async Task RequiredInputTest()
     {
         var command = new Command(default);
-        Assert.IsFalse(command.RequiredInput);
+        await Assert.That(command.RequiredInput).IsFalse();
     }
-    [TestMethod]
-    public void RequiredOutputTest()
+    [Test]
+    public async Task RequiredOutputTest()
     {
         var command = new Command(default);
-        Assert.IsTrue(command.RequiredOutput);
+        await Assert.That(command.RequiredOutput).IsTrue();
     }
 }

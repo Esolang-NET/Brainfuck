@@ -4,11 +4,10 @@ using Command = Esolang.Brainfuck.Processor.SequenceCommands.IncrementPointerCom
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands.Tests;
 
-[TestClass]
 public class IncrementPointerCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object?[]> ExecuteTestData
+    internal static IEnumerable<object?[]> ExecuteTestData
     {
         get
         {
@@ -51,32 +50,31 @@ public class IncrementPointerCommandTests
                 => [context, expected];
         }
     }
-    [TestMethod]
-    [DynamicData(nameof(ExecuteTestData))]
-    public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
+    [Test]
+    [MethodDataSource(nameof(ExecuteTestData))]
+    public async Task ExecuteAsyncTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected, CancellationToken CancellationToken)
     {
-        var token = TestContext.CancellationToken;
+        var actual = await new Command(context).ExecuteAsync(CancellationToken);
+        await Assert.That(actual).IsEqualTo(expected);
+    }
+    [Test]
+    [MethodDataSource(nameof(ExecuteTestData))]
+    public async Task ExecuteTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected, CancellationToken CancellationToken)
+    {
+        var actual = new Command(context).Execute(CancellationToken);
+        await Assert.That(actual).IsEqualTo(expected);
+    }
 
-        var actual = await new Command(context).ExecuteAsync(token);
-        Assert.AreEqual<BrainfuckContext>(expected, actual);
-    }
-    [TestMethod]
-    [DynamicData(nameof(ExecuteTestData))]
-    public void ExecuteTest(TestShared.BrainfuckContext context, TestShared.BrainfuckContext expected)
-    {
-        var actual = new Command(context).Execute(TestContext.CancellationToken);
-        Assert.AreEqual<BrainfuckContext>(expected, actual);
-    }
-    [TestMethod]
-    public void RequiredInputTest()
+    [Test]
+    public async Task RequiredInputTest()
     {
         var command = new Command(default);
-        Assert.IsFalse(command.RequiredInput);
+        await Assert.That(command.RequiredInput).IsFalse();
     }
-    [TestMethod]
-    public void RequiredOutputTest()
+    [Test]
+    public async Task RequiredOutputTest()
     {
         var command = new Command(default);
-        Assert.IsFalse(command.RequiredOutput);
+        await Assert.That(command.RequiredOutput).IsFalse();
     }
 }

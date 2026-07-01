@@ -2,38 +2,37 @@ using System.CommandLine;
 
 namespace Esolang.Brainfuck.Interpreter.Tests;
 
-[TestClass]
 public class BrainfuckConsoleExtensionsTests
 {
-    [TestMethod]
-    public void AddDefaultGlobalOptions_ShouldRegisterAllSyntaxOptions()
+    [Test]
+    public async Task AddDefaultGlobalOptions_ShouldRegisterAllSyntaxOptions()
     {
         var root = new RootCommand();
 
         root.AddDefaultGlobalOptions();
 
-        AssertCanParse(root, ["--syntax-no-use-default-value"]);
-        AssertCanParse(root, ["-snd"]);
-        AssertCanParse(root, ["--syntax-increment-pointer", "x"]);
-        AssertCanParse(root, ["-sip", "x"]);
-        AssertCanParse(root, ["--syntax-dencrement-pointer", "x"]);
-        AssertCanParse(root, ["-sdp", "x"]);
-        AssertCanParse(root, ["--syntax-increment-current", "x"]);
-        AssertCanParse(root, ["-sic", "x"]);
-        AssertCanParse(root, ["--syntax-decrement-current", "x"]);
-        AssertCanParse(root, ["-sdc", "x"]);
-        AssertCanParse(root, ["--syntax-output", "x"]);
-        AssertCanParse(root, ["-so", "x"]);
-        AssertCanParse(root, ["--syntax-input", "x"]);
-        AssertCanParse(root, ["-si", "x"]);
-        AssertCanParse(root, ["--syntax-begin", "x"]);
-        AssertCanParse(root, ["-sb", "x"]);
-        AssertCanParse(root, ["--syntax-end", "x"]);
-        AssertCanParse(root, ["-se", "x"]);
+        await AssertCanParse(root, ["--syntax-no-use-default-value"]);
+        await AssertCanParse(root, ["-snd"]);
+        await AssertCanParse(root, ["--syntax-increment-pointer", "x"]);
+        await AssertCanParse(root, ["-sip", "x"]);
+        await AssertCanParse(root, ["--syntax-dencrement-pointer", "x"]);
+        await AssertCanParse(root, ["-sdp", "x"]);
+        await AssertCanParse(root, ["--syntax-increment-current", "x"]);
+        await AssertCanParse(root, ["-sic", "x"]);
+        await AssertCanParse(root, ["--syntax-decrement-current", "x"]);
+        await AssertCanParse(root, ["-sdc", "x"]);
+        await AssertCanParse(root, ["--syntax-output", "x"]);
+        await AssertCanParse(root, ["-so", "x"]);
+        await AssertCanParse(root, ["--syntax-input", "x"]);
+        await AssertCanParse(root, ["-si", "x"]);
+        await AssertCanParse(root, ["--syntax-begin", "x"]);
+        await AssertCanParse(root, ["-sb", "x"]);
+        await AssertCanParse(root, ["--syntax-end", "x"]);
+        await AssertCanParse(root, ["-se", "x"]);
     }
 
-    [TestMethod]
-    public void GetValue_ShouldUseDefaults_WhenNoOverrides()
+    [Test]
+    public async Task GetValue_ShouldUseDefaults_WhenNoOverrides()
     {
         var root = new RootCommand();
         var binder = root.AddDefaultGlobalOptions();
@@ -41,18 +40,18 @@ public class BrainfuckConsoleExtensionsTests
         var parsed = root.Parse([]);
         var options = binder.GetValue(parsed);
 
-        Assert.AreEqual(BrainfuckOptionsDefault.IncrementPointer, options.IncrementPointer);
-        Assert.AreEqual(BrainfuckOptionsDefault.DecrementPointer, options.DecrementPointer);
-        Assert.AreEqual(BrainfuckOptionsDefault.IncrementCurrent, options.IncrementCurrent);
-        Assert.AreEqual(BrainfuckOptionsDefault.DecrementCurrent, options.DecrementCurrent);
-        Assert.AreEqual(BrainfuckOptionsDefault.Output, options.Output);
-        Assert.AreEqual(BrainfuckOptionsDefault.Input, options.Input);
-        Assert.AreEqual(BrainfuckOptionsDefault.Begin, options.Begin);
-        Assert.AreEqual(BrainfuckOptionsDefault.End, options.End);
+        await Assert.That(options.IncrementPointer).IsEqualTo(BrainfuckOptionsDefault.IncrementPointer);
+        await Assert.That(options.DecrementPointer).IsEqualTo(BrainfuckOptionsDefault.DecrementPointer);
+        await Assert.That(options.IncrementCurrent).IsEqualTo(BrainfuckOptionsDefault.IncrementCurrent);
+        await Assert.That(options.DecrementCurrent).IsEqualTo(BrainfuckOptionsDefault.DecrementCurrent);
+        await Assert.That(options.Output).IsEqualTo(BrainfuckOptionsDefault.Output);
+        await Assert.That(options.Input).IsEqualTo(BrainfuckOptionsDefault.Input);
+        await Assert.That(options.Begin).IsEqualTo(BrainfuckOptionsDefault.Begin);
+        await Assert.That(options.End).IsEqualTo(BrainfuckOptionsDefault.End);
     }
 
-    [TestMethod]
-    public void GetValue_ShouldUseExplicitOverrides()
+    [Test]
+    public async Task GetValue_ShouldUseExplicitOverrides()
     {
         var root = new RootCommand();
         var binder = root.AddDefaultGlobalOptions();
@@ -69,41 +68,41 @@ public class BrainfuckConsoleExtensionsTests
         ]);
         var options = binder.GetValue(parsed);
 
-        Assert.AreEqual("😀", options.IncrementPointer);
-        Assert.AreEqual("😁", options.DecrementPointer);
-        Assert.AreEqual("😂", options.IncrementCurrent);
-        Assert.AreEqual("🤣", options.DecrementCurrent);
-        Assert.AreEqual("😃", options.Output);
-        Assert.AreEqual("😄", options.Input);
-        Assert.AreEqual("😅", options.Begin);
-        Assert.AreEqual("😆", options.End);
+        await Assert.That(options.IncrementPointer).IsEqualTo("😀");
+        await Assert.That(options.DecrementPointer).IsEqualTo("😁");
+        await Assert.That(options.IncrementCurrent).IsEqualTo("😂");
+        await Assert.That(options.DecrementCurrent).IsEqualTo("🤣");
+        await Assert.That(options.Output).IsEqualTo("😃");
+        await Assert.That(options.Input).IsEqualTo("😄");
+        await Assert.That(options.Begin).IsEqualTo("😅");
+        await Assert.That(options.End).IsEqualTo("😆");
     }
 
-    [TestMethod]
-    public void AddDefaultCommand_ShouldRegisterSourceArgument()
+    [Test]
+    public async Task AddDefaultCommand_ShouldRegisterSourceArgument()
     {
         var root = new RootCommand();
         var binder = root.AddDefaultGlobalOptions();
 
         root.AddDefaultCommand(binder);
 
-        Assert.Contains(v => v.Name == "source", root.Arguments);
+        await Assert.That(root.Arguments).Contains(v => v.Name == "source");
     }
 
-    [TestMethod]
-    public void AddParseCommand_ShouldRegisterParseSubcommand()
+    [Test]
+    public async Task AddParseCommand_ShouldRegisterParseSubcommand()
     {
         var root = new RootCommand();
         var binder = root.AddDefaultGlobalOptions();
 
         root.AddParseCommand(binder);
 
-        Assert.Contains(v => v.Name == "parse", root.Subcommands);
+        await Assert.That(root.Subcommands).Contains(v => v.Name == "parse");
     }
 
-    static void AssertCanParse(Command root, string[] args)
+    static async Task AssertCanParse(Command root, string[] args)
     {
         var parsed = root.Parse(args);
-        Assert.IsEmpty(parsed.Errors, $"Expected successful parse for args: {string.Join(" ", args)}");
+        await Assert.That(parsed.Errors).IsEmpty().Because($"Expected successful parse for args: {string.Join(" ", args)}");
     }
 }

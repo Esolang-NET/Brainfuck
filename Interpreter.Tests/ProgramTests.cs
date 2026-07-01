@@ -1,26 +1,25 @@
 namespace Esolang.Brainfuck.Interpreter.Tests;
 
-[TestClass]
 public class ProgramTests
 {
     static int Run(string[] args)
     {
         var entryPoint = typeof(Program).Assembly.EntryPoint!;
-        Assert.IsNotNull(entryPoint);
+        Assert.NotNull(entryPoint);
         object?[] parmaeters = [args];
         var result = entryPoint.Invoke(null, parmaeters) as int?;
-        Assert.IsNotNull(result);
+        Assert.NotNull(result);
         return result.Value;
     }
-    [TestMethod]
-    public void RunAsync_ParseCommand_ReturnsZero() => Assert.AreEqual(0, Run(["parse", "++"]));
+    [Test]
+    public async Task RunAsync_ParseCommand_ReturnsZero() => await Assert.That(Run(["parse", "++"])).IsEqualTo(0);
 
-    [TestMethod]
-    public void RunAsync_DefaultCommand_ReturnsZero() => Assert.AreEqual(0, Run(["+++"]));
+    [Test]
+    public async Task RunAsync_DefaultCommand_ReturnsZero() => await Assert.That(Run(["+++"])).IsEqualTo(0);
 
-    [TestMethod]
-    public void RunAsync_EmptyArgs_ReturnOne() => Assert.AreEqual(1, Run([]));
+    [Test]
+    public async Task RunAsync_EmptyArgs_ReturnOne() => await Assert.That(Run([])).IsEqualTo(1);
 
-    [TestMethod]
-    public void RunAsync_Help_ReturnZero() => Assert.AreEqual(0, Run(["--help"]));
+    [Test]
+    public async Task RunAsync_Help_ReturnZero() => await Assert.That(Run(["--help"])).IsEqualTo(0);
 }
