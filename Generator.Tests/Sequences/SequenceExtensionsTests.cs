@@ -1,10 +1,13 @@
-﻿namespace Esolang.Brainfuck.Generator.Sequences.Tests;
+﻿using TUnit.Assertions.Enums;
 
-[TestClass]
+namespace Esolang.Brainfuck.Generator.Sequences.Tests;
+
 public class SequenceExtensionsTests
 {
-    public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object?[]> NestAndUnNestTestData
+    readonly TestContext TestContext;
+    void LogWriteLine(string message) => TestContext.OutputWriter.WriteLine(message);
+    public SequenceExtensionsTests() => TestContext = TestContext.Current!;
+    internal static IEnumerable<object?[]> NestAndUnNestTestData
     {
         get
         {
@@ -14,17 +17,17 @@ public class SequenceExtensionsTests
                 => [source];
         }
     }
-    [TestMethod]
-    [DynamicData(nameof(NestAndUnNestTestData))]
-    public void NestAndUnNestTest(string source)
+    [Test]
+    [MethodDataSource(nameof(NestAndUnNestTestData))]
+    public async Task NestAndUnNestTest(string source)
     {
 
         var expected = new BrainfuckSequenceEnumerable(source).Select((v, i) => new Sequence(i, v.Sequence, v.Syntax)).ToArray();
-        TestContext.WriteLine("expected : [" + string.Join(", ", (IEnumerable<Sequence>)expected) + "]");
+        LogWriteLine("expected : [" + string.Join(", ", (IEnumerable<Sequence>)expected) + "]");
         var nested = expected.Nest();
-        TestContext.WriteLine("nested :   [" + string.Join(", ", nested) + "]");
+        LogWriteLine("nested :   [" + string.Join(", ", nested) + "]");
         var actual = nested.UnNest().ToArray();
-        TestContext.WriteLine("nested :   [" + string.Join(", ", (IEnumerable<Sequence>)actual) + "]");
-        CollectionAssert.AreEqual(expected, actual);
+        LogWriteLine("nested :   [" + string.Join(", ", (IEnumerable<Sequence>)actual) + "]");
+        await Assert.That(actual).IsEquivalentTo(expected, CollectionOrdering.Matching);
     }
 }

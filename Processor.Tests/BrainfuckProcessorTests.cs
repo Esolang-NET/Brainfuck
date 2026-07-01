@@ -1,12 +1,13 @@
+using TUnit.Assertions.Enums;
+
 namespace Esolang.Brainfuck.Processor.Tests;
 
-[TestClass]
-public class BrainfuckProcessorTests(TestContext TestContext)
+public class BrainfuckProcessorTests
 {
-#pragma warning disable MSTEST0054 // TestContext.CancellationTokenSource.Token の代わりに TestContext.CancellationToken を使用する
-    CancellationToken CancellationToken => TestContext.CancellationTokenSource.Token;
-#pragma warning restore MSTEST0054 // TestContext.CancellationTokenSource.Token の代わりに TestContext.CancellationToken を使用する
-    static IEnumerable<object?[]> RunAndOutputStringTestData
+    readonly TestContext TestContext;
+    public BrainfuckProcessorTests() => TestContext = TestContext.Current!;
+    void LogWriteLine(string message) => TestContext.OutputWriter.WriteLine(message);
+    internal static IEnumerable<object?[]> RunAndOutputStringTestData
     {
         get
         {
@@ -28,9 +29,9 @@ public class BrainfuckProcessorTests(TestContext TestContext)
                 => [source, input, expected];
         }
     }
-    [TestMethod]
-    [DynamicData(nameof(RunAndOutputStringTestData))]
-    public async Task RunAndOutputStringAsyncTest(string source, string? input, string? expected)
+    [Test]
+    [MethodDataSource(nameof(RunAndOutputStringTestData))]
+    public async Task RunAndOutputStringAsyncTest(string source, string? input, string? expected, CancellationToken CancellationToken)
     {
         var enumerable = new BrainfuckSequenceEnumerable(source);
         var sequences = enumerable.Select(v => v.Sequence).ToArray().AsMemory();
@@ -38,51 +39,35 @@ public class BrainfuckProcessorTests(TestContext TestContext)
 
         var actual = await runner.RunAndOutputStringAsync(input, CancellationToken);
 
-        Assert.AreEqual(expected, actual);
+        await Assert.That(actual).IsEqualTo(expected);
     }
 
-    [TestMethod]
-    public void BrainfuckRunnerTest()
+    [Test]
+    public async Task BrainfuckRunnerTest()
     {
         var runner = new BrainfuckProcessor("]");
         runner.Deconstruct(out var sequences);
-        CollectionAssert.AreEqual(new[] { BrainfuckSequence.End }, sequences.ToArray());
-        TestContext.WriteLine(runner.ToString());
+        await Assert.That(sequences.ToArray()).IsEquivalentTo((BrainfuckSequence[])[BrainfuckSequence.End], CollectionOrdering.Matching);
+        LogWriteLine(runner.ToString());
     }
-    [TestMethod]
-    public void BrainfuckRunnerWithOptionTest()
+    [Test]
+    public async Task BrainfuckRunnerWithOptionTest()
     {
         {
             TestShared.BrainfuckOptions options = new();
             var runner = new BrainfuckProcessor("]", options);
             runner.Deconstruct(out var sequences);
-            CollectionAssert.AreEqual(new[] { BrainfuckSequence.End }, sequences.ToArray());
-            TestContext.WriteLine(runner.ToString());
+            await Assert.That(sequences.ToArray()).IsEquivalentTo((BrainfuckSequence[])[BrainfuckSequence.End], CollectionOrdering.Matching);
+            LogWriteLine(runner.ToString());
         }
         {
             TestShared.BrainfuckOptions options = new();
             var runner = new BrainfuckProcessor("[", options);
             runner.Deconstruct(out var sequences);
-            CollectionAssert.AreEqual(new[] { BrainfuckSequence.Begin }, sequences.ToArray());
-            TestContext.WriteLine(runner.ToString());
+            await Assert.That(sequences.ToArray()).IsEquivalentTo((BrainfuckSequence[])[BrainfuckSequence.Begin], CollectionOrdering.Matching);
+            LogWriteLine(runner.ToString());
         }
 
     }
 
-    // These tests rely on deprecated RunToEnd methods. They need to be updated
-    // to use the new event-based I/O or removed if they are for old I/O.
-    // I will comment them out for now to get the project building.
-    /*
-    [TestMethod]
-    public void RunToEnd_TextIo_ReturnsZeroAndWritesOutput() { ... }
-    
-    [TestMethod]
-    public async Task RunToEndAsync_PipeIo_ReturnsZeroAndWritesOutput() { ... }
-    
-    [TestMethod]
-    public async Task RunToEndAsync_TextIo_ReturnsZeroAndWritesOutput() { ... }
-
-    [TestMethod]
-    public void RunToEnd_PipeIo_ReturnsZeroAndWritesOutput() { ... }
-    */
 }

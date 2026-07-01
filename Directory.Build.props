@@ -44,14 +44,43 @@
     <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" Visible="false" Link="icon.png" />
   </ItemGroup>
 
+
+  <!-- #region test project settings -->
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests')) == 'True'">
     <TestResultsFolderPath>$(MSBuildProjectDirectory)\TestResults</TestResultsFolderPath>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <IsPublishable>false</IsPublishable>
-    <NoWarn>$(NoWarn);RS1035;CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;IDE1006</NoWarn>
     <OutputType>Exe</OutputType>
-    <EnableMSTestRunner>true</EnableMSTestRunner>
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
   </PropertyGroup>
+
+  <ItemGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests')) == 'True'">
+    <ProjectCapability Include="TestContainer" />
+
+    <PackageReference Include="TUnit" Version="1.54.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" Version="18.8.0" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" Version="2.2.3" />
+
+    <AssemblyAttribute Include="System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage" />
+
+    <Compile Include="$(MSBuildThisFileDirectory)TestShared/AssemblyLoadContext.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TestShared/BrainfuckOptions.cs" />
+  </ItemGroup>
+
+  <!-- #region net462 or later specific settings -->
+  <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests')) == 'True' and $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net462'))">
+    <EnableTUnitPolyfills>false</EnableTUnitPolyfills>
+
+		<NoWarn>$(NoWarn);CS0592;CS0436</NoWarn>
+  </PropertyGroup>
+
+	<ItemGroup Condition="$([System.String]::Copy('$(MSBuildProjectName)').EndsWith('.Tests')) == 'True' and $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net462'))">
+		<PackageReference Include="Polyfill" Version="10.8.1" PrivateAssets="all" />
+
+    <Compile Include="$(MSBuildThisFileDirectory)TestShared/ExcludeFromCodeCoverageAttribute.cs" />
+  </ItemGroup>
+  <!-- #endregion -->
+  <!-- #endregion -->
+
 </Project>

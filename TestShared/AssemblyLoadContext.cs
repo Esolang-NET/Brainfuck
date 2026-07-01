@@ -2,7 +2,7 @@
 #if NET
 // using System.Runtime.Loader;
 #else
-using System.Reflection;
+using Assembly = System.Reflection.Assembly;
 #endif
 
 namespace TestShared;
@@ -73,8 +73,10 @@ class AssemblyLoadContext
             }
         }
         if (rawSymbolStore is { Length: > 0 })
+#pragma warning disable RS1035 // アナライザーに対して禁止された API を使用しない
             return Assembly.Load(rowAssembly, rawSymbolStore);
         return Assembly.Load(rowAssembly);
+#pragma warning restore RS1035 // アナライザーに対して禁止された API を使用しない
     }
 #endif
 #pragma warning restore IDE0021 // Use expression body for constructors

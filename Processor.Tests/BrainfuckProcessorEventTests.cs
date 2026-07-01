@@ -3,50 +3,52 @@ using static Esolang.Processor.IOEvent;
 
 namespace Esolang.Brainfuck.Processor.Tests;
 
-[TestClass]
-public class BrainfuckProcessorEventTests(TestContext TestContext)
+public class BrainfuckProcessorEventTests
 {
-    [TestMethod]
-    public async Task RunAsyncEnumerable_ProducesOutputEvents()
+    readonly TestContext TestContext;
+    public BrainfuckProcessorEventTests() => TestContext = TestContext.Current!;
+
+    [Test]
+    public async Task RunAsyncEnumerable_ProducesOutputEvents(CancellationToken CancellationToken)
     {
         // "+" して "." するプログラム
         var processor = new BrainfuckProcessor("+.");
         var events = new List<IOEvent>();
 
-        await foreach (var ev in processor.RunAsyncEnumerable(TestContext.CancellationToken))
+        await foreach (var ev in processor.RunAsyncEnumerable(CancellationToken))
         {
             events.Add(ev);
         }
 
-        Assert.HasCount(2, events); // OutputCharEvent, EndEvent
-        Assert.IsInstanceOfType<OutputCharEvent>(events[0]);
-        Assert.AreEqual(1, ((OutputCharEvent)events[0]).Output);
-        Assert.IsInstanceOfType<EndEvent>(events[1]);
+        await Assert.That(events).Count().IsEqualTo(2); // OutputCharEvent, EndEvent
+        await Assert.That(events[0]).IsTypeOf<OutputCharEvent>()
+            .And.HasProperty(v => v.Output).IsEqualTo((char)1);
+        await Assert.That(events[1]).IsTypeOf<EndEvent>();
     }
 
-    [TestMethod]
-    public async Task RunAsyncEnumerable_HandlesInputEvent()
+    [Test]
+    public async Task RunAsyncEnumerable_HandlesInputEvent(CancellationToken CancellationToken)
     {
         // "," して "." するプログラム
         var processor = new BrainfuckProcessor(",.");
         var events = new List<IOEvent>();
 
-        var enumerator = processor.RunAsyncEnumerable(TestContext.CancellationToken).GetAsyncEnumerator(TestContext.CancellationToken);
+        var enumerator = processor.RunAsyncEnumerable(CancellationToken).GetAsyncEnumerator(CancellationToken);
 
         // Input 命令に到達
-        Assert.IsTrue(await enumerator.MoveNextAsync());
-        Assert.IsInstanceOfType<InputCharEvent>(enumerator.Current);
+        await Assert.That(await enumerator.MoveNextAsync()).IsTrue();
+        await Assert.That(enumerator.Current).IsTypeOf<InputCharEvent>();
 
         // 入力を提供
         ((InputCharEvent)enumerator.Current).Write('A');
 
         // 次の命令（出力）に到達
-        Assert.IsTrue(await enumerator.MoveNextAsync());
-        Assert.IsInstanceOfType<OutputCharEvent>(enumerator.Current);
-        Assert.AreEqual('A', ((OutputCharEvent)enumerator.Current).Output);
+        await Assert.That(await enumerator.MoveNextAsync()).IsTrue();
+        await Assert.That(enumerator.Current).IsTypeOf<OutputCharEvent>()
+            .And.HasProperty(v => v.Output).IsEqualTo('A');
 
         // EndEvent
-        Assert.IsTrue(await enumerator.MoveNextAsync());
-        Assert.IsInstanceOfType<EndEvent>(enumerator.Current);
+        await Assert.That(await enumerator.MoveNextAsync()).IsTrue();
+        await Assert.That(enumerator.Current).IsTypeOf<EndEvent>();
     }
 }

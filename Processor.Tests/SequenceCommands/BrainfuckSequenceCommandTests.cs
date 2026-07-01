@@ -3,11 +3,10 @@ using Command = Esolang.Brainfuck.Processor.SequenceCommands.BrainfuckSequenceCo
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands.Tests;
 
-[TestClass]
 public class BrainfuckSequenceCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object?[]> TryGetCommandTestData
+    internal static IEnumerable<object?[]> TryGetCommandTestData
     {
         get
         {
@@ -59,33 +58,33 @@ public class BrainfuckSequenceCommandTests
                 => [context, expected];
         }
     }
-    [TestMethod]
-    [DynamicData(nameof(TryGetCommandTestData))]
-    public void TryGetCommandTest(TestShared.BrainfuckContext context, Type expected)
+    [Test]
+    [MethodDataSource(nameof(TryGetCommandTestData))]
+    public async Task TryGetCommandTest(TestShared.BrainfuckContext context, Type expected)
     {
         var result = Command.TryGetCommand(context, out var command);
-        Assert.AreEqual(expected is not null, result);
+        await Assert.That(result).IsEqualTo(expected is not null);
         if (!result)
         {
-            Assert.IsNull(command);
+            await Assert.That(command).IsNull();
             return;
         }
-        Assert.IsNotNull(command);
-        Assert.AreEqual(expected, command.GetType());
+        Assert.NotNull(command);
+        await Assert.That(command.GetType()).IsEqualTo(expected);
     }
-    [TestMethod]
-    [DynamicData(nameof(TryGetCommandTestData))]
-    public void Cast(TestShared.BrainfuckContext context, Type expected)
+    [Test]
+    [MethodDataSource(nameof(TryGetCommandTestData))]
+    public async Task Cast(TestShared.BrainfuckContext context, Type expected)
     {
         var command = (Command?)(BrainfuckContext)context;
-        Assert.AreEqual(expected is not null, command is not null);
+        await Assert.That(command is not null).IsEqualTo(expected is not null);
         if (command is null)
         {
-            Assert.IsNull(command);
+            await Assert.That(command).IsNull();
             return;
         }
-        Assert.IsNotNull(command);
-        Assert.AreEqual(expected, command.GetType());
+        Assert.NotNull(command);
+        await Assert.That(command.GetType()).IsEqualTo(expected);
     }
 
 }

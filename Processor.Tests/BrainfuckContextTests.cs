@@ -1,27 +1,30 @@
 ﻿namespace Esolang.Brainfuck.Processor.Tests;
 
-[TestClass]
 public class BrainfuckContextTests
 {
-    public TestContext TestContext { get; set; } = default!;
-    [TestMethod]
+    readonly TestContext TestContext;
+    public BrainfuckContextTests() => TestContext = TestContext.Current!;
+
+    void LogWriteLine(string message) => TestContext.OutputWriter.WriteLine(message);
+
+    [Test]
     public void ToStringTest()
     {
         var context1 = new BrainfuckContext();
-        Assert.IsNotNull(context1.ToString());
+        Assert.NotNull(context1.ToString());
 
         var context2 = new BrainfuckContext(
             Sequences: new[] { BrainfuckSequence.Comment },
             Stack: [0]
         );
-        Assert.IsNotNull(context2.ToString());
+        Assert.NotNull(context2.ToString());
 
         BrainfuckContext context3 = default;
 
-        Assert.IsNotNull(context3.ToString());
+        Assert.NotNull(context3.ToString());
     }
-    [TestMethod]
-    public void EqualsTest()
+    [Test]
+    public async Task EqualsTest()
     {
 
         var context1 = new BrainfuckContext();
@@ -30,11 +33,11 @@ public class BrainfuckContextTests
             Stack: [0]
         );
         BrainfuckContext context3 = default;
-        Assert.AreNotEqual(context1, context2);
-        Assert.AreEqual(context1, context3);
+        await Assert.That(context1).IsNotEqualTo(context2);
+        await Assert.That(context1).IsEqualTo(context3);
     }
-    [TestMethod]
-    public void GetHashCodeTest()
+    [Test]
+    public async Task GetHashCodeTest()
     {
 
         var context1 = new BrainfuckContext();
@@ -46,10 +49,10 @@ public class BrainfuckContextTests
         var hashCode1 = context1.GetHashCode();
         var hashCode2 = context2.GetHashCode();
         var hashCode3 = context3.GetHashCode();
-        TestContext.WriteLine($"{nameof(context1)}:{hashCode1}");
-        TestContext.WriteLine($"{nameof(context2)}:{hashCode2}");
-        TestContext.WriteLine($"{nameof(context3)}:{hashCode3}");
-        Assert.AreNotEqual(hashCode1, hashCode2, $"{nameof(hashCode1)} != {nameof(hashCode2)}");
-        Assert.AreEqual(hashCode1, hashCode3, $"{nameof(hashCode1)} == {nameof(hashCode3)}");
+        LogWriteLine($"{nameof(context1)}:{hashCode1}");
+        LogWriteLine($"{nameof(context2)}:{hashCode2}");
+        LogWriteLine($"{nameof(context3)}:{hashCode3}");
+        await Assert.That(hashCode1).IsNotEqualTo(hashCode2);
+        await Assert.That(hashCode1).IsEqualTo(hashCode3);
     }
 }

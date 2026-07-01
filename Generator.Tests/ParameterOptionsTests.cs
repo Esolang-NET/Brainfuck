@@ -1,10 +1,9 @@
 namespace Esolang.Brainfuck.Generator.Tests;
 
-[TestClass]
 public class ParameterOptionsTests
 {
-    [TestMethod]
-    public void ParameterOptions_HasProperties_CorrectBehavior()
+    [Test]
+    public async Task ParameterOptions_HasProperties_CorrectBehavior()
     {
         var options = new ParameterOptions(
             ParameterSymbols: "",
@@ -18,10 +17,10 @@ public class ParameterOptionsTests
             IsLoggerFromParameter: false
         );
 
-        Assert.IsTrue(options.HasPipeWriterParameter);
-        Assert.IsFalse(options.HasTextWriterParameter);
-        Assert.IsTrue(options.HasPipeReaderParameter);
-        Assert.IsFalse(options.HasTextReaderParameter);
-        Assert.IsTrue(options.HasInputStringParameter);
+        await Assert.That(options.HasPipeWriterParameter).IsTrue();
+        await Assert.That(options.HasTextWriterParameter).IsFalse();
+        await Assert.That(options.HasPipeReaderParameter).IsTrue();
+        await Assert.That(options.HasTextReaderParameter).IsFalse();
+        await Assert.That(options.HasInputStringParameter).IsTrue();
     }
 }

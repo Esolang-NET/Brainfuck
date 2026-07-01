@@ -5,15 +5,13 @@ using Command = Esolang.Brainfuck.Processor.SequenceCommands.InputCommand;
 
 namespace Esolang.Brainfuck.Processor.SequenceCommands.Tests;
 
-[TestClass()]
 public class InputCommandTests
 {
     public TestContext TestContext { get; set; } = default!;
 
-    [TestMethod]
-    public async Task ExecuteAsyncTest()
+    [Test]
+    public async Task ExecuteAsyncTest(CancellationToken CancellationToken)
     {
-        var token = TestContext.CancellationToken;
         var sequences = new[] { Input }.AsMemory();
         var stack = ImmutableArray.Create<byte>(2);
         BrainfuckContext context = new(
@@ -22,31 +20,31 @@ public class InputCommandTests
         );
 
         var command = new Command(context);
-        var ioEvent = await command.GetIoEventAsync(token);
-        Assert.IsInstanceOfType<InputCharEvent>(ioEvent);
+        var ioEvent = await command.GetIoEventAsync(CancellationToken);
+        await Assert.That(ioEvent).IsTypeOf<InputCharEvent>(); ;
 
         ((InputCharEvent)ioEvent!).Write('A');
 
-        var actual = await command.ExecuteAsync(ioEvent!, token);
+        var actual = await command.ExecuteAsync(ioEvent!, CancellationToken);
 
         var expected = context with
         {
             Stack = [(byte)'A'],
             SequencesIndex = 1,
         };
-        Assert.AreEqual(expected, actual);
+        await Assert.That(actual).IsEqualTo(expected);
     }
 
-    [TestMethod]
-    public void RequiredInputTest()
+    [Test]
+    public async Task RequiredInputTest()
     {
         var command = new Command(default);
-        Assert.IsTrue(command.RequiredInput);
+        await Assert.That(command.RequiredInput).IsTrue();
     }
-    [TestMethod]
-    public void RequiredOutputTest()
+    [Test]
+    public async Task RequiredOutputTest()
     {
         var command = new Command(default);
-        Assert.IsFalse(command.RequiredOutput);
+        await Assert.That(command.RequiredOutput).IsFalse();
     }
 }

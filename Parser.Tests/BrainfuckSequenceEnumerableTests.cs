@@ -1,12 +1,15 @@
-﻿using TestShared;
+﻿using TUnit.Assertions.Enums;
 using static Esolang.Brainfuck.BrainfuckSequence;
 namespace Esolang.Brainfuck.Tests;
 
-[TestClass]
 public class BrainfuckSequenceEnumerableTests
 {
-    public TestContext TestContext { get; set; } = default!;
-    static IEnumerable<object?[]> GetEnumerableTestData
+    readonly TestContext TestContext;
+
+    void LogWriteLine(string message) => TestContext.OutputWriter.WriteLine(message);
+
+    public BrainfuckSequenceEnumerableTests() => TestContext = TestContext.Current!;
+    internal static IEnumerable<object?[]> GetEnumerableTestData
     {
         get
         {
@@ -65,57 +68,56 @@ public class BrainfuckSequenceEnumerableTests
             );
 
             static object?[] GetEnumerableTest(string source, TestShared.BrainfuckOptions? options = default!, Tuple<BrainfuckSequence, string>[]? expected = null)
-                => [source, options, (expected ?? []).ToSerializable()];
+                => [source, options, (expected ?? [])];
         }
     }
-    [TestMethod]
-    [DynamicData(nameof(GetEnumerableTestData))]
-    public void GetEnumerableTest(string source, TestShared.BrainfuckOptions? options, Array<Tuple<BrainfuckSequence, string>> expected)
+    [Test]
+    [MethodDataSource(nameof(GetEnumerableTestData))]
+    public async Task GetEnumerableTest(string source, TestShared.BrainfuckOptions? options, Tuple<BrainfuckSequence, string>[] expected)
     {
         var actual = new BrainfuckSequenceEnumerable(source, options).ToArray();
-        TestContext.WriteLine("expected:[{0}] actual:[{1}]",
-            string.Join(", ", expected.AsArray().Select(v => $"{v.Item1}:\"{v.Item2}\"")),
-            string.Join(", ", actual.Select(v => $"{v.Sequence}:\"{v.Syntax}\"")));
-        CollectionAssert.AreEqual(expected.AsArray().Select(v => (v.Item1, v.Item2)).ToArray(), actual.Select(v => (v.Sequence, v.Syntax.ToString())).ToArray());
+        LogWriteLine($"expected:[{string.Join(", ", expected.Select(v => $"{v.Item1}:\"{v.Item2}\""))}] actual:[{string.Join(", ", actual.Select(v => $"{v.Sequence}:\"{v.Syntax}\""))}]");
+        await Assert.That(actual.Select(v => (v.Sequence, v.Syntax.ToString())).ToArray())
+            .IsEquivalentTo(expected.Select(v => (v.Item1, v.Item2)).ToArray(), CollectionOrdering.Matching);
     }
-    [TestMethod]
-    public void RequiredInputTest()
+    [Test]
+    public async Task RequiredInputTest()
     {
         var e1 = new BrainfuckSequenceEnumerable("[");
-        Assert.IsFalse(e1.RequiredInput);
+        await Assert.That(e1.RequiredInput).IsFalse();
         var e2 = new BrainfuckSequenceEnumerable(",");
-        Assert.IsTrue(e2.RequiredInput);
+        await Assert.That(e2.RequiredInput).IsTrue();
     }
-    [TestMethod]
-    public void RequiredOutputTest()
+    [Test]
+    public async Task RequiredOutputTest()
     {
         var e1 = new BrainfuckSequenceEnumerable("]");
-        Assert.IsFalse(e1.RequiredOutput);
+        await Assert.That(e1.RequiredOutput).IsFalse();
         var e2 = new BrainfuckSequenceEnumerable(".");
-        Assert.IsTrue(e2.RequiredOutput);
+        await Assert.That(e2.RequiredOutput).IsTrue();
     }
-    [TestMethod]
-    public void ToStringTest()
+    [Test]
+    public async Task ToStringTest()
     {
         var e1 = new BrainfuckSequenceEnumerable(ReadOnlyMemory<char>.Empty);
-        Assert.IsNotNull(e1.ToString());
+        await Assert.That(e1.ToString()).IsNotNull();
         var e2 = new BrainfuckSequenceEnumerable("]");
-        Assert.IsNotNull(e2.ToString());
+        await Assert.That(e2.ToString()).IsNotNull();
     }
-    [TestMethod]
-    public void EnumeratorTest()
+    [Test]
+    public async Task EnumeratorTest()
     {
         var enumerator = ((System.Collections.IEnumerable)new BrainfuckSequenceEnumerable("[")).GetEnumerator();
         try
         {
             var e = enumerator;
-            Assert.IsTrue(e.MoveNext());
+            await Assert.That(e.MoveNext()).IsTrue();
             var syntax1 = (e.Current as (BrainfuckSequence, ReadOnlyMemory<char>)?)?.Item1;
-            Assert.AreEqual(Begin, syntax1);
+            await Assert.That(syntax1).IsEqualTo(Begin);
 
             e.Reset();
             var syntax2 = (e.Current as (BrainfuckSequence, ReadOnlyMemory<char>)?)?.Item1;
-            Assert.AreEqual(default(BrainfuckSequence), syntax2);
+            await Assert.That(syntax2).IsEqualTo(default(BrainfuckSequence));
         }
         finally
         {
