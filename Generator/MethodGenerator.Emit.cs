@@ -756,7 +756,7 @@ public partial class MethodGenerator
                         methodSymbol.Name,
                         currentLanguageVersion.ToString()));
             }
-            if (!TryGetSources(methodSymbol, out var sequences))
+            if (!TryGetSources(methodSymbol, out var sequences, context.CancellationToken))
             {
                 InvalidValueParameter = true;
                 var diagnostic = DiagnosticDescriptors.InvalidValueParameter;
@@ -835,7 +835,8 @@ public partial class MethodGenerator
 
         static bool TryGetSources(
             IMethodSymbol methodSymbol,
-            out BrainfuckSequenceEnumerable sequences
+            out BrainfuckSequenceEnumerable sequences,
+            CancellationToken cancellationToken
         )
         {
             sequences = default!;
@@ -866,7 +867,7 @@ public partial class MethodGenerator
                 Input: input,
                 Begin: begin,
                 End: end
-            ));
+            ), cancellationToken);
             return true;
             static T GetNamedArgumentOrDefault<T>(AttributeData attributeData, string name, T defaultValue)
             {

@@ -124,4 +124,71 @@ public class BrainfuckSequenceEnumerableTests
             if (enumerator is IDisposable d) d.Dispose();
         }
     }
+    [Test]
+    public async Task CancellationToken_PropertyIsDefault_WhenNotProvided()
+    {
+        var e = new BrainfuckSequenceEnumerable("><+-.,[]");
+        await Assert.That(e.CancellationToken).IsEqualTo(default);
+    }
+    [Test]
+    public async Task CancellationToken_PropertyIsSet_WhenProvided()
+    {
+        using var cts = new CancellationTokenSource();
+        var e = new BrainfuckSequenceEnumerable("><+-.,[]", cts.Token);
+        await Assert.That(e.CancellationToken).IsEqualTo(cts.Token);
+    }
+    [Test]
+    public async Task CancellationToken_EnumerationCompletesNormally_WhenNotCancelled()
+    {
+        using var cts = new CancellationTokenSource();
+        var e = new BrainfuckSequenceEnumerable("><+-.,[]", cts.Token);
+        await Assert.That(e.ToArray().Length).IsEqualTo(8);
+    }
+    [Test]
+    public async Task CancellationToken_ThrowsOperationCanceledException_WhenCancelledBeforeEnumeration()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var e = new BrainfuckSequenceEnumerable("><+-.,[]", cts.Token);
+        var threw = false;
+        try
+        {
+            foreach (var _ in e) { }
+        }
+        catch (OperationCanceledException)
+        {
+            threw = true;
+        }
+        await Assert.That(threw).IsTrue();
+    }
+    [Test]
+    public async Task CancellationToken_ThrowsOperationCanceledException_WhenCancelledMidEnumeration()
+    {
+        using var cts = new CancellationTokenSource();
+        var e = new BrainfuckSequenceEnumerable("><+-.,[]", cts.Token);
+        var threw = false;
+        var count = 0;
+        try
+        {
+            foreach (var _ in e)
+            {
+                count++;
+                if (count == 4) cts.Cancel();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            threw = true;
+        }
+        await Assert.That(threw).IsTrue();
+        await Assert.That(count).IsGreaterThanOrEqualTo(4).And.IsLessThan(8);
+    }
+    [Test]
+    public async Task CancellationToken_WithMemoryAndOptions_SetsToken()
+    {
+        using var cts = new CancellationTokenSource();
+        var options = new BrainfuckOptions();
+        var e = new BrainfuckSequenceEnumerable("><".AsMemory(), options, cts.Token);
+        await Assert.That(e.CancellationToken).IsEqualTo(cts.Token);
+    }
 }

@@ -25,41 +25,47 @@ public sealed partial record BrainfuckSequenceEnumerable(ReadOnlyMemory<char> So
     /// brainfuck source to sequence parser.
     /// </summary>
     /// <param name="source"></param>
-    public BrainfuckSequenceEnumerable(string source) : this(source.AsMemory()) { }
-
-    /// <summary>
-    /// brainfuck source to sequence parser.
-    /// </summary>
-    /// <param name="source"></param>
-    public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source) : this(source, null) { }
-
-    /// <summary>
-    /// brainfuck source to sequence parser.
-    /// </summary>
-    /// <param name="source"></param>
-    /// <param name="options"></param>
-    public BrainfuckSequenceEnumerable(string source, BrainfuckOptions? options) : this(source.AsMemory(), options) { }
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    public BrainfuckSequenceEnumerable(string source, CancellationToken cancellationToken = default)
+        : this(source.AsMemory(), (IBrainfuckOptions?)null, cancellationToken) { }
 
     /// <summary>
     /// brainfuck source to sequence parser.
     /// </summary>
     /// <param name="source"></param>
     /// <param name="options"></param>
-    public BrainfuckSequenceEnumerable(string source, IBrainfuckOptions? options) : this(source.AsMemory(), options) { }
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    public BrainfuckSequenceEnumerable(string source, BrainfuckOptions? options, CancellationToken cancellationToken = default)
+        : this(source.AsMemory(), (IBrainfuckOptions?)options, cancellationToken) { }
 
     /// <summary>
     /// brainfuck source to sequence parser.
     /// </summary>
     /// <param name="source"></param>
     /// <param name="options"></param>
-    public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source, IBrainfuckOptions? options = null)
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    public BrainfuckSequenceEnumerable(string source, IBrainfuckOptions? options, CancellationToken cancellationToken = default)
+        : this(source.AsMemory(), options, cancellationToken) { }
+
+    /// <summary>
+    /// brainfuck source to sequence parser.
+    /// </summary>
+    /// <param name="source"></param>
+    /// <param name="options"></param>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    public BrainfuckSequenceEnumerable(ReadOnlyMemory<char> source, IBrainfuckOptions? options = null, CancellationToken cancellationToken = default)
         : this(source, options switch
         {
             BrainfuckOptions bo => bo,
             not null => new(options),
             _ => new(),
         })
-    { }
+        => CancellationToken = cancellationToken;
+
+    /// <summary>
+    /// The token to monitor for cancellation requests during parsing.
+    /// </summary>
+    public CancellationToken CancellationToken { get; init; }
 
     [MemberNotNull(nameof(_needInput), nameof(_needOutput))]
     void InitializeRequired()
@@ -104,7 +110,7 @@ public sealed partial record BrainfuckSequenceEnumerable(ReadOnlyMemory<char> So
     }
 
     /// <inheritdoc cref="IEnumerable{T}.GetEnumerator"/>
-    public Enumerator GetEnumerator() => new(Source, [.. OptionSyntaxes.OrderByDescending(v => v.Syntax.Length)]);
+    public Enumerator GetEnumerator() => new(Source, [.. OptionSyntaxes.OrderByDescending(v => v.Syntax.Length)], CancellationToken);
     IEnumerator<(BrainfuckSequence, ReadOnlyMemory<char>)> IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)>.GetEnumerator() => GetEnumerator();
     IEnumerable<(BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)> OptionSyntaxes
     {

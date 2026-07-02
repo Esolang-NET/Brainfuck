@@ -115,17 +115,17 @@ public static class BrainfuckInterpreterExtensions
             Description = SR.Get("SourceArgumentDescription"),
         };
         parseCommand.Arguments.Add(sourceArgument);
-        parseCommand.SetAction(parseResult =>
+        parseCommand.SetAction((parseResult, cancellationToken) =>
         {
 
             var output = parseResult.InvocationConfiguration.Output;
             var o = option.GetValue(parseResult);
             var source = parseResult.GetRequiredValue(sourceArgument);
-            foreach (var (sequence, syntaxes) in new BrainfuckSequenceEnumerable(source, o))
+            foreach (var (sequence, syntaxes) in new BrainfuckSequenceEnumerable(source, o, cancellationToken))
             {
                 output.WriteLine($"{sequence}: {syntaxes}");
             }
-            return 0;
+            return Task.FromResult(0);
         });
         rootCommand.Add(parseCommand);
         return rootCommand;
