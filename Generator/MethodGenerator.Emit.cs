@@ -858,7 +858,7 @@ public partial class MethodGenerator
             var input = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.Input), BrainfuckOptionsDefault.Input);
             var begin = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.Begin), BrainfuckOptionsDefault.Begin);
             var end = GetNamedArgumentOrDefault(attributeData, nameof(BrainfuckOptions.End), BrainfuckOptionsDefault.End);
-            sequences = new BrainfuckSequenceEnumerable(source!.AsMemory(), (IBrainfuckOptions)new BrainfuckOptions(
+            sequences = new BrainfuckSequenceEnumerable(source!.AsMemory(), new BrainfuckOptions(
                 IncrementPointer: incrementPointer,
                 DecrementPointer: decrementPointer,
                 IncrementCurrent: incrementCurrent,
