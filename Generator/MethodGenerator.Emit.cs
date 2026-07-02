@@ -756,7 +756,7 @@ public partial class MethodGenerator
                         methodSymbol.Name,
                         currentLanguageVersion.ToString()));
             }
-            if (!TryGetSources(methodSymbol, context.CancellationToken, out var sequences))
+            if (!TryGetSources(methodSymbol, out var sequences, context.CancellationToken))
             {
                 InvalidValueParameter = true;
                 var diagnostic = DiagnosticDescriptors.InvalidValueParameter;
@@ -835,8 +835,8 @@ public partial class MethodGenerator
 
         static bool TryGetSources(
             IMethodSymbol methodSymbol,
-            CancellationToken cancellationToken,
-            out BrainfuckSequenceEnumerable sequences
+            out BrainfuckSequenceEnumerable sequences,
+            CancellationToken cancellationToken
         )
         {
             sequences = default!;
