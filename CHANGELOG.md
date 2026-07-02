@@ -6,6 +6,12 @@ The format is based on Keep a Changelog.
 
 ## [Unreleased]
 
+### Added
+
+- `Esolang.Brainfuck.Parser`: Added `CancellationToken` support to `BrainfuckSequenceEnumerable` via a new `CancellationToken` init-only property and constructor overloads accepting `CancellationToken`. The token is checked on every `MoveNext()` call and throws `OperationCanceledException` when cancellation is requested.
+- `Esolang.Brainfuck.Generator`: `SourceProductionContext.CancellationToken` is now propagated from the source generator pipeline into `BrainfuckSequenceEnumerable` during code generation.
+- `Esolang.Brainfuck.Interpreter`: The `parse` sub-command now propagates the CLI cancellation token into `BrainfuckSequenceEnumerable`.
+
 ### Fixed
 
 - CI: Added `--no-symbols` flag to `push_nupkg` step in the release workflow to prevent automatic `.snupkg` uploads for RID-specific (NativeAOT) packages, which do not have valid symbol packages. Symbol packages for `any`/portable and library packages are still pushed explicitly via the dedicated `push_snupkg` step.

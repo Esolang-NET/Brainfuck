@@ -15,21 +15,24 @@ public sealed partial record BrainfuckSequenceEnumerable
         ReadOnlyMemory<char> memory;
 
         readonly (BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)[] optionSyntaxes;
+        readonly CancellationToken _cancellationToken;
 
         /// <inheritdoc cref="IEnumerator{T}.Current"/>
         public readonly (BrainfuckSequence, ReadOnlyMemory<char>) Current => current;
 
         readonly object IEnumerator.Current => current;
-        internal Enumerator(ReadOnlyMemory<char> memory, (BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)[] optionSyntaxes)
+        internal Enumerator(ReadOnlyMemory<char> memory, (BrainfuckSequence Sequence, ReadOnlyMemory<char> Syntax)[] optionSyntaxes, CancellationToken cancellationToken = default)
         {
             original = memory;
             this.memory = memory;
             this.optionSyntaxes = optionSyntaxes;
+            _cancellationToken = cancellationToken;
         }
 
         /// <inheritdoc cref="IEnumerator.MoveNext"/>
         public bool MoveNext()
         {
+            _cancellationToken.ThrowIfCancellationRequested();
             if (memory.Length <= 0) return false;
             (memory, current) = Next(memory, optionSyntaxes);
             return true;
