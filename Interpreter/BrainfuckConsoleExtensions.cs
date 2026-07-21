@@ -11,11 +11,27 @@ namespace Esolang.Brainfuck.Interpreter;
 public static class BrainfuckInterpreterExtensions
 {
     /// <summary>
+    /// Adds a command that executes Brainfuck code with the specified syntax options.
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="command"></param>
+    /// <param name="binder"></param>
+    /// <returns></returns>
+    public static T AddBrainfuckCommand<T>(this T command, out BrainfuckOptionBinder binder)
+        where T : Command
+    {
+        binder = command.AddDefaultGlobalOptions();
+        return command
+                .AddDefaultCommand(binder)
+                .AddParseCommand(binder);
+    }
+    /// <summary>
     /// Adds global options that represent Brainfuck syntax configuration.
     /// </summary>
     /// <param name="rootCommand">The target root command.</param>
     /// <returns>A binder that groups the added options.</returns>
-    public static BrainfuckOptionBinder AddDefaultGlobalOptions(this RootCommand rootCommand)
+    public static BrainfuckOptionBinder AddDefaultGlobalOptions<T>(this T rootCommand)
+        where T : Command
     {
         var noUseDefaultValue = new Option<bool>("--syntax-no-use-default-value", "-snd")
         {
@@ -81,7 +97,8 @@ public static class BrainfuckInterpreterExtensions
     /// <param name="rootCommand">The target root command.</param>
     /// <param name="option">The syntax option binder.</param>
     /// <returns>The configured root command.</returns>
-    public static RootCommand AddDefaultCommand(this RootCommand rootCommand, BrainfuckOptionBinder option)
+    public static T AddDefaultCommand<T>(this T rootCommand, BrainfuckOptionBinder option)
+        where T : Command
     {
         rootCommand.Description = SR.Get("RootCommandDescription");
         var sourceArgument = new Argument<string>("source")
@@ -105,8 +122,10 @@ public static class BrainfuckInterpreterExtensions
     /// </summary>
     /// <param name="rootCommand">The target root command.</param>
     /// <param name="option">The syntax option binder.</param>
-    /// <returns>The configured root command.</returns>
-    public static RootCommand AddParseCommand(this RootCommand rootCommand, BrainfuckOptionBinder option)
+    /// <returns>The configured command.</returns>
+    /// <typeparam name="T">The type of the root command.</typeparam>
+    public static T AddParseCommand<T>(this T rootCommand, BrainfuckOptionBinder option)
+        where T : Command
     {
         var parseCommand = new Command("parse", SR.Get("ParseCommandDescription"));
 
