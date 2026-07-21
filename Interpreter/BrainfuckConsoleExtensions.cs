@@ -15,12 +15,11 @@ public static class BrainfuckInterpreterExtensions
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <param name="command"></param>
-    /// <param name="binder"></param>
     /// <returns></returns>
-    public static T AddBrainfuckCommand<T>(this T command, out BrainfuckOptionBinder binder)
+    public static T AddBrainfuckCommands<T>(this T command)
         where T : Command
     {
-        binder = command.AddDefaultGlobalOptions();
+        var binder = command.AddDefaultGlobalOptions();
         return command
                 .AddDefaultCommand(binder)
                 .AddParseCommand(binder);
@@ -101,9 +100,9 @@ public static class BrainfuckInterpreterExtensions
         where T : Command
     {
         rootCommand.Description = SR.Get("RootCommandDescription");
-        var sourceArgument = new Argument<string>("source")
+        Argument<string> sourceArgument = new("source")
         {
-            Description = SR.Get("SourceArgumentDescription"),
+            Description = SR.Get("SourceArgumentDescription")
         };
         rootCommand.Arguments.Add(sourceArgument);
         rootCommand.SetAction(async (result, cancellationToken) =>
