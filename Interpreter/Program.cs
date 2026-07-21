@@ -2,7 +2,7 @@ using Esolang.Brainfuck.Interpreter;
 using System.CommandLine;
 using System.Diagnostics.CodeAnalysis;
 
-return await RunAsync(args);
+return await RunWithCancelRegisterAsync(args);
 
 /// <summary>
 /// The main program class for the Brainfuck interpreter. This class is responsible for setting up the command-line interface and handling user input. It defines the entry point of the application and orchestrates the execution of commands based on the provided arguments.
@@ -63,7 +63,7 @@ partial class Program
     /// <param name="args"></param>
     /// <returns></returns>
     [ExcludeFromCodeCoverage]
-    static async Task<int> RunAsync(string[] args)
+    static async Task<int> RunWithCancelRegisterAsync(string[] args)
     {
         try
         {
